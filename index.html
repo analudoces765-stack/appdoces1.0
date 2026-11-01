@@ -105,6 +105,27 @@ input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 3
 .step .n{width:34px;height:34px;border-radius:50%;background:var(--p);color:#fff;display:grid;place-items:center;font:600 15px Fraunces,serif;flex:none}
 .step.done .n{background:var(--ok)}.step b{display:block}.step small{color:var(--mu)}
 .sim{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}@media(max-width:700px){.sim{grid-template-columns:1fr}}
+
+.ai-recipe-search{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}.ai-recipe-search b{display:block;font-size:13px}.ai-recipe-search small{display:block;color:var(--mu);font-size:11px;margin-top:2px}.ai-recipe-entry{display:flex;gap:7px;flex:1;max-width:520px}.ai-recipe-entry input{min-width:0;flex:1;border:1px solid var(--bd);border-radius:9px;padding:9px 11px}.ai-recipe-entry .btn{white-space:nowrap}@media(max-width:650px){.ai-recipe-search{align-items:stretch;flex-direction:column}.ai-recipe-entry{max-width:none}}
+/* ===== Analu IA ===== */
+.ai-wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-height:calc(100vh - 150px)}
+.ai-hero{background:linear-gradient(120deg,#4a2638,#8b4a6f);color:#fff;border-radius:18px;padding:20px 22px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px #5b314018}
+.ai-mark{width:48px;height:48px;border-radius:15px;background:#ffffff20;display:grid;place-items:center;font-size:25px;flex:none}
+.ai-hero h2{font:600 21px Fraunces,Georgia,serif;margin:0 0 3px}.ai-hero p{font-size:12px;opacity:.85;margin:0}
+.ai-badge{margin-left:auto;border:1px solid #ffffff55;border-radius:99px;padding:5px 9px;font-size:10px;white-space:nowrap}
+.ai-chat{background:#fff;border:1px solid var(--bd);border-radius:16px;display:flex;flex-direction:column;min-height:420px;flex:1;overflow:hidden}
+.ai-messages{padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;flex:1;max-height:calc(100vh - 390px);min-height:300px}
+.ai-msg{max-width:min(84%,700px);padding:12px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:13px}
+.ai-msg.user{align-self:flex-end;background:var(--p);color:#fff;border-bottom-right-radius:4px}
+.ai-msg.assistant{align-self:flex-start;background:#f8f3f5;color:var(--ink);border:1px solid #f0e5e9;border-bottom-left-radius:4px}
+.ai-msg a{color:inherit;text-decoration:underline}.ai-msg.assistant a{color:#8b4a6f}
+.ai-composer{border-top:1px solid var(--bd);padding:12px;display:flex;gap:9px;align-items:flex-end;background:#fff}
+.ai-composer textarea{flex:1;resize:vertical;min-height:48px;max-height:130px;border:1px solid var(--bd);border-radius:12px;padding:12px;outline:none;background:#fff}
+.ai-composer textarea:focus{border-color:var(--p)}.ai-send{border:0;border-radius:12px;background:var(--p);color:#fff;padding:0 17px;height:48px;font-weight:600}.ai-send:disabled{opacity:.5;cursor:wait}
+.ai-hints{display:flex;flex-wrap:wrap;gap:8px}.ai-hints button{background:#fff;border:1px solid var(--bd);border-radius:99px;padding:7px 11px;color:var(--mu);font-size:11px}.ai-note{font-size:11px;color:var(--mu);text-align:center}
+.ai-empty{text-align:center;margin:auto;max-width:490px;padding:20px;color:var(--mu)}.ai-empty strong{display:block;color:var(--ink);font:600 19px Fraunces,Georgia,serif;margin:8px 0}.ai-typing{color:var(--mu);font-size:12px;padding:0 18px 12px}
+@media(max-width:600px){.ai-hero{padding:16px}.ai-badge{display:none}.ai-messages{max-height:calc(100vh - 370px);padding:12px}.ai-msg{max-width:94%}.ai-chat{min-height:420px}.ai-wrap{min-height:calc(100vh - 125px)}}
+
 </style></head><body>
 <div id="root"></div><div id="ov"></div><aside id="dr"></aside><div id="tt"></div>
 <script>
@@ -164,9 +185,9 @@ const MOD={dashboard:{t:'Início',i:'home'},vendas:{t:'Vendas',i:'cart'},encomen
 estoque:{t:'Insumos e estoque',n:'1 · Insumos',i:'box',tabs:['insumos','movimentacoes']},produtos:{t:'Receitas',n:'2 · Receitas',i:'bag'},precos:{t:'Preço de venda',n:'3 · Preço de venda',i:'tag'},
 simulador:{t:'Simulador',i:'calc'},historico:{t:'Histórico de preços',i:'trend',tabs:['historico_precos']},
 producao:{t:'Produção',i:'chef',tabs:['ordens_producao']},lista:{t:'Lista de compras',i:'list'},compras:{t:'Compras e fornecedores',n:'Compras',i:'truck',tabs:['compras','fornecedores']},
-financeiro:{t:'Financeiro',i:'wallet'},relatorios:{t:'Relatórios',i:'chart'},usuarios:{t:'Usuários',i:'shield',tabs:['perfis','atividades']},config:{t:'Configurações',i:'gear'}};
-const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos','simulador','historico']],['Vendas',['vendas','encomendas','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']]];
-const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config'].includes(k)),Atendente:['dashboard','vendas','encomendas','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
+financeiro:{t:'Financeiro',i:'wallet'},relatorios:{t:'Relatórios',i:'chart'},usuarios:{t:'Usuários',i:'shield',tabs:['perfis','atividades']},config:{t:'Configurações',i:'gear'},analuia:{t:'Analu IA',n:'Analu IA',i:'sparkles'}};
+const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos','simulador','historico']],['Vendas',['vendas','encomendas','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']],['Assistente',['analuia']]];
+const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config','analuia'].includes(k)),Atendente:['dashboard','vendas','encomendas','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
 /* regras de preço: lucro é % do PREÇO DE VENDA (30% de lucro = de cada R$100 vendidos, R$30 sobram). Taxas (cartão/imposto) saem do preço também. */
 const taxa=()=>num(CFG.taxa_pct);
 const cT=p=>num(p.custo)+num(p.custo_extra);                       // custo total de 1 unidade
@@ -224,6 +245,47 @@ atividades:{t:'Histórico de atividades',s:'Registro automático de quem fez o q
 const kpi=(l,i,v,sub='')=>`<div class="card kpi"><div class=ico>${ic(i,20)}</div><div><small>${l}</small><b>${v}</b>${sub}</div></div>`;
 
 /* ===== boot / login ===== */
+
+/* ===== Analu IA — assistente profissional de confeitaria ===== */
+let aiHistory=[];let aiBusy=false;let aiInitialQuestion='';
+const AI_STORAGE=()=>`analu_ia_chat_${me?.id||'visitante'}`;
+function aiFormat(text){
+ let s=esc(text||'');
+ s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+ s=s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
+ return s;
+}
+function aiBubble(role,content){return `<div class="ai-msg ${role}">${aiFormat(content)}</div>`}
+function aiRender(){
+ const box=$('#aiMessages');if(!box)return;
+ box.innerHTML=aiHistory.length?aiHistory.map(m=>aiBubble(m.role==='user'?'user':'assistant',m.content)).join(''):`<div class="ai-empty"><div style="font-size:34px">👩‍🍳</div><strong>Olá! Eu sou a Analu IA.</strong><p>Sou sua parceira de confeitaria: posso ensinar técnicas, desenvolver receitas, resolver problemas de preparo e ajudar a calcular custos usando os dados cadastrados no Doces da Analu.</p></div>`;
+ box.scrollTop=box.scrollHeight;
+}
+async function analuIA(){
+ try{const saved=JSON.parse(localStorage.getItem(AI_STORAGE())||'[]');aiHistory=Array.isArray(saved)?saved.slice(-30):[]}catch{aiHistory=[]}
+ $('#main').innerHTML=`<section class="ai-wrap">
+  <div class="ai-hero"><div class="ai-mark">✦</div><div><h2>Analu IA</h2><p>Especialista em confeitaria, receitas e gestão de custos</p></div><span class="ai-badge">CONFEITARIA PROFISSIONAL</span></div>
+  <div class="ai-hints"><button data-ai="Me ensine uma receita profissional de brigadeiro gourmet, com técnica e pontos corretos.">🍫 Receita profissional</button><button data-ai="Como faço a temperagem correta do chocolate? Explique passo a passo.">🌡️ Temperagem</button><button data-ai="Me ajude a calcular o custo de uma receita usando meus insumos cadastrados.">🧮 Calcular custos</button><button data-ai="Como aumentar o rendimento de uma receita sem perder qualidade?">📈 Aumentar rendimento</button></div>
+  <div class="ai-chat"><div class="ai-messages" id="aiMessages"></div><div class="ai-typing" id="aiTyping" hidden>A Analu IA está pensando...</div><form class="ai-composer" id="aiForm"><textarea id="aiInput" rows="2" placeholder="Pergunte qualquer coisa sobre confeitaria..." required></textarea><button class="ai-send" id="aiSend" type="submit">Enviar ↑</button></form></div>
+  <p class="ai-note">As respostas podem usar pesquisa na internet. Custos e preços devem ser conferidos com os cadastros e notas de compra.</p>
+ </section>`;
+ aiRender();if(aiInitialQuestion){$('#aiInput').value=aiInitialQuestion;aiInitialQuestion='';}
+ $('#aiForm').onsubmit=async e=>{e.preventDefault();await aiSend()};
+ $('#aiInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#aiForm').requestSubmit()}});
+ document.querySelectorAll('[data-ai]').forEach(b=>b.onclick=()=>{$('#aiInput').value=b.dataset.ai;$('#aiInput').focus();});
+}
+async function aiSend(){
+ const input=$('#aiInput'),send=$('#aiSend'),typing=$('#aiTyping');const question=input?.value.trim();if(!question||aiBusy)return;
+ aiBusy=true;aiHistory.push({role:'user',content:question});aiHistory=aiHistory.slice(-30);localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory));input.value='';send.disabled=true;typing.hidden=false;aiRender();
+ try{
+  const {data:{session},error:se}=await sb.auth.getSession();if(se||!session)throw new Error('Sua sessão expirou. Entre novamente no sistema.');
+  const res=await fetch(`${SUPABASE_URL}/functions/v1/analu-ia`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},body:JSON.stringify({messages:aiHistory.slice(-12)})});
+  const payload=await res.json().catch(()=>({}));if(!res.ok)throw new Error(payload.error||payload.message||`Erro ${res.status} ao consultar a Analu IA.`);
+  aiHistory.push({role:'assistant',content:payload.answer||'Não consegui gerar uma resposta agora.'});aiHistory=aiHistory.slice(-30);localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory));
+ }catch(err){aiHistory.push({role:'assistant',content:`Não consegui responder agora. ${err.message}\n\nConfira se a função analu-ia foi publicada no Supabase e se a chave GEMINI_API_KEY foi configurada.`});}
+ finally{aiBusy=false;typing.hidden=true;send.disabled=false;aiRender();input.focus();}
+}
+
 async function boot(){
  try{
   if(!window.supabase)throw new Error('Biblioteca do Supabase não carregou (verifique internet/adblock).');
@@ -266,12 +328,13 @@ async function go(r){
  route=r;history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
  $('#ttl').textContent=MOD[r].t;$('#main').onclick=null;$('#main').innerHTML='<div class=sk></div>';
- try{await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,simulador:simView,lista:listaView}[r]||mod)(r)}catch(e){$('#main').innerHTML=errBox(e)}}
+ try{await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,simulador:simView,lista:listaView,analuia:analuIA}[r]||mod)(r)}catch(e){$('#main').innerHTML=errBox(e)}}
 
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+'<div id=lst></div>';
+ $('#main').innerHTML=(r==='produtos'?`<div class=ai-recipe-search><div><b>Precisa de uma orientação?</b><small>Converse com a Analu IA sobre receitas, ingredientes e técnicas.</small></div><div class=ai-recipe-entry><input id=aiRecipeAsk placeholder="Ex.: como faço um brigadeiro de pistache?"><button class=btn id=aiRecipeGo>Conversar com a IA</button></div></div>`:'')+(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+'<div id=lst></div>';
+ if(r==='produtos')$('#aiRecipeGo').onclick=()=>{aiInitialQuestion=$('#aiRecipeAsk').value.trim();go('analuia')};
  $('#main').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tabSel[r]=b.dataset.t;mod(r)});
  await list(t,$('#lst'))}
 const refsOf=d=>d.f.flatMap(f=>f[2]==='ref'?[f[3][0]]:f[2]==='lines'?f[3].cols.filter(c=>c[2]==='ref').map(c=>c[3][0]):[]);
