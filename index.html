@@ -279,7 +279,7 @@ async function aiSend(){
  aiBusy=true;aiHistory.push({role:'user',content:question});aiHistory=aiHistory.slice(-30);localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory));input.value='';send.disabled=true;typing.hidden=false;aiRender();
  try{
   const {data:{session},error:se}=await sb.auth.getSession();if(se||!session)throw new Error('Sua sessão expirou. Entre novamente no sistema.');
-  const res=await fetch(`${SUPABASE_URL}/functions/v1/analu-ia`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},body:JSON.stringify({messages:aiHistory.slice(-12)})});
+  const res=await fetch(`${SUPABASE_URL}/functions/v1/ANALU-IA`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},body:JSON.stringify({messages:aiHistory.slice(-12)})});
   const payload=await res.json().catch(()=>({}));if(!res.ok)throw new Error(payload.error||payload.message||`Erro ${res.status} ao consultar a Analu IA.`);
   aiHistory.push({role:'assistant',content:payload.answer||'Não consegui gerar uma resposta agora.'});aiHistory=aiHistory.slice(-30);localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory));
  }catch(err){aiHistory.push({role:'assistant',content:`Não consegui responder agora. ${err.message}\n\nConfira se a função analu-ia foi publicada no Supabase e se a chave GEMINI_API_KEY foi configurada.`});}
