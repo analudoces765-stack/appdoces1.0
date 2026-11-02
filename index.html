@@ -683,26 +683,27 @@ AIH.produtos=['Me sugira 3 receitas lucrativas para vender essa semana','Quais r
 AIH.producao=['Como organizar a produção do dia para perder menos tempo?'];
 
 /* ===== 1 · zero cache: recalcula custos a partir dos insumos atuais e grava no banco ===== */
-let xBusy=false;
+let xBusy=false,xQuiet=0,xGoAt=0;const xLast={};
+async function xSet(tb,id,k,val,cur){if(Math.abs(val-num(cur))<=1e-6||xLast[tb+id+k]===val)return;xLast[tb+id+k]=val;xQuiet=Date.now()+4000;await sb.from(tb).update({[k]:val}).eq('id',id)}
 async function xSync(){
  if(xBusy||!canW('produtos')&&!canW('insumos'))return;xBusy=true;
  try{
   const [I,P,F,CC]=await Promise.all([all('insumos'),all('produtos'),all('ficha_tecnica'),all('configuracoes')]);
   CFG={...CFG,...Object.fromEntries(CC.map(x=>[x.chave,x.valor]))};
   for(const i of I){if(num(i.qtd_embalagem)>0&&num(i.preco_embalagem)>0){const c=num(i.preco_embalagem)/num(i.qtd_embalagem);
-   if(Math.abs(c-num(i.custo_unit))>1e-9){const {error}=await sb.from('insumos').update({custo_unit:c}).eq('id',i.id);if(!error)i.custo_unit=c}}}
+   await xSet('insumos',i.id,'custo_unit',c,i.custo_unit)}}
   const Im=new Map(I.map(i=>[i.id,i]));
   for(const p of P){
    const tot=F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=Im.get(f.insumo_id);if(!i)return a;const q=convX(f.quantidade,f.unidade||i.unidade,i);return q==null?a:a+q*num(i.custo_unit)},0);
    const c=Math.round(tot/(num(p.rendimento)||1)*1e6)/1e6;
-   if(Math.abs(c-num(p.custo))>1e-6)await sb.from('produtos').update({custo:c}).eq('id',p.id);
+   await xSet('produtos',p.id,'custo',c,p.custo);
    if(['embalagem_total','tempo_min','tempos'].some(k=>p[k]!=null)){const ce=xExtra(p);
-    if(Math.abs(ce-num(p.custo_extra))>1e-6)await sb.from('produtos').update({custo_extra:ce}).eq('id',p.id)}}
+    await xSet('produtos',p.id,'custo_extra',ce,p.custo_extra)}}
  }catch(e){}finally{xBusy=false}}
 
 function xLive(){
  if(window.__rt)return;let t;
- const fire=()=>{clearTimeout(t);t=setTimeout(async()=>{if(!me)return;cache={};
+ const fire=()=>{clearTimeout(t);t=setTimeout(async()=>{if(!me)return;cache={};if(Date.now()<xQuiet||Date.now()-xGoAt<2000)return;
   if(document.body.classList.contains('dr-open')){cache.insumos=await all('insumos');$('#fm')?.dispatchEvent(new Event('input',{bubbles:true}));return}
   if(document.activeElement?.closest?.('#main')&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
   go(route)},500)};
@@ -712,7 +713,7 @@ const xStart=start;start=async()=>{await xStart();xLive()};
 
 async function go(r){
  if(!me)return;const ok=ALLOW[me.nivel]||[];if(!MOD[r]||!ok.includes(r))r='dashboard';
- route=r;aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
+ xGoAt=Date.now();route=r;aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
  $('#ttl').textContent=MOD[r].t;$('#main').onclick=$('#main').onchange=$('#main').oninput=null;$('#main').innerHTML='<div class=sk></div>';
  try{if(['dashboard','produtos','precos','producao','lista','estoque','config'].includes(r))await xSync();
@@ -773,12 +774,12 @@ CF.splice(5,0,
 CF.find(x=>x[0]==='custo_fixo_mes')[1]='Outros custos fixos do mês — aluguel, internet, água, geladeira, contador… (R$). Gás e energia dos equipamentos já são calculados por receita';
 {const f=T.produtos.f,i=f.findIndex(x=>x[0]==='custo_extra');
  f.splice(i,1,['embalagem_total','Embalagem e outros — total da RECEITA INTEIRA (R$): caixinha, laço, sacola…','money',,'nolist'],
-  ['tempo_min','Seu tempo de trabalho (minutos) — do começo ao fim, incluindo embalar','number',,'nolist'],
-  ['min_gas','Fogão / forno a gás aceso (minutos)','number',,'nolist'],
-  ['min_panela','Panela elétrica mexedora ligada (minutos)','number',,'nolist'],
-  ['min_forno','Forno elétrico ligado (minutos)','number',,'nolist'],
-  ['min_bat','Batedeira ligada (minutos)','number',,'nolist'],
-  ['min_liq','Liquidificador ligado (minutos)','number',,'nolist']);
+  ['tempo_min','Seu tempo de trabalho (minutos) — do começo ao fim, incluindo embalar','tempo',,'nolist'],
+  ['min_gas','Fogão / forno a gás aceso (minutos)','tempo',,'nolist'],
+  ['min_panela','Panela elétrica mexedora ligada (minutos)','tempo',,'nolist'],
+  ['min_forno','Forno elétrico ligado (minutos)','tempo',,'nolist'],
+  ['min_bat','Batedeira ligada (minutos)','tempo',,'nolist'],
+  ['min_liq','Liquidificador ligado (minutos)','tempo',,'nolist']);
  f.find(x=>x[0]==='preco')[1]='Preço de venda de 1 unidade (R$)';
  f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita INTEIRA — digite o nome, a quantidade total e a unidade (forminhas e caixas também entram aqui)'}
 const xc=k=>num(CFG[k])||XD[k]||0;
@@ -786,8 +787,11 @@ const xHora=()=>{const h=xc('dias_sem')*xc('horas_dia')*4.33;return h>0?num(CFG.
 const xT=o=>{let t=o.tempos;if(typeof t==='string'){try{t=JSON.parse(t)}catch{t={}}}t=t||{};return{gas:num(t.gas??o.min_gas),panela:num(t.panela??o.min_panela),forno:num(t.forno??o.min_forno),bat:num(t.bat??o.min_bat),liq:num(t.liq??o.min_liq)}};
 const xParts=o=>{const t=xT(o);return{trab:num(o.tempo_min)/60*xHora(),gas:t.gas/60*(xc('botijao_preco')/13*0.25),luz:(t.panela*xc('w_panela')+t.forno*xc('w_forno')+t.bat*xc('w_bat')+t.liq*xc('w_liq'))/60000*xc('preco_kwh')}};
 const xExtra=o=>{const q=xParts(o);return Math.round((num(o.embalagem_total)+q.trab+q.gas+q.luz)/(num(o.rendimento)||1)*1e6)/1e6};
+const xInp=inp;
+inp=(f,v,lc)=>{if(f[2]!=='tempo')return xInp(f,v,lc);const h=num(v)>=60&&num(v)%60===0;
+ return `<div style="display:flex;gap:8px"><input name="${f[0]}" type=number step=any min=0 inputmode=decimal placeholder="0" value="${v?h?num(v)/60:num(v):''}" style="flex:1"><select name="${f[0]}_u" style="width:112px"><option value=min>minutos</option><option value=h ${h?'selected':''}>horas</option></select></div>`};
 const xCollect=collect;
-collect=(root,fields)=>{const o=xCollect(root,fields);if('embalagem_total' in o){
+collect=(root,fields)=>{const o=xCollect(root,fields);['tempo_min','min_gas','min_panela','min_forno','min_bat','min_liq'].forEach(k=>{if(k in o){const u=root.querySelector(`[name=${k}_u]`);o[k]=num(o[k])*(u?.value==='h'?60:1)}});if('embalagem_total' in o){
  o.tempos=JSON.stringify({gas:num(o.min_gas),panela:num(o.min_panela),forno:num(o.min_forno),bat:num(o.min_bat),liq:num(o.min_liq)});
  ['min_gas','min_panela','min_forno','min_bat','min_liq'].forEach(k=>delete o[k]);o.custo_extra=xExtra(o)}return o};
 const xEdit=editRow;
