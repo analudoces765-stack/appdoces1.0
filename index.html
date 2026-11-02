@@ -206,11 +206,11 @@ const T={
 clientes:{t:'Clientes',s:'Cadastro, preferências e histórico de compras',one:'cliente',f:[['nome','Nome','text',,'req'],['telefone','Telefone','text'],['endereco','Endereço','text'],['preferencias','Preferências','area'],['observacoes','Observações','area']],acts:[['clock','Histórico de compras',histCli]]},
 produtos:{t:'Receitas',s:'Digite os ingredientes e a quantidade — o custo aparece na hora',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
  f:[['nome','Nome da receita / produto','text',,'req'],['categoria','Categoria','text'],['rendimento','Rende quantas unidades?','number',,'req'],
- ['ficha','Ingredientes — digite o nome e a quantidade usada na receita inteira (ex.: 2 un de leite condensado = 2 latas · 40 un de uva)','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'g'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',['g','kg','ml','L','un']]]},'nolist'],
+ ['ficha','Ingredientes — digite o nome, a quantidade da receita inteira e escolha a unidade que quiser (unidade, g, kg, ml, L)','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'un'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',[['un','unidade'],['g','g'],['kg','kg'],['ml','ml'],['L','L']]]]},'nolist'],
  ['custo_extra','Embalagem, mão de obra e outros (R$ por unidade)','money',,'nolist'],['margem','Lucro que você quer (% do preço de venda)','number',,'nolist'],['calc','','info',,'nolist'],
  ['custo','Custo por unidade','money',,'ro'],['preco','Preço de venda (R$)','money',,'req'],['estoque','Em estoque','number',,'ro'],['ativo','Ativo','bool']],
  fmt:{custo:r=>cT(r)>0?brl(cT(r)):'<span class="bd warn">Sem custo</span>',rendimento:r=>fmtN(r.rendimento)+' un'},
- check:v=>!(v.rendimento>0)?'Informe quantas unidades a receita rende.':v.ficha.some(l=>!(l.quantidade>0))?'Informe a quantidade de cada ingrediente.':v.margem<0||v.margem+taxa()>=100?'Lucro desejado + taxas precisam somar menos de 100%.':null,
+ check:v=>!(v.rendimento>0)?'Informe quantas unidades a receita rende.':v.ficha.some(l=>!(l.quantidade>0))?'Informe a quantidade de cada ingrediente.':v.margem<0||v.margem+taxa()>=100?'Lucro desejado + taxas precisam somar menos de 100%.':ficBad(v)?'Há ingrediente com unidade diferente da compra. Preencha a equivalência no quadro amarelo.':null,
  x:[['Margem real',r=>{const m=margemReal(r);return m==null||!cT(r)?'<span class=mute>—</span>':`<span class="bd ${abaixo(r)?'warn':'ok'}" title="Meta: ${fmtN(r.margem)}%">${Math.round(m)}%</span>`}]]},
 vendas:{t:'Vendas',s:'Cada venda baixa o estoque e lança a receita automaticamente',nl:'Nova venda',noedit:1,nodel:1,new:novaVenda,
  f:[['numero','Nº','number'],['created_at','Data','dt'],['cliente_id','Cliente','ref',['clientes','nome']],['forma_pagamento','Pagamento','select',FP],['desconto','Desconto','money'],['total','Total','money'],['status','Status','select',['Concluída','Cancelada']]],
@@ -219,7 +219,7 @@ encomendas:{t:'Encomendas',s:'O sinal e o saldo a receber são lançados no fina
  acts:[['check','Marcar como entregue',r=>upd('encomendas',r.id,{status:'Entregue'},'Encomenda entregue'),r=>!['Entregue','Cancelado'].includes(r.status)]]},
 insumos:{t:'Insumos e embalagens',s:'Você coloca o que comprou e quanto pagou. O sistema calcula o custo por grama, por ml e por unidade.',one:'insumo',warn:r=>num(r.quantidade)<=num(r.minimo),live:insLive,def:{tipo:'Matéria-prima',unidade:'un',qtd_embalagem:1,quantidade:0,minimo:1},
  check:v=>!(v.qtd_embalagem>0)?'Informe quanto você comprou (maior que zero).':v.quantidade<0||v.minimo<0?'Estoque não pode ser negativo.':null,
- f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você conta este item (un = lata, caixa, forminha, uva…)','select',['un','kg','g','L','ml'],'nolist'],['qtd_embalagem','Quanto veio na embalagem (ex.: 1 lata, 50 forminhas, 80 uvas)','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
+ f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você compra / conta este item?','select',[['un','Por unidade (lata, caixa, forminha, uva…)'],['kg','Por quilo (kg)'],['g','Por grama (g)'],['L','Por litro (L)'],['ml','Por mililitro (ml)']],'nolist'],['qtd_embalagem','Quanto veio na embalagem (ex.: 1 lata, 50 forminhas, 80 uvas)','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
  ['custo_unit','Custo por g / ml / un','money',,'ro'],['quantidade','Em estoque agora','number'],['minimo','Estoque mínimo — avisa quando sobrar essa quantidade ou menos (1 = avisa só com 1 sobrando)','number']],
  fmt:{qtd_embalagem:r=>`${fmtN(r.qtd_embalagem)} ${r.unidade||''} · ${brl(r.preco_embalagem)}`,
  custo_unit:r=>{if(!num(r.custo_unit))return '<span class="bd warn">Sem preço</span>';const b=baseCusto(r);return `${brl4(b.v)} <small class=mute>/${b.u}</small>`},
@@ -374,18 +374,19 @@ async function editRow(tb,r,pre){
   const q=r?sb.from(tb).update(p).eq('id',r.id).select().single():sb.from(tb).insert(p).select().single();
   const {data,error}=await q;if(error)return fail(error);
   if(L){const o=L[3],x=await sb.from(o.tb).delete().eq(o.fk,data.id);if(x.error)return fail(x.error);
-   const ins=v[L[0]].map(l=>({...l,[o.fk]:data.id}));if(ins.length){const y=await sb.from(o.tb).insert(ins);if(y.error)return fail(y.error)}}
+   const nz=l=>{if(tb!=='produtos')return l;const i=(cache.insumos||[]).find(x=>x.id===l.insumo_id),q=i?convX(l.quantidade,l.unidade||i.unidade,i):null;return i&&q!=null?{...l,quantidade:Math.round(q*1e6)/1e6,unidade:i.unidade}:l};
+   const ins=v[L[0]].map(l=>({...nz(l),[o.fk]:data.id}));if(ins.length){const y=await sb.from(o.tb).insert(ins);if(y.error)return fail(y.error)}}
   return true}})}
 
 /* ===== formulários (drawer) ===== */
 function inp(f,v,lc){const [k,l,t,o]=f,val=v??'';
- if(t==='select')return `<select name="${k}">${o.map(x=>`<option ${x===val?'selected':''}>${x}</option>`).join('')}</select>`;
+ if(t==='select')return `<select name="${k}">${o.map(x=>{const [a,b]=Array.isArray(x)?x:[x,x];return `<option value="${esc(a)}" ${a===val?'selected':''}>${esc(b)}</option>`}).join('')}</select>`;
  if(t==='ref')return `<input name="${k}" data-ref="${o[0]}" list="dl_${o[0]}" autocomplete=off placeholder="${esc(lc?l:'Digite para buscar…')}" value="${esc(val?refName(o,val):'')}">`;
  if(t==='area')return `<textarea name="${k}" rows=3>${esc(val)}</textarea>`;
  if(t==='bool')return `<label class=ck><input type=checkbox name="${k}" ${v==null||v?'checked':''}> ${l}</label>`;
  const ty={money:'number',number:'number',date:'date',color:'color'}[t]||'text';
  return `<input name="${k}" type=${ty} ${ty==='number'?'step=any min=0 inputmode=decimal':''} value="${esc(val)}" ${lc?`placeholder="${l}"`:''}>`}
-const ln=(f,r)=>`<div class=ln>${f[3].cols.map(c=>inp(c,r[c[0]],1)).join('')}<button type=button class=ib data-rm>${ic('x',16)}</button></div>`;
+const ln=(f,r)=>`<div class=ln${r.insumo_id?' data-ex=1':''}>${f[3].cols.map(c=>inp(c,r[c[0]],1)).join('')}<button type=button class=ib data-rm>${ic('x',16)}</button></div>`;
 function fld(f,v){const [k,l,t,o,fl='']=f;
  if(t==='info')return `<div class=cp id="${k}"></div>`;
  if(t==='lines')return `<div class=fl><label>${l}</label><div class=lines data-l="${k}">${(v?.length?v:[{...(o.def||{})}]).map(r=>ln(f,r)).join('')}</div><button type=button class=btn-o data-add="${k}">${ic('plus',16)} Adicionar linha</button></div>`;
@@ -436,6 +437,18 @@ async function recibo(v){
  const linhas=(it||[]).map(i=>`${i.quantidade}x ${esc(i.produto_nome)}<span style="float:right">${brl(i.quantidade*i.preco)}</span><br>`).join('');
  w.document.write(`<div style="font:13px monospace;padding:16px"><h3 style="text-align:center">${esc(CFG.nome_doceria||'Doceria')}</h3><p style="text-align:center">${esc(CFG.telefone||'')}</p><hr>Venda nº ${v.numero} — ${dtt(v.created_at)}<br>${cl?'Cliente: '+esc(cl.nome):''}<hr>${linhas}<hr>Desconto<span style="float:right">${brl(v.desconto)}</span><br><b>Total<span style="float:right">${brl(v.total)}</span></b><br>Pagamento: ${esc(v.forma_pagamento||'')}<p style="text-align:center">Obrigado pela preferência! 🧁</p></div>`);w.document.close();w.print()}
 
+/* ===== equivalência: "1 unidade = quantos g/ml" (pergunta uma vez só) ===== */
+const getEq=()=>{try{return JSON.parse(CFG.equiv||localStorage.getItem('eq')||'{}')}catch{return{}}};
+async function setEq(id,n,u){const E=getEq();E[id]={n,u};CFG.equiv=JSON.stringify(E);try{localStorage.setItem('eq',CFG.equiv)}catch{}const {error}=await sb.from('configuracoes').upsert([{chave:'equiv',valor:CFG.equiv}]);if(error)toast('Equivalência salva só neste aparelho','bad')}
+function convX(q,de,i){const para=i.unidade;if((FAM[de]||'un')===(FAM[para]||'un'))return conv(q,de,para);const e=getEq()[i.id];if(!e)return null;
+ if(FAM[de]==='un'&&FAM[para]===FAM[e.u])return conv(num(q)*e.n,e.u,para);
+ if(FAM[para]==='un'&&FAM[de]===FAM[e.u])return conv(q,de,e.u)/e.n;return null}
+const ficBad=v=>v.ficha.some(l=>{const i=(cache.insumos||[]).find(x=>x.id===l.insumo_id);return i&&convX(l.quantidade,l.unidade||i.unidade,i)==null});
+const uN=u=>u==='un'?'unidade':u;
+const eqBox=(i,u)=>(FAM[u]!=='un'&&FAM[i.unidade]!=='un')?`<div class="note w"><b>${esc(i.nome)}</b> está cadastrado em ${uN(i.unidade)} e você usou ${uN(u)}. Use ${FAM[i.unidade]==='peso'?'g ou kg':'ml ou L'} (ou mude o insumo).</div>`
+ :`<div class="note w"><b>${esc(i.nome)}</b> está em ${uN(i.unidade)} e você usou ${uN(u)}. Informe uma vez só: 1 unidade de ${esc(i.nome)} equivale a<span style="display:flex;gap:6px;margin-top:6px"><input data-eqn="${i.id}" type=number step=any min=0 placeholder="ex.: 395" style="width:90px"><select data-equ="${i.id}" style="width:80px">${['g','kg','ml','L'].map(x=>`<option ${x===(FAM[u]!=='un'?u:i.unidade)?'selected':''}>${x}</option>`).join('')}</select><button type=button class=btn-o data-eqs="${i.id}">Salvar</button></span></div>`;
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-eqs]');if(!b)return;const id=b.dataset.eqs,n=num($(`[data-eqn="${id}"]`).value),u=$(`[data-equ="${id}"]`).value;if(!(n>0))return toast('Informe um número maior que zero','bad');await setEq(id,n,u);toast('Equivalência salva');$('#fm')?.dispatchEvent(new Event('input',{bubbles:true}))});
+
 /* ===== precificação: formulários ao vivo ===== */
 const setHtml=(el,h)=>{if(el._h!==h){el._h=h;el.innerHTML=h}};
 function insLive(fm){
@@ -443,17 +456,17 @@ function insLive(fm){
  const q=num(v.qtd_embalagem),pr=num(v.preco_embalagem),u=v.unidade;
  if(!(q>0))return setHtml(el,'<span class=mute>Informe quanto você comprou e quanto pagou para ver o custo.</span>');
  const cu=pr/q,b=baseCusto({custo_unit:cu,unidade:u});
- setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`+(u==='un'?'<p class=hint>Conte em unidades: 1 lata de leite condensado, 1 caixinha de creme de leite, 50 forminhas, 80 uvas… Nas receitas você usa também em “un” (ex.: 2 un = 2 latas), sem converter para ml ou g.</p>':''))}
-function fixUnits(fm){ /* em cada ingrediente só deixa unidades do mesmo tipo do insumo (peso, volume ou unidade) */
+ setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`+(u==='un'?'<p class=hint>Conte em unidades: 1 lata de leite condensado, 1 caixinha de creme de leite, 50 forminhas, 80 uvas… Na receita você escolhe a unidade que quiser (unidade, g, ml…). Se for diferente da compra, o sistema pergunta a equivalência uma vez só (ex.: 1 lata = 395 g).</p>':''))}
+function fixUnits(fm){ /* ao escolher um insumo, a unidade da linha vira a dele; depois você troca por qualquer uma */
  fm.querySelectorAll('[data-l="ficha"] .ln').forEach(ln=>{
-  const s=ln.querySelector('[name=insumo_id]'),u=ln.querySelector('[name=unidade]'),i=fnd('insumos',s?.value);if(!u||!i)return;
-  const opts=UNF[FAM[i.unidade]||'un'];
-  if([...u.options].map(o=>o.value).join()!==opts.join()){const prev=u.value;u.innerHTML=opts.map(o=>`<option>${o}</option>`).join('');u.value=opts.includes(prev)?prev:opts[0]}})}
+  const s=ln.querySelector('[name=insumo_id]'),u=ln.querySelector('[name=unidade]'),i=fnd('insumos',s?.value);if(!u||!i||u.dataset.ins===i.id)return;
+  if(ln.dataset.ex&&u.dataset.ins===undefined){u.dataset.ins=i.id;return}
+  u.value=i.unidade;u.dataset.ins=i.id})}
 function prodLive(fm){
  fixUnits(fm);
  const v=collect(fm,T.produtos.f.filter(f=>!(f[4]||'').includes('ro'))),I=cache.insumos||[],el=fm.querySelector('#calc');if(!el)return;
- let tot=0;const sem=[];
- for(const l of v.ficha){const i=I.find(x=>x.id===l.insumo_id);if(!i)continue;if(!num(i.custo_unit))sem.push(i.nome);tot+=conv(l.quantidade,l.unidade||i.unidade,i.unidade)*num(i.custo_unit)}
+ let tot=0;const sem=[],mis=[];
+ for(const l of v.ficha){const i=I.find(x=>x.id===l.insumo_id);if(!i)continue;if(!num(i.custo_unit))sem.push(i.nome);const q=convX(l.quantidade,l.unidade||i.unidade,i);if(q==null){mis.push([i,l.unidade||i.unidade]);continue}tot+=q*num(i.custo_unit)}
  const rend=num(v.rendimento)>0?num(v.rendimento):1,ing=tot/rend,ex=num(v.custo_extra),rat=ing+ex>0?rateio():0,cus=ing+ex+rat,m=num(v.margem),t=taxa(),sug=sugeridoDe(cus,m),pr=num(v.preco),real=margemDe(pr,cus);
  setHtml(el,`<div class=cpr><span>Ingredientes (por unidade)</span><b>${brl4(ing)}</b></div><div class=cpr><span>Embalagem, mão de obra e outros</span><b>${brl4(ex)}</b></div>${rat?`<div class=cpr><span>Rateio de custos fixos</span><b>${brl4(rat)}</b></div>`:''}<div class=cpr><span>Custo total por unidade</span><b>${brl4(cus)}</b></div>`
   +(t?`<div class=cpr><span>Taxas sobre a venda</span><b>${fmtN(t)}%</b></div>`:'')
@@ -461,6 +474,7 @@ function prodLive(fm){
   +(sug?`<button type=button class=btn-o data-use="${sug}">Usar o preço sugerido</button> `:'')
   +`<button type=button class=btn-o data-aiq="Sugira ingredientes, quantidades e rendimento para a receita: ">✦ Pedir ajuda à IA</button>`
   +(pr>0&&cus>0&&real!=null?`<div class=cpr style="margin-top:8px"><span>Com o preço de ${brl(pr)}, seu lucro é</span><b style="color:var(--${real<m-0.5?'ba':'ok'})">${Math.round(real)}% · ${brl(pr*(1-t/100)-cus)} por unidade</b></div>`:'')
+  +mis.filter((m,k)=>mis.findIndex(x=>x[0].id===m[0].id)===k).map(([i,u])=>eqBox(i,u)).join('')
   +(v.__bad?.length?`<p class=hint style="color:var(--ba)">Ingrediente não encontrado: ${esc([...new Set(v.__bad)].join(', '))}. Cadastre em Insumos primeiro ou escolha um nome da lista.</p>`:'')
   +(cus<=0?'<p class=hint>Adicione os ingredientes para ver o custo e o preço sugerido.</p>':'')
   +(m+t>=100?'<p class=hint style="color:var(--ba)">Lucro desejado + taxas precisam somar menos de 100%.</p>':'')
