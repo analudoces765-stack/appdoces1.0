@@ -662,5 +662,98 @@ async function cfgView(){
   dl(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}),'backup-doceria-'+today()+'.json')}}
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+</script>
+<script>
+/* patch-analu.js — carregue DEPOIS do <script> principal e apague a última linha "boot();" dele. */
+(()=>{const s=document.createElement('style');s.textContent=`
+.lv-hero{background:linear-gradient(135deg,#fff,#ffe9f0);border:1px solid var(--bd);border-radius:22px;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.lv-hero h2{font:400 34px/1.1 Satisfy,cursive;color:var(--p)}.lv-hero p{color:var(--mu);margin-top:4px}
+.lv-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.lv-chips button{background:#fff;border:1px solid var(--bd);border-radius:99px;padding:7px 13px;font-size:12.5px;color:var(--p)}.lv-chips button:hover{background:var(--ps)}
+.rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.rc{background:#fff;border:1px solid var(--bd);border-radius:20px;overflow:hidden;box-shadow:0 6px 20px #d72c6214;transition:.2s}.rc:hover{transform:translateY(-3px)}
+.rc-h{height:92px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:linear-gradient(135deg,#ffe3ec,#fff1d6)}.rc-h span{font-size:46px}
+.rc-h em{font-style:normal;font-size:11.5px;background:#ffffffcc;padding:3px 10px;border-radius:99px;color:var(--p)}
+.rc-b{padding:14px 16px}.rc-b h3{font:600 17px Fraunces,serif;margin:0}.rc-n{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.rc-n small{display:block;color:var(--mu);font-size:11px}
+.rc-a{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.rc-a .btn{padding:7px 12px}
+.pq{display:flex;gap:8px;align-items:center;margin:10px 0}.pq input{width:90px}
+.nd{font-size:12px;margin:8px 0;color:var(--mu)}.nd div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.nd .no{color:var(--ba);font-weight:600}`;document.head.append(s)})();
+
+MOD.produtos.t='Livro de receitas';MOD.producao={t:'Produção rápida',n:'Produção',i:'chef'};
+AIH.produtos=['Me sugira 3 receitas lucrativas para vender essa semana','Quais receitas devo reajustar o preço?','Como reduzir o custo do brigadeiro sem perder qualidade?'];
+AIH.producao=['Como organizar a produção do dia para perder menos tempo?'];
+
+/* ===== 1 · zero cache: recalcula custos a partir dos insumos atuais e grava no banco ===== */
+let xBusy=false;
+async function xSync(){
+ if(xBusy||!canW('produtos')&&!canW('insumos'))return;xBusy=true;
+ try{
+  const [I,P,F]=await Promise.all([all('insumos'),all('produtos'),all('ficha_tecnica')]);
+  for(const i of I){if(num(i.qtd_embalagem)>0&&num(i.preco_embalagem)>0){const c=num(i.preco_embalagem)/num(i.qtd_embalagem);
+   if(Math.abs(c-num(i.custo_unit))>1e-9){const {error}=await sb.from('insumos').update({custo_unit:c}).eq('id',i.id);if(!error)i.custo_unit=c}}}
+  const Im=new Map(I.map(i=>[i.id,i]));
+  for(const p of P){
+   const tot=F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=Im.get(f.insumo_id);if(!i)return a;const q=convX(f.quantidade,f.unidade||i.unidade,i);return q==null?a:a+q*num(i.custo_unit)},0);
+   const c=Math.round(tot/(num(p.rendimento)||1)*1e6)/1e6;
+   if(Math.abs(c-num(p.custo))>1e-6)await sb.from('produtos').update({custo:c}).eq('id',p.id)}
+ }catch(e){}finally{xBusy=false}}
+
+function xLive(){
+ if(window.__rt)return;let t;
+ const fire=()=>{clearTimeout(t);t=setTimeout(async()=>{if(!me)return;cache={};
+  if(document.body.classList.contains('dr-open')){cache.insumos=await all('insumos');$('#fm')?.dispatchEvent(new Event('input',{bubbles:true}));return}
+  if(document.activeElement?.closest?.('#main')&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
+  go(route)},500)};
+ window.__rt=sb.channel('analu-live').on('postgres_changes',{event:'*',schema:'public'},fire).subscribe();
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)fire()})}
+const xStart=start;start=async()=>{await xStart();xLive()};
+
+async function go(r){
+ if(!me)return;const ok=ALLOW[me.nivel]||[];if(!MOD[r]||!ok.includes(r))r='dashboard';
+ route=r;aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
+ document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
+ $('#ttl').textContent=MOD[r].t;$('#main').onclick=$('#main').onchange=$('#main').oninput=null;$('#main').innerHTML='<div class=sk></div>';
+ try{if(['dashboard','produtos','precos','producao','lista','estoque'].includes(r))await xSync();
+  await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,lista:listaView,produtos:xLivro,producao:xProd}[r]||mod)(r)}
+ catch(e){$('#main').innerHTML=errBox(e)}
+ lowCheck()}
+
+/* ===== 3 · Livro de receitas ===== */
+const xEmo=p=>{const c=nm((p.categoria||'')+' '+p.nome);return/brigad/.test(c)?'🍫':/bolo/.test(c)?'🍰':/torta|pave/.test(c)?'🥧':/cookie|biscoit/.test(c)?'🍪':/pao/.test(c)?'🥐':/trufa|bombom/.test(c)?'🍬':/sorvete|gelad/.test(c)?'🍨':/cupcake/.test(c)?'🧁':'🍮'};
+async function xLivro(){
+ const [P0,F]=await Promise.all([all('produtos'),all('ficha_tecnica')]);cache.insumos=await all('insumos');
+ const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome)),w=canW('produtos'),ab=P.filter(abaixo);
+ $('#main').innerHTML=`<section class=lv-hero><div><h2>Vamos preparar o que hoje? 👩‍🍳🧁</h2><p>Seu livro de receitas — custos sempre atualizados com o preço dos insumos.</p></div><div class=tools><div class=sr>${ic('search',16)}<input id=q placeholder="Buscar receita…"></div>${w?`<button class=btn id=nr>${ic('plus',16)} Nova receita</button>`:''}</div></section>
+ <div class=lv-chips><button data-aiq="Me sugira 3 receitas lucrativas para vender essa semana, com ingredientes e rendimento.">✦ Sugerir receitas</button><button data-aiq="Analise minhas receitas e preços cadastrados. Quais estão com lucro baixo e o que devo reajustar?">✦ Reajustar preços${ab.length?` (${ab.length} abaixo da meta)`:''}</button><button data-aiq="Me dê dicas para aumentar o rendimento das minhas receitas sem perder qualidade.">✦ Dicas da Analu</button></div>
+ ${P.length?`<div class=rg>${P.map((p,i)=>{const c=cT(p),m=margemReal(p);return `<article class=rc data-n="${esc(nm(p.nome))}"><div class=rc-h><span>${xEmo(p)}</span><em>${esc(p.categoria||'Receita')}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un · ${F.filter(f=>f.produto_id===p.id).length} ingredientes</small>
+ <div class=rc-n><div><small>Custo/un</small><b>${c>0?brl(c):'—'}</b></div><div><small>Preço</small><b>${num(p.preco)?brl(p.preco):'—'}</b></div><div><small>Lucro</small>${c>0&&m!=null?`<span class="bd ${abaixo(p)?'warn':'ok'}">${Math.round(m)}%</span>`:'—'}</div></div>
+ <div class=rc-a>${canW('ordens_producao')?`<button class=btn data-pr>${ic('chef',15)} Produzir</button>`:''}${w?`<button class=ib title=Editar data-ed="${i}">${ic('edit')}</button><button class=ib title=Excluir data-dl="${i}">${ic('trash')}</button>`:''}<button class=ib title="Pedir ajuda à IA" data-aiq="Como posso melhorar a receita e o preço de ${esc(p.nome)}?">✦</button></div></div></article>`}).join('')}</div>`:`<div class="card empty">${ic('bag',40)}<p>Seu livro está vazio. Crie a primeira receita ou peça sugestões à Analu IA.</p></div>`}`;
+ $('#q').oninput=e=>{const v=nm(e.target.value);document.querySelectorAll('.rc').forEach(c=>c.hidden=!c.dataset.n.includes(v))};
+ $('#nr')?.addEventListener('click',()=>editRow('produtos'));
+ $('#main').onclick=e=>{const a=e.target.closest('[data-ed]'),d=e.target.closest('[data-dl]');
+  if(e.target.closest('[data-pr]'))location.hash='producao';if(a)editRow('produtos',P[+a.dataset.ed]);if(d)delRow('produtos',P[+d.dataset.dl])}}
+
+/* ===== 5 · Produção rápida (1 clique, via RPC transacional) ===== */
+let xPD={};
+const xNd=(p,q)=>{const rend=num(p.rendimento)||1,a=xPD.F.filter(f=>f.produto_id===p.id).map(f=>{const i=xPD.I.get(f.insumo_id),c=i&&convX(f.quantidade,f.unidade||i.unidade,i);return c==null||!i?null:{i,n:c*q/rend}}).filter(Boolean);
+ return a.length?a.map(({i,n})=>`<div class="${n>num(i.quantidade)+1e-9?'no':''}"><span>${esc(i.nome)}</span><span>${fmtN(Math.round(n*1000)/1000)} ${i.unidade} <small>(tem ${fmtN(i.quantidade)})</small></span></div>`).join(''):'<div>Sem ingredientes cadastrados.</div>'};
+async function xProd(){
+ const [P0,I,F]=await Promise.all([all('produtos'),all('insumos'),all('ficha_tecnica')]);cache.insumos=I;
+ xPD={F,I:new Map(I.map(i=>[i.id,i])),P:P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome))};
+ $('#main').innerHTML=`<section class=lv-hero><div><h2>Produção rápida 🧁</h2><p>Digite quantas unidades vai fazer e clique. Os ingredientes saem do estoque sozinhos.</p></div><button class=btn-o data-aiq="Como organizar a produção de hoje para render mais?">✦ Pedir dica à IA</button></section>
+ ${xPD.P.length?`<div class=rg>${xPD.P.map((p,i)=>`<article class=rc><div class=rc-h><span>${xEmo(p)}</span><em>em estoque: ${fmtN(p.estoque)}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>receita rende ${fmtN(p.rendimento)} un</small>
+ <div class=pq><input type=number min=1 step=any inputmode=decimal data-pq="${i}" value="${num(p.rendimento)||1}"><span class=mute>unidades</span></div><div class=nd id="nd${i}">${xNd(p,num(p.rendimento)||1)}</div>
+ <button class="btn w100" data-go="${i}">${ic('chef',16)} Produzir e baixar estoque</button></div></article>`).join('')}</div>`:`<div class="card empty">${ic('chef',40)}<p>Cadastre receitas no Livro de receitas para produzir aqui.</p></div>`}
+ <div class=ph style="margin-top:24px"><div><h2>Últimas movimentações</h2></div></div><div id=hist></div>`;
+ $('#main').oninput=e=>{const x=e.target.closest('[data-pq]');if(x)$('#nd'+x.dataset.pq).innerHTML=xNd(xPD.P[+x.dataset.pq],num(x.value))};
+ $('#main').onclick=e=>{const b=e.target.closest('[data-go]');if(!b)return;const p=xPD.P[+b.dataset.go];xRun(p,num($(`[data-pq="${b.dataset.go}"]`).value),b)};
+ list('movimentacoes',$('#hist'))}
+async function xRun(p,q,btn,force=false){
+ if(!(q>0))return toast('Informe quantas unidades vai produzir','bad');btn.disabled=true;
+ const {error}=await sb.rpc('produzir',{p_produto:p.id,p_qtd:q,p_forcar:force});btn.disabled=false;
+ if(error){if(/insuficiente/i.test(error.message))return confirm(error.message+'\n\nProduzir mesmo assim? O estoque ficará negativo.')?xRun(p,q,btn,true):0;
+  if(['42883','PGRST202'].includes(error.code))return toast('Falta rodar o produzir.sql no Supabase.','bad');return fail(error)}
+ toast(`${fmtN(q)} un de ${p.nome} produzidas — estoque baixado`);go('producao')}
+
 boot();
+
 </script></body></html>
