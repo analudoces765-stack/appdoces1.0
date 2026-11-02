@@ -28,7 +28,7 @@ svg.i{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke
 .ct{flex:1;margin-left:248px;min-width:0}
 .top{display:flex;align-items:center;gap:12px;padding:16px 28px;position:sticky;top:0;background:#f8f4f2e8;backdrop-filter:blur(8px);z-index:10;border-bottom:1px solid var(--bd)}
 .top h1{font:600 22px Fraunces,serif;flex:1}.date{color:var(--mu)}.date::first-letter{text-transform:uppercase}
-main{padding:24px 28px 60px;max-width:1280px}
+main{padding:24px 28px 90px;max-width:1280px}
 .ib{border:0;background:none;padding:7px;border-radius:8px;color:var(--mu);display:inline-grid;place-items:center}.ib:hover{background:var(--ps);color:var(--p)}.ib.mb{display:none}
 .btn,.btn-o{display:inline-flex;align-items:center;gap:6px;padding:9px 15px;border-radius:10px;border:1px solid var(--p);font-weight:500;transition:.15s}
 .btn{background:var(--p);color:#fff}.btn:hover{filter:brightness(.92)}.btn:disabled{opacity:.5}
@@ -38,8 +38,8 @@ main{padding:24px 28px 60px;max-width:1280px}
 .ph h2{font:600 20px Fraunces,serif}.ph p,.mute{color:var(--mu);font-size:13px}
 .tools{display:flex;gap:8px;flex-wrap:wrap}
 .sr{display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--bd);border-radius:10px;padding:0 12px;color:var(--mu)}.sr #q{border:0;outline:0;box-shadow:none;padding:9px 0;width:170px;background:none;border-radius:0}.sr #q:focus{box-shadow:none}
-.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--bd)}
-.tabs button{background:none;border:0;padding:10px 16px;color:var(--mu);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500}.tabs .on{color:var(--p);border-color:var(--p)}
+.tabs{display:flex;gap:4px;margin-bottom:18px;border-bottom:1px solid var(--bd);overflow-x:auto}
+.tabs button{background:none;border:0;padding:10px 16px;color:var(--mu);border-bottom:2px solid transparent;margin-bottom:-1px;font-weight:500;white-space:nowrap}.tabs .on{color:var(--p);border-color:var(--p)}
 .tw{overflow-x:auto}table{border-collapse:collapse;width:100%}
 th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);text-align:left;padding:12px 14px;background:#fcf9f8;border-bottom:1px solid var(--bd);white-space:nowrap}
 td{padding:12px 14px;border-bottom:1px solid #f4ece9;white-space:nowrap}tr:last-child td{border:0}tbody tr:hover{background:#fdfaf9}
@@ -65,7 +65,7 @@ body.dr-open #dr{transform:none}body.dr-open #ov{opacity:1;pointer-events:auto}
 input:not([type=checkbox]):not([type=color]),select,textarea{width:100%;padding:10px 12px;border:1px solid var(--bd);border-radius:10px;background:#fff;outline:0;transition:.15s}
 input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--ps)}
 .ck{display:flex;gap:8px;align-items:center;margin-top:4px}input[type=color]{width:60px;height:38px;border:1px solid var(--bd);border-radius:8px;padding:2px;background:#fff}
-.ln{display:flex;gap:6px;margin-bottom:8px}.ln select{flex:2}.ln input{flex:1;min-width:70px}
+.ln{display:flex;gap:6px;margin-bottom:8px}.ln select{flex:2}.ln input{flex:1;min-width:70px}.ln input[data-ref]{flex:3}
 #tt{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;display:grid;gap:8px}
 .toast{padding:11px 18px;border-radius:12px;color:#fff;background:var(--ok);box-shadow:0 8px 24px #0003;animation:up .25s}.toast.bad{background:var(--ba)}@keyframes up{from{transform:translateY(12px);opacity:0}}
 .err{color:var(--ba);font-size:13px;min-height:18px;margin-top:8px}
@@ -105,27 +105,23 @@ input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 3
 .step .n{width:34px;height:34px;border-radius:50%;background:var(--p);color:#fff;display:grid;place-items:center;font:600 15px Fraunces,serif;flex:none}
 .step.done .n{background:var(--ok)}.step b{display:block}.step small{color:var(--mu)}
 .sim{display:grid;grid-template-columns:2fr 1fr 1fr;gap:12px}@media(max-width:700px){.sim{grid-template-columns:1fr}}
-
-.ai-recipe-search{background:#fff;border:1px solid var(--bd);border-radius:14px;padding:13px 15px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:12px}.ai-recipe-search b{display:block;font-size:13px}.ai-recipe-search small{display:block;color:var(--mu);font-size:11px;margin-top:2px}.ai-recipe-entry{display:flex;gap:7px;flex:1;max-width:520px}.ai-recipe-entry input{min-width:0;flex:1;border:1px solid var(--bd);border-radius:9px;padding:9px 11px}.ai-recipe-entry .btn{white-space:nowrap}@media(max-width:650px){.ai-recipe-search{align-items:stretch;flex-direction:column}.ai-recipe-entry{max-width:none}}
-/* ===== Analu IA ===== */
-.ai-wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:14px;min-height:calc(100vh - 150px)}
-.ai-hero{background:linear-gradient(120deg,#4a2638,#8b4a6f);color:#fff;border-radius:18px;padding:20px 22px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px #5b314018}
-.ai-mark{width:48px;height:48px;border-radius:15px;background:#ffffff20;display:grid;place-items:center;font-size:25px;flex:none}
-.ai-hero h2{font:600 21px Fraunces,Georgia,serif;margin:0 0 3px}.ai-hero p{font-size:12px;opacity:.85;margin:0}
-.ai-badge{margin-left:auto;border:1px solid #ffffff55;border-radius:99px;padding:5px 9px;font-size:10px;white-space:nowrap}
-.ai-chat{background:#fff;border:1px solid var(--bd);border-radius:16px;display:flex;flex-direction:column;min-height:420px;flex:1;overflow:hidden}
-.ai-messages{padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;flex:1;max-height:calc(100vh - 390px);min-height:300px}
-.ai-msg{max-width:min(84%,700px);padding:12px 14px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:13px}
+.note{background:#fff;border:1px dashed var(--bd);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:#5b4a46}.note.w{background:#fff8ec;border-color:#f3d9a4}.note a{color:var(--p)}
+input.pi{padding:7px 9px}
+/* ===== Analu IA flutuante (todas as telas) ===== */
+.ai-msg{max-width:92%;padding:10px 13px;border-radius:14px;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:13px}
 .ai-msg.user{align-self:flex-end;background:var(--p);color:#fff;border-bottom-right-radius:4px}
 .ai-msg.assistant{align-self:flex-start;background:#f8f3f5;color:var(--ink);border:1px solid #f0e5e9;border-bottom-left-radius:4px}
-.ai-msg a{color:inherit;text-decoration:underline}.ai-msg.assistant a{color:#8b4a6f}
-.ai-composer{border-top:1px solid var(--bd);padding:12px;display:flex;gap:9px;align-items:flex-end;background:#fff}
-.ai-composer textarea{flex:1;resize:vertical;min-height:48px;max-height:130px;border:1px solid var(--bd);border-radius:12px;padding:12px;outline:none;background:#fff}
-.ai-composer textarea:focus{border-color:var(--p)}.ai-send{border:0;border-radius:12px;background:var(--p);color:#fff;padding:0 17px;height:48px;font-weight:600}.ai-send:disabled{opacity:.5;cursor:wait}
-.ai-hints{display:flex;flex-wrap:wrap;gap:8px}.ai-hints button{background:#fff;border:1px solid var(--bd);border-radius:99px;padding:7px 11px;color:var(--mu);font-size:11px}.ai-note{font-size:11px;color:var(--mu);text-align:center}
-.ai-empty{text-align:center;margin:auto;max-width:490px;padding:20px;color:var(--mu)}.ai-empty strong{display:block;color:var(--ink);font:600 19px Fraunces,Georgia,serif;margin:8px 0}.ai-typing{color:var(--mu);font-size:12px;padding:0 18px 12px}
-@media(max-width:600px){.ai-hero{padding:16px}.ai-badge{display:none}.ai-messages{max-height:calc(100vh - 370px);padding:12px}.ai-msg{max-width:94%}.ai-chat{min-height:420px}.ai-wrap{min-height:calc(100vh - 125px)}}
-
+.ai-msg a{color:inherit;text-decoration:underline}
+.ai-empty{text-align:center;margin:auto;padding:16px;color:var(--mu);font-size:13px}.ai-empty strong{display:block;color:var(--ink);font:600 17px Fraunces,Georgia,serif;margin:6px 0}
+#aiB{position:fixed;right:18px;bottom:18px;z-index:60;border:0;border-radius:99px;background:var(--p);color:#fff;padding:12px 18px;font-weight:600;box-shadow:0 8px 24px #0004}
+#aiP{position:fixed;right:18px;bottom:76px;width:min(390px,calc(100vw - 24px));height:min(560px,calc(100vh - 100px));background:#fff;border:1px solid var(--bd);border-radius:16px;box-shadow:0 16px 48px #0003;z-index:60;display:flex;flex-direction:column;overflow:hidden}
+#aiP[hidden]{display:none}
+.aih{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:var(--p);color:#fff}.aih .ib{color:#fff}.aih .ib:hover{background:#ffffff30;color:#fff}
+#aiM{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:10px}
+#aiQ{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 8px}#aiQ button{background:#fff;border:1px solid var(--bd);border-radius:99px;padding:6px 10px;font-size:11.5px;color:var(--mu)}#aiQ button:hover{border-color:var(--p);color:var(--p)}
+#aiF{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);align-items:flex-end}#aiF textarea{flex:1;resize:none}
+body.dr-open #aiB{display:none}
+@media(min-width:1000px){body.dr-open #aiP{right:498px}}
 </style></head><body>
 <div id="root"></div><div id="ov"></div><aside id="dr"></aside><div id="tt"></div>
 <script>
@@ -182,29 +178,35 @@ let sb,me,CFG={},cache={},route='dashboard';const tabSel={};
 const all=t=>sb.from(t).select('*').then(r=>r.data||[]);
 const canW=tb=>{const n=me.nivel;return n==='Admin'||(n==='Gerente'&&!['perfis','configuracoes'].includes(tb))||(n==='Atendente'&&['vendas','venda_itens','clientes','encomendas'].includes(tb))||(n==='Produção'&&['ordens_producao','insumos','movimentacoes'].includes(tb))};
 const MOD={dashboard:{t:'Início',i:'home'},vendas:{t:'Vendas',i:'cart'},encomendas:{t:'Encomendas',i:'cake'},clientes:{t:'Clientes',i:'users'},
-estoque:{t:'Insumos e estoque',n:'1 · Insumos',i:'box',tabs:['insumos','movimentacoes']},produtos:{t:'Receitas',n:'2 · Receitas',i:'bag'},precos:{t:'Preço de venda',n:'3 · Preço de venda',i:'tag'},
-simulador:{t:'Simulador',i:'calc'},historico:{t:'Histórico de preços',i:'trend',tabs:['historico_precos']},
+estoque:{t:'Insumos e estoque',n:'1 · Insumos',i:'box',tabs:['insumos','movimentacoes']},produtos:{t:'Receitas',n:'2 · Receitas',i:'bag'},precos:{t:'Precificação inteligente',n:'3 · Precificação',i:'tag'},
 producao:{t:'Produção',i:'chef',tabs:['ordens_producao']},lista:{t:'Lista de compras',i:'list'},compras:{t:'Compras e fornecedores',n:'Compras',i:'truck',tabs:['compras','fornecedores']},
-financeiro:{t:'Financeiro',i:'wallet'},relatorios:{t:'Relatórios',i:'chart'},usuarios:{t:'Usuários',i:'shield',tabs:['perfis','atividades']},config:{t:'Configurações',i:'gear'},analuia:{t:'Analu IA',n:'Analu IA',i:'sparkles'}};
-const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos','simulador','historico']],['Vendas',['vendas','encomendas','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']],['Assistente',['analuia']]];
-const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config','analuia'].includes(k)),Atendente:['dashboard','vendas','encomendas','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
-/* regras de preço: lucro é % do PREÇO DE VENDA (30% de lucro = de cada R$100 vendidos, R$30 sobram). Taxas (cartão/imposto) saem do preço também. */
-const taxa=()=>num(CFG.taxa_pct);
-const cT=p=>num(p.custo)+num(p.custo_extra);                       // custo total de 1 unidade
+financeiro:{t:'Financeiro',i:'wallet'},relatorios:{t:'Relatórios',i:'chart'},usuarios:{t:'Usuários',i:'shield',tabs:['perfis','atividades']},config:{t:'Configurações',i:'gear'}};
+const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos']],['Vendas',['vendas','encomendas','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']]];
+const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config'].includes(k)),Atendente:['dashboard','vendas','encomendas','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
+/* regras de preço: lucro é % do PREÇO DE VENDA (30% de lucro = de cada R$100 vendidos, R$30 sobram). Taxas (cartão/imposto) saem do preço também.
+   Preço = custo ÷ (1 − lucro% − taxas%). O custo inclui o rateio dos custos fixos (Configurações), se informado. */
+const taxa=()=>num(CFG.taxa_pct),rateio=()=>num(CFG.producao_mes)>0?num(CFG.custo_fixo_mes)/num(CFG.producao_mes):0;
+const cT=p=>{const b=num(p.custo)+num(p.custo_extra);return b>0?b+rateio():0};   // custo total de 1 unidade
 const sugeridoDe=(cus,m)=>{const d=1-(num(m)+taxa())/100;return d>0&&cus>0?Math.ceil(cus/d*100)/100:null};
 const sugerido=p=>sugeridoDe(cT(p),p.margem);
 const margemDe=(pr,cus)=>num(pr)>0?(num(pr)*(1-taxa()/100)-cus)/num(pr)*100:null;
 const margemReal=p=>margemDe(p.preco,cT(p));
 const abaixo=p=>{const m=margemReal(p);return m!=null&&cT(p)>0&&m<num(p.margem)-0.5};
 const custoIng=(p,F,I2,adj=()=>1)=>F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=I2.get(f.insumo_id);return i?a+conv(f.quantidade,f.unidade||i.unidade,i.unidade)*num(i.custo_unit)*adj(i):a},0)/(num(p.rendimento)||1);
-const FP=['Pix','Dinheiro','Débito','Crédito'],optLabel=(t,x,l)=>t==='produtos'?`${x.nome} — ${brl(x.preco)}`:t==='insumos'?`${x.nome} (${x.unidade})`:x[l];
+const FP=['Pix','Dinheiro','Débito','Crédito'];
+
+/* ===== digitar em vez de selecionar: campos "ref" viram texto com sugestões ===== */
+const nm=s=>String(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+const fnd=(t,s)=>nm(s)?(cache[t]||[]).find(x=>nm(x.nome)===nm(s)):null;
+function rid(t,s,o){const x=fnd(t,s);if(!x&&nm(s))(o.__bad=o.__bad||[]).push(String(s).trim());return x?x.id:null}
+const dls=()=>Object.keys(cache).filter(t=>Array.isArray(cache[t])).map(t=>`<datalist id="dl_${t}">${cache[t].filter(x=>x.ativo!==false&&x.nome).map(x=>`<option value="${esc(x.nome)}">`).join('')}</datalist>`).join('');
 
 /* ===== definição dos módulos ===== */
 const T={
 clientes:{t:'Clientes',s:'Cadastro, preferências e histórico de compras',one:'cliente',f:[['nome','Nome','text',,'req'],['telefone','Telefone','text'],['endereco','Endereço','text'],['preferencias','Preferências','area'],['observacoes','Observações','area']],acts:[['clock','Histórico de compras',histCli]]},
-produtos:{t:'Receitas',s:'Escolha os ingredientes e a quantidade — o custo aparece na hora',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
+produtos:{t:'Receitas',s:'Digite os ingredientes e a quantidade — o custo aparece na hora',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
  f:[['nome','Nome da receita / produto','text',,'req'],['categoria','Categoria','text'],['rendimento','Rende quantas unidades?','number',,'req'],
- ['ficha','Ingredientes — quantidade usada na receita inteira','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'g'},cols:[['insumo_id','Insumo','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',['g','kg','ml','L','un']]]},'nolist'],
+ ['ficha','Ingredientes — digite o nome (cadastrado em Insumos) e a quantidade usada na receita inteira','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'g'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',['g','kg','ml','L','un']]]},'nolist'],
  ['custo_extra','Embalagem, mão de obra e outros (R$ por unidade)','money',,'nolist'],['margem','Lucro que você quer (% do preço de venda)','number',,'nolist'],['calc','','info',,'nolist'],
  ['custo','Custo por unidade','money',,'ro'],['preco','Preço de venda (R$)','money',,'req'],['estoque','Em estoque','number',,'ro'],['ativo','Ativo','bool']],
  fmt:{custo:r=>cT(r)>0?brl(cT(r)):'<span class="bd warn">Sem custo</span>',rendimento:r=>fmtN(r.rendimento)+' un'},
@@ -244,48 +246,53 @@ atividades:{t:'Histórico de atividades',s:'Registro automático de quem fez o q
 };
 const kpi=(l,i,v,sub='')=>`<div class="card kpi"><div class=ico>${ic(i,20)}</div><div><small>${l}</small><b>${v}</b>${sub}</div></div>`;
 
-/* ===== boot / login ===== */
-
-/* ===== Analu IA — assistente profissional de confeitaria ===== */
-let aiHistory=[];let aiBusy=false;let aiInitialQuestion='';
+/* ===== Analu IA — assistente flutuante, disponível em todas as telas ===== */
+let aiHistory=[],aiBusy=false;
 const AI_STORAGE=()=>`analu_ia_chat_${me?.id||'visitante'}`;
+const AIH={produtos:['Sugira ingredientes e quantidades para a receita: ','Como aumentar o rendimento sem perder qualidade?'],precos:['Quais receitas estão com lucro baixo e o que devo ajustar?','Como definir o preço de um produto novo?'],estoque:['Como calcular o custo por grama de um insumo?','Qual estoque mínimo devo manter?'],producao:['Como organizar a produção da semana?'],vendas:['Como fazer promoção sem perder lucro?'],_:['Como posso aumentar meu lucro?','Me ajude a calcular o custo de uma receita']};
 function aiFormat(text){
  let s=esc(text||'');
  s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
- s=s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
- return s;
+ return s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
 }
-function aiBubble(role,content){return `<div class="ai-msg ${role}">${aiFormat(content)}</div>`}
-function aiRender(){
- const box=$('#aiMessages');if(!box)return;
- box.innerHTML=aiHistory.length?aiHistory.map(m=>aiBubble(m.role==='user'?'user':'assistant',m.content)).join(''):`<div class="ai-empty"><div style="font-size:34px">👩‍🍳</div><strong>Olá! Eu sou a Analu IA.</strong><p>Sou sua parceira de confeitaria: posso ensinar técnicas, desenvolver receitas, resolver problemas de preparo e ajudar a calcular custos usando os dados cadastrados no Doces da Analu.</p></div>`;
- box.scrollTop=box.scrollHeight;
-}
-async function analuIA(){
- try{const saved=JSON.parse(localStorage.getItem(AI_STORAGE())||'[]');aiHistory=Array.isArray(saved)?saved.slice(-30):[]}catch{aiHistory=[]}
- $('#main').innerHTML=`<section class="ai-wrap">
-  <div class="ai-hero"><div class="ai-mark">✦</div><div><h2>Analu IA</h2><p>Especialista em confeitaria, receitas e gestão de custos</p></div><span class="ai-badge">CONFEITARIA PROFISSIONAL</span></div>
-  <div class="ai-hints"><button data-ai="Me ensine uma receita profissional de brigadeiro gourmet, com técnica e pontos corretos.">🍫 Receita profissional</button><button data-ai="Como faço a temperagem correta do chocolate? Explique passo a passo.">🌡️ Temperagem</button><button data-ai="Me ajude a calcular o custo de uma receita usando meus insumos cadastrados.">🧮 Calcular custos</button><button data-ai="Como aumentar o rendimento de uma receita sem perder qualidade?">📈 Aumentar rendimento</button></div>
-  <div class="ai-chat"><div class="ai-messages" id="aiMessages"></div><div class="ai-typing" id="aiTyping" hidden>A Analu IA está pensando...</div><form class="ai-composer" id="aiForm"><textarea id="aiInput" rows="2" placeholder="Pergunte qualquer coisa sobre confeitaria..." required></textarea><button class="ai-send" id="aiSend" type="submit">Enviar ↑</button></form></div>
-  <p class="ai-note">As respostas podem usar pesquisa na internet. Custos e preços devem ser conferidos com os cadastros e notas de compra.</p>
- </section>`;
- aiRender();if(aiInitialQuestion){$('#aiInput').value=aiInitialQuestion;aiInitialQuestion='';}
- $('#aiForm').onsubmit=async e=>{e.preventDefault();await aiSend()};
- $('#aiInput').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#aiForm').requestSubmit()}});
- document.querySelectorAll('[data-ai]').forEach(b=>b.onclick=()=>{$('#aiInput').value=b.dataset.ai;$('#aiInput').focus();});
-}
+const aiBubble=(role,c)=>`<div class="ai-msg ${role}">${aiFormat(c)}</div>`;
+function aiRender(){const b=$('#aiM');if(!b)return;
+ b.innerHTML=aiHistory.length?aiHistory.map(m=>aiBubble(m.role==='user'?'user':'assistant',m.content)).join(''):'<div class=ai-empty><div style="font-size:30px">👩‍🍳</div><strong>Olá! Eu sou a Analu IA.</strong><p>Posso ajudar com receitas, custos, preços, estoque e produção — em qualquer tela do sistema.</p></div>';
+ b.scrollTop=b.scrollHeight}
+function aiHints(){const q=$('#aiQ');if(!q)return;
+ q.innerHTML=(AIH[route]||AIH._).map(h=>`<button type=button data-q="${esc(h)}">${esc(h.replace(/:\s*$/,'…'))}</button>`).join('');
+ q.querySelectorAll('button').forEach(b=>b.onclick=()=>aiOpen(b.dataset.q))}
+function aiOpen(q){const p=$('#aiP');if(!p)return;p.hidden=false;aiRender();const i=$('#aiI');if(q)i.value=q;i.focus();if(q&&!/:\s*$/.test(q))aiSend()}
+function aiDock(){if($('#aiD'))return;
+ try{const s=JSON.parse(localStorage.getItem(AI_STORAGE())||'[]');aiHistory=Array.isArray(s)?s.slice(-30):[]}catch{aiHistory=[]}
+ const d=document.createElement('div');d.id='aiD';
+ d.innerHTML=`<button id=aiB>✦ Analu IA</button><div id=aiP hidden><div class=aih><b>✦ Analu IA</b><button class=ib id=aiX title=Fechar>${ic('x')}</button></div><div id=aiM></div><div id=aiQ></div><form id=aiF><textarea id=aiI rows=2 placeholder="Pergunte sobre receitas, custos, preços…" required></textarea><button class=btn id=aiSend>Enviar</button></form></div>`;
+ document.body.append(d);
+ $('#aiB').onclick=()=>$('#aiP').hidden?aiOpen():($('#aiP').hidden=true);$('#aiX').onclick=()=>$('#aiP').hidden=true;
+ $('#aiF').onsubmit=e=>{e.preventDefault();aiSend()};
+ $('#aiI').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#aiF').requestSubmit()}};
+ aiHints();aiRender()}
+/* a IA recebe um resumo dos seus insumos e receitas para responder com os SEUS números */
+async function aiCtx(){const [I,P]=await Promise.all([all('insumos'),all('produtos')]);
+ return `Tela: ${MOD[route]?.t||route}. Taxas sobre vendas: ${taxa()}%. Rateio de custos fixos por unidade: ${brl4(rateio())}. Insumos: ${I.slice(0,60).map(i=>{const b=baseCusto(i);return `${i.nome} ${brl4(b.v)}/${b.u}`}).join('; ')||'nenhum'}. Receitas: ${P.slice(0,40).map(p=>`${p.nome} (rende ${p.rendimento}, custo ${brl(cT(p))}, preço ${brl(p.preco)}, lucro desejado ${p.margem}%)`).join('; ')||'nenhuma'}`}
 async function aiSend(){
- const input=$('#aiInput'),send=$('#aiSend'),typing=$('#aiTyping');const question=input?.value.trim();if(!question||aiBusy)return;
- aiBusy=true;aiHistory.push({role:'user',content:question});aiHistory=aiHistory.slice(-30);localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory));input.value='';send.disabled=true;typing.hidden=false;aiRender();
+ const inp=$('#aiI'),btn=$('#aiSend'),q=inp.value.trim();if(!q||aiBusy)return;
+ aiBusy=true;aiHistory=[...aiHistory,{role:'user',content:q}].slice(-30);inp.value='';btn.disabled=true;aiRender();
+ $('#aiM').insertAdjacentHTML('beforeend','<div class="ai-msg assistant">Pensando…</div>');$('#aiM').scrollTop=1e9;
  try{
-  const {data:{session},error:se}=await sb.auth.getSession();if(se||!session)throw new Error('Sua sessão expirou. Entre novamente no sistema.');
-  const res=await fetch(`${SUPABASE_URL}/functions/v1/ANALU-IA`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},body:JSON.stringify({messages:aiHistory.slice(-12)})});
-  const payload=await res.json().catch(()=>({}));if(!res.ok)throw new Error(payload.error||payload.message||`Erro ${res.status} ao consultar a Analu IA.`);
-  aiHistory.push({role:'assistant',content:payload.answer||'Não consegui gerar uma resposta agora.'});aiHistory=aiHistory.slice(-30);localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory));
- }catch(err){aiHistory.push({role:'assistant',content:`Não consegui responder agora. ${err.message}\n\nConfira se a função analu-ia foi publicada no Supabase e se a chave GEMINI_API_KEY foi configurada.`});}
- finally{aiBusy=false;typing.hidden=true;send.disabled=false;aiRender();input.focus();}
+  const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Sua sessão expirou. Entre novamente no sistema.');
+  let ctx='';try{ctx=await aiCtx()}catch{}
+  const msgs=aiHistory.slice(-12).map(m=>({...m}));msgs[msgs.length-1].content=(ctx?`[Dados do sistema da doceria, use para responder: ${ctx}]\n\n`:'')+q;
+  const res=await fetch(`${SUPABASE_URL}/functions/v1/ANALU-IA`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},body:JSON.stringify({messages:msgs,tela:route})});
+  const p=await res.json().catch(()=>({}));if(!res.ok)throw new Error(p.error||p.message||`Erro ${res.status} ao consultar a Analu IA.`);
+  aiHistory.push({role:'assistant',content:p.answer||'Não consegui gerar uma resposta agora.'});
+ }catch(err){aiHistory.push({role:'assistant',content:`Não consegui responder agora. ${err.message}\n\nConfira se a função analu-ia está publicada no Supabase e se a chave GEMINI_API_KEY foi configurada.`})}
+ finally{aiHistory=aiHistory.slice(-30);try{localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory))}catch{}aiBusy=false;btn.disabled=false;aiRender();inp.focus()}
 }
+/* qualquer botão com data-aiq abre a IA já com a pergunta (se terminar com ": ", completa com o nome da receita do formulário) */
+document.addEventListener('click',e=>{const b=e.target.closest('[data-aiq]');if(!b)return;const q=b.dataset.aiq;aiOpen(/:\s*$/.test(q)?q+($('#fm [name=nome]')?.value||''):q)});
 
+/* ===== boot / login ===== */
 async function boot(){
  try{
   if(!window.supabase)throw new Error('Biblioteca do Supabase não carregou (verifique internet/adblock).');
@@ -300,7 +307,7 @@ async function boot(){
 }
 function viewSetup(){$('#root').innerHTML=`<div class=lg><div class=lp><div><img class=logo src="logo-branco.png" alt="Doces da Analu"><p>Conecte o seu banco de dados para começar.</p></div></div><div class=lf><form id=sf><h2>Conectar ao Supabase</h2><p class=mute>Project Settings → API</p><label>Project URL</label><input id=su1 required value="${SUPABASE_URL}" placeholder="https://xxxx.supabase.co"><label>anon public key</label><input id=sk required><button class="btn w100">Conectar</button></form></div></div>`;
  $('#sf').onsubmit=e=>{e.preventDefault();localStorage.setItem('sbcfg',JSON.stringify({u:$('#su1').value.trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,''),k:$('#sk').value.trim()}));boot()}}
-function viewLogin(msg=''){me=null;
+function viewLogin(msg=''){me=null;$('#aiD')?.remove();aiHistory=[];
  $('#root').innerHTML=`<div class=lg><div class=lp><div><img class=logo src="logo-branco.png" alt="Doces da Analu"><p>Do custo do insumo ao preço de venda, com estoque, produção e finanças em um só lugar.</p></div></div><div class=lf><form id=lf><img class=logo-m src="logo.png" alt="Doces da Analu"><h2>Bem-vindo</h2><p class=mute>Entre para continuar</p><label>E-mail</label><input id=em type=email required autocomplete=username><label>Senha</label><input id=pw type=password required minlength=6 autocomplete=current-password><div class=err id=le>${esc(msg)}</div><button class="btn w100" id=lb>Entrar</button><button type=button class="btn-o w100" id=su>Criar conta</button><a href="#" id=fg>Esqueci a senha</a></form></div></div>`;
  $('#lf').onsubmit=async e=>{e.preventDefault();$('#lb').disabled=true;const {error}=await sb.auth.signInWithPassword({email:$('#em').value,password:$('#pw').value});
   if(error){$('#le').textContent='E-mail ou senha incorretos.';$('#lb').disabled=false}else start()};
@@ -322,19 +329,18 @@ function shell(){
  const nav=NAV.map(([g,it])=>{it=it.filter(i=>ok.includes(i));return it.length?`<div class=ng>${g}</div>`+it.map(i=>`<a href="#${i}" data-r="${i}">${ic(MOD[i].i)}<span>${MOD[i].n||MOD[i].t}</span></a>`).join(''):''}).join('');
  $('#root').innerHTML=`<div class=app><aside id=side><div class=brand><img src="logo.png" alt="Doces da Analu"><small>Sistema de gestão</small></div><nav>${nav}</nav><div class=me><div class=av>${esc((me.nome||'?')[0]).toUpperCase()}</div><div><b>${esc(me.nome)}</b><small>${me.nivel}</small></div><button class=ib id=lo title=Sair>${ic('logout')}</button></div></aside><div id=sc></div><div class=ct><header class=top><button class="ib mb" id=bg>${ic('menu',22)}</button><h1 id=ttl></h1><span class=date>${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</span></header><main id=main></main></div></div>`;
  $('#lo').onclick=()=>sb.auth.signOut();$('#bg').onclick=()=>document.body.classList.add('nav-open');$('#sc').onclick=()=>document.body.classList.remove('nav-open');
- window.onhashchange=()=>go(location.hash.slice(1))}
+ window.onhashchange=()=>go(location.hash.slice(1));aiDock()}
 async function go(r){
  if(!me)return;const ok=ALLOW[me.nivel]||[];if(!MOD[r]||!ok.includes(r))r='dashboard';
- route=r;history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');
+ route=r;aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
- $('#ttl').textContent=MOD[r].t;$('#main').onclick=null;$('#main').innerHTML='<div class=sk></div>';
- try{await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,simulador:simView,lista:listaView,analuia:analuIA}[r]||mod)(r)}catch(e){$('#main').innerHTML=errBox(e)}}
+ $('#ttl').textContent=MOD[r].t;$('#main').onclick=$('#main').onchange=null;$('#main').innerHTML='<div class=sk></div>';
+ try{await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,lista:listaView}[r]||mod)(r)}catch(e){$('#main').innerHTML=errBox(e)}}
 
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(r==='produtos'?`<div class=ai-recipe-search><div><b>Precisa de uma orientação?</b><small>Converse com a Analu IA sobre receitas, ingredientes e técnicas.</small></div><div class=ai-recipe-entry><input id=aiRecipeAsk placeholder="Ex.: como faço um brigadeiro de pistache?"><button class=btn id=aiRecipeGo>Conversar com a IA</button></div></div>`:'')+(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+'<div id=lst></div>';
- if(r==='produtos')$('#aiRecipeGo').onclick=()=>{aiInitialQuestion=$('#aiRecipeAsk').value.trim();go('analuia')};
+ $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+'<div id=lst></div>';
  $('#main').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tabSel[r]=b.dataset.t;mod(r)});
  await list(t,$('#lst'))}
 const refsOf=d=>d.f.flatMap(f=>f[2]==='ref'?[f[3][0]]:f[2]==='lines'?f[3].cols.filter(c=>c[2]==='ref').map(c=>c[3][0]):[]);
@@ -373,7 +379,7 @@ async function editRow(tb,r,pre){
 /* ===== formulários (drawer) ===== */
 function inp(f,v,lc){const [k,l,t,o]=f,val=v??'';
  if(t==='select')return `<select name="${k}">${o.map(x=>`<option ${x===val?'selected':''}>${x}</option>`).join('')}</select>`;
- if(t==='ref')return `<select name="${k}"><option value="">Selecione…</option>${(cache[o[0]]||[]).filter(x=>x.ativo!==false).map(x=>`<option value="${x.id}" ${x.id===val?'selected':''}>${esc(optLabel(o[0],x,o[1]))}</option>`).join('')}</select>`;
+ if(t==='ref')return `<input name="${k}" data-ref="${o[0]}" list="dl_${o[0]}" autocomplete=off placeholder="${esc(lc?l:'Digite para buscar…')}" value="${esc(val?refName(o,val):'')}">`;
  if(t==='area')return `<textarea name="${k}" rows=3>${esc(val)}</textarea>`;
  if(t==='bool')return `<label class=ck><input type=checkbox name="${k}" ${v==null||v?'checked':''}> ${l}</label>`;
  const ty={money:'number',number:'number',date:'date',color:'color'}[t]||'text';
@@ -385,26 +391,27 @@ function fld(f,v){const [k,l,t,o,fl='']=f;
  if(t==='date'&&v==null&&fl.includes('today'))v=today();
  return `<div class=fl>${t==='bool'?'':`<label>${l}${fl.includes('req')?' *':''}</label>`}${inp(f,v)}</div>`}
 function collect(root,fields){const o={};for(const [k,,t,op] of fields){
- if(t==='lines'){const fc=op.cols[0][0];o[k]=[...root.querySelectorAll(`[data-l="${k}"] .ln`)].map(r=>Object.fromEntries(op.cols.map(c=>{const e=r.querySelector(`[name="${c[0]}"]`);return [c[0],c[2]==='number'?num(e.value):e.value]}))).filter(x=>x[fc]);continue}
+ if(t==='lines'){const fc=op.cols[0][0];o[k]=[...root.querySelectorAll(`[data-l="${k}"] .ln`)].map(r=>Object.fromEntries(op.cols.map(c=>{const e=r.querySelector(`[name="${c[0]}"]`);return [c[0],c[2]==='number'?num(e.value):c[2]==='ref'?rid(c[3][0],e.value,o):e.value]}))).filter(x=>x[fc]);continue}
  const e=root.querySelector(`[name="${k}"]`);if(!e)continue;
- o[k]=t==='bool'?e.checked:(t==='number'||t==='money')?num(e.value):(e.value===''?null:e.value)}return o}
+ o[k]=t==='ref'?rid(op[0],e.value,o):t==='bool'?e.checked:(t==='number'||t==='money')?num(e.value):(e.value===''?null:e.value)}return o}
 function open_(title,html){$('#dr').innerHTML=`<div class=dh><h3>${title}</h3><button class=ib id=dx>${ic('x')}</button></div>${html}`;document.body.classList.add('dr-open');
  const c=()=>document.body.classList.remove('dr-open');$('#dx').onclick=$('#ov').onclick=c;return c}
 function panel(title,html){open_(title,`<div class=db>${html}</div>`)}
 function form({title,fields,vals={},save,btn='Salvar',foot='',onInput}){
- const close=open_(title,`<form id=fm><div class=db>${fields.map(f=>fld(f,vals[f[0]])).join('')}</div><div class=df>${foot}<button type=button class=btn-o id=dc>Cancelar</button><button class=btn id=ds>${btn}</button></div></form>`);
+ const close=open_(title,`<form id=fm>${dls()}<div class=db>${fields.map(f=>fld(f,vals[f[0]])).join('')}</div><div class=df>${foot}<button type=button class=btn-o id=dc>Cancelar</button><button class=btn id=ds>${btn}</button></div></form>`);
  const fm=$('#fm');$('#dc').onclick=close;
  if(onInput){fm.oninput=fm.onchange=()=>onInput(fm);onInput(fm)}
  fm.addEventListener('click',e=>{const a=e.target.closest('[data-add]');
   if(a){const f=fields.find(x=>x[0]===a.dataset.add);fm.querySelector(`[data-l="${f[0]}"]`).insertAdjacentHTML('beforeend',ln(f,{...(f[3].def||{})}));return}
   const r=e.target.closest('[data-rm]');if(r){const b=r.closest('.lines');if(b.children.length>1)r.closest('.ln').remove();else r.closest('.ln').querySelectorAll('input,select').forEach(x=>x.value='');onInput?.(fm)}});
  fm.onsubmit=async e=>{e.preventDefault();const v=collect(fm,fields);
+  if(v.__bad?.length)return toast('Não encontrei: '+[...new Set(v.__bad)].join(', ')+'. Escolha um nome da lista que aparece ao digitar, ou cadastre o item antes.','bad');delete v.__bad;
   for(const f of fields)if((f[4]||'').includes('req')&&(v[f[0]]==null||v[f[0]]===''))return toast(f[1]+' é obrigatório','bad');
   const b=$('#ds');b.disabled=true;const ok=await save(v);b.disabled=false;if(ok){close();toast('Salvo com sucesso');cache={};go(route)}}}
 
 /* ===== ações específicas ===== */
 async function novaVenda(){
- const fields=[['cliente_id','Cliente (opcional)','ref',['clientes','nome']],['itens','Itens da venda','lines',{cols:[['produto_id','Produto','ref',['produtos','nome']],['quantidade','Qtd','number']],def:{quantidade:1}}],['forma_pagamento','Forma de pagamento','select',FP],['desconto','Desconto (R$)','money']];
+ const fields=[['cliente_id','Cliente (opcional)','ref',['clientes','nome']],['itens','Itens da venda — digite o nome do produto','lines',{cols:[['produto_id','Digite o produto','ref',['produtos','nome']],['quantidade','Qtd','number']],def:{quantidade:1}}],['forma_pagamento','Forma de pagamento','select',FP],['desconto','Desconto (R$)','money']];
  await loadRefs({f:fields});cache.produtos=await all('produtos');
  form({title:'Nova venda',fields,btn:'Finalizar venda',foot:'<div class=tot>Total <b id=tot>R$ 0,00</b></div>',
   onInput:fm=>{const v=collect(fm,fields),sub=v.itens.reduce((a,i)=>a+num(cache.produtos.find(p=>p.id===i.produto_id)?.preco)*i.quantidade,0);$('#tot').textContent=brl(Math.max(0,sub-v.desconto))},
@@ -438,7 +445,7 @@ function insLive(fm){
  setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`)}
 function fixUnits(fm){ /* em cada ingrediente só deixa unidades do mesmo tipo do insumo (peso, volume ou unidade) */
  fm.querySelectorAll('[data-l="ficha"] .ln').forEach(ln=>{
-  const s=ln.querySelector('[name=insumo_id]'),u=ln.querySelector('[name=unidade]'),i=(cache.insumos||[]).find(x=>x.id===s?.value);if(!u||!i)return;
+  const s=ln.querySelector('[name=insumo_id]'),u=ln.querySelector('[name=unidade]'),i=fnd('insumos',s?.value);if(!u||!i)return;
   const opts=UNF[FAM[i.unidade]||'un'];
   if([...u.options].map(o=>o.value).join()!==opts.join()){const prev=u.value;u.innerHTML=opts.map(o=>`<option>${o}</option>`).join('');u.value=opts.includes(prev)?prev:opts[0]}})}
 function prodLive(fm){
@@ -446,12 +453,14 @@ function prodLive(fm){
  const v=collect(fm,T.produtos.f.filter(f=>!(f[4]||'').includes('ro'))),I=cache.insumos||[],el=fm.querySelector('#calc');if(!el)return;
  let tot=0;const sem=[];
  for(const l of v.ficha){const i=I.find(x=>x.id===l.insumo_id);if(!i)continue;if(!num(i.custo_unit))sem.push(i.nome);tot+=conv(l.quantidade,l.unidade||i.unidade,i.unidade)*num(i.custo_unit)}
- const rend=num(v.rendimento)>0?num(v.rendimento):1,ing=tot/rend,ex=num(v.custo_extra),cus=ing+ex,m=num(v.margem),t=taxa(),sug=sugeridoDe(cus,m),pr=num(v.preco),real=margemDe(pr,cus);
- setHtml(el,`<div class=cpr><span>Ingredientes (por unidade)</span><b>${brl4(ing)}</b></div><div class=cpr><span>Embalagem, mão de obra e outros</span><b>${brl4(ex)}</b></div><div class=cpr><span>Custo total por unidade</span><b>${brl4(cus)}</b></div>`
+ const rend=num(v.rendimento)>0?num(v.rendimento):1,ing=tot/rend,ex=num(v.custo_extra),rat=ing+ex>0?rateio():0,cus=ing+ex+rat,m=num(v.margem),t=taxa(),sug=sugeridoDe(cus,m),pr=num(v.preco),real=margemDe(pr,cus);
+ setHtml(el,`<div class=cpr><span>Ingredientes (por unidade)</span><b>${brl4(ing)}</b></div><div class=cpr><span>Embalagem, mão de obra e outros</span><b>${brl4(ex)}</b></div>${rat?`<div class=cpr><span>Rateio de custos fixos</span><b>${brl4(rat)}</b></div>`:''}<div class=cpr><span>Custo total por unidade</span><b>${brl4(cus)}</b></div>`
   +(t?`<div class=cpr><span>Taxas sobre a venda</span><b>${fmtN(t)}%</b></div>`:'')
   +`<div class="cpr big"><span>Preço sugerido para ${fmtN(m)}% de lucro</span><b>${sug?brl(sug):'—'}</b></div>`
-  +(sug?`<button type=button class=btn-o data-use="${sug}">Usar o preço sugerido</button>`:'')
+  +(sug?`<button type=button class=btn-o data-use="${sug}">Usar o preço sugerido</button> `:'')
+  +`<button type=button class=btn-o data-aiq="Sugira ingredientes, quantidades e rendimento para a receita: ">✦ Pedir ajuda à IA</button>`
   +(pr>0&&cus>0&&real!=null?`<div class=cpr style="margin-top:8px"><span>Com o preço de ${brl(pr)}, seu lucro é</span><b style="color:var(--${real<m-0.5?'ba':'ok'})">${Math.round(real)}% · ${brl(pr*(1-t/100)-cus)} por unidade</b></div>`:'')
+  +(v.__bad?.length?`<p class=hint style="color:var(--ba)">Ingrediente não encontrado: ${esc([...new Set(v.__bad)].join(', '))}. Cadastre em Insumos primeiro ou escolha um nome da lista.</p>`:'')
   +(cus<=0?'<p class=hint>Adicione os ingredientes para ver o custo e o preço sugerido.</p>':'')
   +(m+t>=100?'<p class=hint style="color:var(--ba)">Lucro desejado + taxas precisam somar menos de 100%.</p>':'')
   +(sem.length?`<p class=hint style="color:var(--ba)">Sem preço cadastrado: ${esc([...new Set(sem)].join(', '))}. O custo está incompleto.</p>`:''))}
@@ -465,33 +474,47 @@ async function concluirProd(r){
  if(falta.length&&!confirm('Faltam insumos para esta produção:\n'+falta.join('\n')+'\n\nConcluir mesmo assim? O estoque desses itens ficará negativo.'))return;
  upd('ordens_producao',r.id,{status:'Concluída'},'Produção concluída — insumos baixados e estoque atualizado')}
 
-/* ===== 3 · preço de venda ===== */
+/* ===== 3 · PRECIFICAÇÃO INTELIGENTE (uma aba só: preços, simulador e histórico) ===== */
 async function precosView(){
- const P=(await all('produtos')).filter(p=>p.ativo!==false).sort((a,b)=>(abaixo(a)?0:1)-(abaixo(b)?0:1)||a.nome.localeCompare(b.nome)),w=canW('produtos');
+ const t=tabSel.precos||'p';
+ $('#main').innerHTML=`<div class=tabs>${[['p','Preços e margens'],['s','Simulador (e se o insumo subir?)'],['h','Histórico de preços']].map(([k,l])=>`<button class="${k===t?'on':''}" data-pt="${k}">${l}</button>`).join('')}</div><div id=pv></div>`;
+ $('#main').querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{tabSel.precos=b.dataset.pt;precosView()});
+ await({p:precosTab,s:simView,h:()=>list('historico_precos',$('#pv'))}[t])()}
+async function precosTab(){
+ const [P0,I,F]=await Promise.all([all('produtos'),all('insumos'),all('ficha_tecnica')]);
+ const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>(abaixo(a)?0:1)-(abaixo(b)?0:1)||a.nome.localeCompare(b.nome)),w=canW('produtos'),t=taxa(),rt=rateio();
  const comC=P.filter(p=>cT(p)>0),ab=comC.filter(abaixo),sem=P.filter(p=>!(cT(p)>0)),ms=comC.map(margemReal).filter(m=>m!=null);
+ const semIns=I.filter(i=>!num(i.custo_unit)&&F.some(f=>f.insumo_id===i.id));
  const sit=p=>!(cT(p)>0)?'<span class="bd warn">Sem custo</span>':!(num(p.preco)>0)?'<span class="bd bad">Sem preço</span>':abaixo(p)?'<span class="bd bad">Abaixo da meta</span>':'<span class="bd ok">Na meta</span>';
- $('#main').innerHTML=`<div class=ph><div><h2>Preço de venda</h2><p>Você diz quanto quer de lucro. O sistema devolve o preço de venda.</p></div><div class=tools>${w&&ab.length?`<button class=btn id=apl>${ic('check',16)} Aplicar sugerido em ${ab.length}</button>`:''}</div></div>
+ const pin=(p,f,v,max)=>`<input class=pi data-id="${p.id}" data-f="${f}" type=number step=any min=0 ${max?`max=${max}`:''} value="${num(v)}" style="width:92px">`;
+ $('#pv').innerHTML=`<div class=ph><div><h2>Preços e margens</h2><p>Você diz quanto quer de lucro. O sistema devolve o preço de venda.</p></div><div class=tools>${w&&ab.length?`<button class=btn id=apl>${ic('check',16)} Aplicar sugerido em ${ab.length}</button>`:''}<button class=btn-o data-aiq="Analise minhas receitas e preços cadastrados. Quais estão com lucro baixo e o que devo ajustar?">✦ Pedir análise à IA</button></div></div>
  <div class=kpis>${kpi('Receitas','bag',P.length)}${kpi('Abaixo da meta','alert',ab.length)}${kpi('Sem custo','clock',sem.length)}${kpi('Margem média','chart',ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length)+'%':'—')}</div>
- ${taxa()?`<p class=mute style="margin-bottom:10px">Já considerando ${fmtN(taxa())}% de taxas sobre cada venda (Configurações).</p>`:''}
- <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Custo por un.</th><th>Lucro desejado</th><th>Preço sugerido</th><th>Preço atual</th><th>Margem real</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const s=sugerido(p),m=margemReal(p);return `<tr><td>${esc(p.nome)}</td><td>${cT(p)>0?brl(cT(p)):'<span class=mute>—</span>'}</td><td>${fmtN(p.margem)}%</td><td><b>${s?brl(s):'—'}</b></td><td>${brl(p.preco)}</td><td>${m!=null&&cT(p)>0?Math.round(m)+'%':'—'}</td><td>${sit(p)}</td><td class=ac>${w?`${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=ib title="Aplicar preço sugerido" data-ap="${i}">${ic('check')}</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button>`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
+ <div class=note><b>Como o preço é calculado:</b> preço = custo por unidade ÷ (1 − lucro% − taxas%). O custo soma ingredientes + embalagem/mão de obra${rt?` + rateio de custos fixos (${brl4(rt)} por unidade)`:''}. Taxas aplicadas: ${fmtN(t)}%. Edite o <b>lucro desejado</b> ou o <b>preço atual</b> direto na tabela.</div>
+ ${!t&&!rt?`<div class="note w">Dica: para um preço mais realista, informe as <b>taxas</b> (cartão/impostos) e os <b>custos fixos do mês</b> em <a href="#config">Configurações</a>.</div>`:''}
+ ${semIns.length?`<div class="note w"><b>Atenção:</b> estes insumos usados nas receitas estão sem preço, então o custo está incompleto: ${esc(semIns.map(i=>i.nome).join(', '))}. <a href="#estoque">Cadastrar preço</a></div>`:''}
+ <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Ingredientes</th><th>Embalagem + fixos</th><th>Custo total</th><th>Preço mínimo</th><th>Lucro desejado</th><th>Preço sugerido</th><th>Preço atual</th><th>Lucro por un.</th><th>Margem real</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const c=cT(p),s=sugerido(p),m=margemReal(p),mn=sugeridoDe(c,0),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
+  return `<tr><td><b>${esc(p.nome)}</b><br><small class=mute>rende ${fmtN(p.rendimento)} un</small></td><td>${c>0?brl4(num(p.custo)):'—'}</td><td>${c>0?brl4(num(p.custo_extra)+rt):'—'}</td><td><b>${c>0?brl4(c):'—'}</b></td><td>${mn?brl(mn):'—'}</td><td>${w?pin(p,'margem',p.margem,95)+' %':fmtN(p.margem)+'%'}</td><td><b>${s?brl(s):'—'}</b></td><td>${w?pin(p,'preco',p.preco):brl(p.preco)}</td><td>${lu==null?'—':`<span style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</span>`}</td><td>${m!=null&&c>0?Math.round(m)+'%':'—'}</td><td>${sit(p)}</td><td class=ac>${w?`${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=ib title="Aplicar preço sugerido" data-ap="${i}">${ic('check')}</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button>`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
  $('#main').onclick=e=>{const a=e.target.closest('[data-ap]'),d=e.target.closest('[data-ed]');
   if(a){const p=P[+a.dataset.ap];upd('produtos',p.id,{preco:sugerido(p)},'Preço de “'+p.nome+'” atualizado')}
   if(d)editRow('produtos',P[+d.dataset.ed])};
+ $('#main').onchange=async e=>{const x=e.target.closest('.pi');if(!x)return;const f=x.dataset.f,v=num(x.value);
+  if(v<0||(f==='margem'&&v+taxa()>=100))return toast('Lucro desejado + taxas precisam somar menos de 100%.','bad');
+  const {error}=await sb.from('produtos').update({[f]:v}).eq('id',x.dataset.id);if(error)return fail(error);cache={};toast('Atualizado');precosTab()};
  const ap=$('#apl');if(ap)ap.onclick=async()=>{if(!confirm('Aplicar o preço sugerido nas '+ab.length+' receitas abaixo da meta?'))return;
   for(const p of ab){const s=sugerido(p);if(!s)continue;const {error}=await sb.from('produtos').update({preco:s}).eq('id',p.id);if(error)return fail(error)}
-  cache={};toast('Preços atualizados');go('precos')}}
+  cache={};toast('Preços atualizados');precosTab()}}
 
 /* ===== simulador ===== */
 async function simView(){
  const [I,P,F]=await Promise.all([all('insumos'),all('produtos'),all('ficha_tecnica')]);
  const used=new Set(F.map(f=>f.insumo_id)),op=I.filter(i=>used.has(i.id)).sort((a,b)=>a.nome.localeCompare(b.nome)),I2=new Map(I.map(i=>[i.id,i])),PA=P.filter(p=>p.ativo!==false);
- $('#main').innerHTML=`<div class=ph><div><h2>Simulador</h2><p>E se um insumo ficar mais caro ou mais barato? Veja o efeito em cada receita antes de mexer nos preços.</p></div></div>
+ $('#pv').innerHTML=`<div class=ph><div><h2>Simulador</h2><p>E se um insumo ficar mais caro ou mais barato? Veja o efeito em cada receita antes de mexer nos preços.</p></div></div>
  <div class="card pad" style="margin-bottom:14px"><div class=sim><div class=fl><label>Insumo</label><select id=si><option value="*">Todos os insumos</option>${op.map(i=>`<option value="${i.id}">${esc(i.nome)}</option>`).join('')}</select></div>
  <div class=fl><label>Variação (%)</label><input id=sp type=number step=any value=10></div>
  <div class=fl id=snw style="display:none"><label>ou novo preço pago (R$)</label><input id=sn type=number step=any min=0 inputmode=decimal></div></div>
  <p class=hint>É só uma simulação — nada é alterado. Para valer, atualize o preço do insumo em <a href="#estoque" style="color:var(--p)">Insumos</a>.</p></div><div id=so></div>`;
  const run=()=>{const id=$('#si').value,f=1+num($('#sp').value)/100,adj=i=>id==='*'||i.id===id?f:1;
-  const rows=PA.map(p=>{const a=custoIng(p,F,I2),b=custoIng(p,F,I2,adj),ex=num(p.custo_extra);return{p,a:a+ex,b:b+ex,ch:Math.abs(b-a)>1e-9}}).filter(x=>x.ch).sort((x,y)=>(y.b/y.a)-(x.b/x.a));
+  const rows=PA.map(p=>{const a=custoIng(p,F,I2),b=custoIng(p,F,I2,adj),ex=num(p.custo_extra)+rateio();return{p,a:a+ex,b:b+ex,ch:Math.abs(b-a)>1e-9}}).filter(x=>x.ch).sort((x,y)=>(y.b/y.a)-(x.b/x.a));
   $('#so').innerHTML=rows.length?`<div class="card tw"><table><thead><tr><th>Receita</th><th>Custo hoje</th><th>Custo novo</th><th>Margem hoje</th><th>Margem nova</th><th>Preço atual</th><th>Preço sugerido</th></tr></thead><tbody>${rows.map(({p,a,b})=>{const m1=margemDe(p.preco,a),m2=margemDe(p.preco,b),s=sugeridoDe(b,p.margem),pior=m2!=null&&m2<num(p.margem)-0.5;
    return `<tr><td>${esc(p.nome)}</td><td>${brl4(a)}</td><td>${brl4(b)} <small class=mute>(${b>=a?'+':''}${fmtN(Math.round((b/a-1)*1000)/10)}%)</small></td><td>${m1==null?'—':Math.round(m1)+'%'}</td><td>${m2==null?'—':`<span class="bd ${pior?'bad':'ok'}">${Math.round(m2)}%</span>`}</td><td>${brl(p.preco)}</td><td><b>${s?brl(s):'—'}</b></td></tr>`}).join('')}</tbody></table></div>`
    :`<div class="card empty">${ic('calc',40)}<p>Nenhuma receita usa esse insumo.</p></div>`};
@@ -534,15 +557,15 @@ async function dash(){
  await loadRefs({f:[['x','','ref',['clientes','nome']]]});
  const t0=today(),mes=t0.slice(0,7),sv=f=>V.filter(f).reduce((a,v)=>a+num(v.total),0);
  const hoje=sv(v=>day(v.created_at)===t0),ontem=sv(v=>day(v.created_at)===dd(1)),dl_=ontem?Math.round((hoje/ontem-1)*100):null;
- const days=[...Array(14)].map((_,i)=>dd(13-i)),vals=days.map(d=>sv(v=>day(v.created_at)===d)),fm=sv(v=>day(v.created_at).startsWith(mes)),nm=V.filter(v=>day(v.created_at).startsWith(mes)).length;
+ const days=[...Array(14)].map((_,i)=>dd(13-i)),vals=days.map(d=>sv(v=>day(v.created_at)===d)),fm=sv(v=>day(v.created_at).startsWith(mes)),nm_=V.filter(v=>day(v.created_at).startsWith(mes)).length;
  const itM=IT.filter(i=>day(i.vendas.created_at).startsWith(mes)),custo=itM.reduce((a,i)=>a+num(i.quantidade)*cT(P.find(p=>p.id===i.produto_id)||{}),0);
  const comCusto=P.filter(p=>cT(p)>0),comPreco=comCusto.filter(p=>num(p.preco)>0),ab=comCusto.filter(abaixo),setup=['Admin','Gerente'].includes(me.nivel);
  const stp=(n,t,sub,ok,r)=>{const b=`<div class=n>${ok?ic('check',18):n}</div><div><b>${t}</b><small>${sub}</small></div>`;return (ALLOW[me.nivel]||[]).includes(r)?`<a class="card step ${ok?'done':''}" href="#${r}">${b}</a>`:`<div class="card step ${ok?'done':''}">${b}</div>`};
  const top=grp(itM,'produto_nome',i=>num(i.quantidade)).slice(0,5),low=I.filter(i=>num(i.quantidade)<=num(i.minimo));
  const pend=tp=>F.filter(f=>tp.includes(f.tipo)).reduce((a,f)=>a+num(f.valor),0);
- $('#main').innerHTML=(setup?`<div class=steps>${stp(1,'Cadastre seus insumos',I.length?I.length+' cadastrado(s)':'Comece pelo que você compra',I.length>0,'estoque')}${stp(2,'Monte suas receitas',comCusto.length?comCusto.length+' com custo calculado':'Escolha ingredientes e quantidades',comCusto.length>0,'produtos')}${stp(3,'Defina seu preço',!comCusto.length?'Depois das receitas':ab.length?ab.length+' abaixo da meta de lucro':comPreco.length<comCusto.length?(comCusto.length-comPreco.length)+' sem preço':'Todas na meta de lucro',comCusto.length>0&&ab.length===0&&comPreco.length===comCusto.length,'precos')}</div>`:'')+`<div class=kpis>
+ $('#main').innerHTML=(setup?`<div class=steps>${stp(1,'Cadastre seus insumos',I.length?I.length+' cadastrado(s)':'Comece pelo que você compra',I.length>0,'estoque')}${stp(2,'Monte suas receitas',comCusto.length?comCusto.length+' com custo calculado':'Digite ingredientes e quantidades',comCusto.length>0,'produtos')}${stp(3,'Defina seu preço',!comCusto.length?'Depois das receitas':ab.length?ab.length+' abaixo da meta de lucro':comPreco.length<comCusto.length?(comCusto.length-comPreco.length)+' sem preço':'Todas na meta de lucro',comCusto.length>0&&ab.length===0&&comPreco.length===comCusto.length,'precos')}</div>`:'')+`<div class=kpis>
   ${kpi('Vendas hoje','cart',brl(hoje),dl_==null?'':`<em style="color:var(--${dl_>=0?'ok':'ba'})">${dl_>=0?'▲':'▼'} ${Math.abs(dl_)}%</em>`)}
-  ${kpi('Faturamento do mês','trend',brl(fm))}${kpi('Lucro bruto do mês','chart',brl(fm-custo))}${kpi('Ticket médio','receipt',brl(nm?fm/nm:0))}
+  ${kpi('Faturamento do mês','trend',brl(fm))}${kpi('Lucro bruto do mês','chart',brl(fm-custo))}${kpi('Ticket médio','receipt',brl(nm_?fm/nm_:0))}
   ${kpi('Encomendas abertas','cake',E.length)}${fin?kpi('A receber','clock',brl(pend(['Receber','Receita'])))+kpi('A pagar','wallet',brl(pend(['Pagar','Despesa']))):''}${kpi('Estoque baixo','alert',low.length)}</div>
  <div class=g2><div class="card pad" style="grid-column:span 2;min-width:0"><h3>Vendas — últimos 14 dias</h3>${chart(vals,days.map(d=>d.slice(8)+'/'+d.slice(5,7)))}</div></div>
  <div class=g2><div class="card pad"><h3>Próximas entregas</h3>${list2(E.slice(0,6).map(e=>[`${dt(e.data_entrega)} · ${esc(refName(['clientes','nome'],e.cliente_id)==='—'?(e.descricao||'').slice(0,28):refName(['clientes','nome'],e.cliente_id))}`,badge(e.status)]),'Nenhuma encomenda aberta')}</div>
@@ -571,7 +594,7 @@ async function rel(n){
  $('#per').value=n;$('#per').onchange=e=>rel(+e.target.value);$('#ex').onclick=()=>V.length&&csv(V,'vendas');}
 
 /* ===== configurações ===== */
-const CF=[['nome_doceria','Nome da doceria','text'],['telefone','Telefone / WhatsApp','text'],['endereco','Endereço','text'],['chave_pix','Chave Pix','text'],['taxa_pct','Taxas sobre cada venda — cartão, impostos (%) — entram no preço sugerido','number'],['cor','Cor do sistema','color']];
+const CF=[['nome_doceria','Nome da doceria','text'],['telefone','Telefone / WhatsApp','text'],['endereco','Endereço','text'],['chave_pix','Chave Pix','text'],['taxa_pct','Taxas sobre cada venda — cartão, impostos (%) — entram no preço sugerido','number'],['custo_fixo_mes','Custos fixos do mês — aluguel, luz, gás, internet… (R$) — entram no custo de cada receita','money'],['producao_mes','Quantas unidades você produz por mês, em média (para dividir os custos fixos)','number'],['cor','Cor do sistema','color']];
 async function cfgView(){
  $('#main').innerHTML=`<div class=ph><div><h2>Configurações</h2><p>Dados da doceria, personalização e segurança</p></div></div><div class=g2>
  <form class="card pad" id=cf><h3>Dados da doceria</h3>${CF.map(f=>fld(f,CFG[f[0]])).join('')}<button class=btn>Salvar</button></form>
