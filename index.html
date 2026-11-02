@@ -696,7 +696,7 @@ async function xSync(){
    const tot=F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=Im.get(f.insumo_id);if(!i)return a;const q=convX(f.quantidade,f.unidade||i.unidade,i);return q==null?a:a+q*num(i.custo_unit)},0);
    const c=Math.round(tot/(num(p.rendimento)||1)*1e6)/1e6;
    if(Math.abs(c-num(p.custo))>1e-6)await sb.from('produtos').update({custo:c}).eq('id',p.id);
-   if(['embalagem_total','tempo_min','gas_min','luz_min','agua_l'].some(k=>p[k]!=null)){const ce=xExtra(p);
+   if(['embalagem_total','tempo_min','tempos'].some(k=>p[k]!=null)){const ce=xExtra(p);
     if(Math.abs(ce-num(p.custo_extra))>1e-6)await sb.from('produtos').update({custo_extra:ce}).eq('id',p.id)}}
  }catch(e){}finally{xBusy=false}}
 
@@ -758,43 +758,55 @@ async function xRun(p,q,btn,force=false){
  toast(`${fmtN(q)} un de ${p.nome} produzidas — estoque baixado`);go('producao')}
 
 
-/* ===== mão de obra + gás, luz e água calculados por receita ===== */
+/* ===== custo da cozinha automático: o sistema calcula a sua hora, o gás e a energia ===== */
+const XD={dias_sem:5,horas_dia:6,botijao_preco:115,preco_kwh:0.95,w_panela:800,w_forno:1500,w_bat:300,w_liq:500};
 CF.splice(5,0,
- ['valor_hora','Valor da sua hora de trabalho (R$/hora) — vira mão de obra em cada receita','money'],
- ['botijao_preco','Gás: preço do botijão (R$)','money'],
- ['botijao_kg','Gás: kg do botijão (vazio = 13)','number'],
- ['gas_kg_h','Gás: consumo de uma boca/forno aceso (kg por hora; vazio = 0,25)','number'],
- ['preco_kwh','Luz: preço do kWh (R$) — divida o valor TOTAL da conta pelos kWh consumidos','money'],
- ['potencia_w','Luz: potência média dos equipamentos (W; vazio = 1500)','number'],
- ['agua_m3','Água: preço do m³ (R$) — divida o valor TOTAL da conta (água + esgoto) pelos m³','money']);
-CF.find(x=>x[0]==='custo_fixo_mes')[1]='Outros custos fixos do mês — aluguel, internet, geladeira/freezer, contador… (R$). NÃO inclua gás, luz e água usados na produção: eles já são calculados por receita';
+ ['salario_desejado','Quanto você quer ganhar por mês com a confeitaria? (R$) — o sistema calcula o valor da sua hora','money'],
+ ['dias_sem','Quantos dias por semana você trabalha? (padrão 5)','number'],
+ ['horas_dia','Quantas horas por dia? (padrão 6)','number'],
+ ['botijao_preco','Gás: quanto você paga no botijão de 13 kg (R$) — padrão: média do Brasil, troque pelo seu','money'],
+ ['preco_kwh','Luz: preço do kWh (R$) — padrão estimado; na sua conta: valor total ÷ kWh','money'],
+ ['w_panela','Potência da panela mexedora (W) — está na etiqueta do aparelho','number'],
+ ['w_forno','Potência do forno elétrico (W)','number'],
+ ['w_bat','Potência da batedeira (W)','number'],
+ ['w_liq','Potência do liquidificador (W)','number']);
+CF.find(x=>x[0]==='custo_fixo_mes')[1]='Outros custos fixos do mês — aluguel, internet, água, geladeira, contador… (R$). Gás e energia dos equipamentos já são calculados por receita';
 {const f=T.produtos.f,i=f.findIndex(x=>x[0]==='custo_extra');
  f.splice(i,1,['embalagem_total','Embalagem e outros — total da RECEITA INTEIRA (R$): caixinha, laço, sacola…','money',,'nolist'],
-  ['tempo_min','Tempo de trabalho na receita inteira (minutos): preparo, enrolar, embalar','number',,'nolist'],
-  ['gas_min','Gás: minutos com fogão ou forno a gás aceso (receita inteira)','number',,'nolist'],
-  ['luz_min','Luz: minutos com forno elétrico, batedeira ou liquidificador ligados','number',,'nolist'],
-  ['luz_w','Luz: potência desses equipamentos (W) — vazio usa a média das Configurações','number',,'nolist'],
-  ['agua_l','Água usada na receita inteira (litros): lavar, cozinhar, resfriar','number',,'nolist']);
+  ['tempo_min','Seu tempo de trabalho (minutos) — do começo ao fim, incluindo embalar','number',,'nolist'],
+  ['min_gas','Fogão / forno a gás aceso (minutos)','number',,'nolist'],
+  ['min_panela','Panela elétrica mexedora ligada (minutos)','number',,'nolist'],
+  ['min_forno','Forno elétrico ligado (minutos)','number',,'nolist'],
+  ['min_bat','Batedeira ligada (minutos)','number',,'nolist'],
+  ['min_liq','Liquidificador ligado (minutos)','number',,'nolist']);
  f.find(x=>x[0]==='preco')[1]='Preço de venda de 1 unidade (R$)';
  f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita INTEIRA — digite o nome, a quantidade total e a unidade (forminhas e caixas também entram aqui)'}
-/* fórmulas (valores da receita inteira) */
-const xU=o=>{const c=k=>num(CFG[k]),gh=c('botijao_preco')/(c('botijao_kg')||13)*(c('gas_kg_h')||0.25);
- return{gas:num(o.gas_min)/60*gh,luz:(num(o.luz_w)||c('potencia_w')||1500)/1000*num(o.luz_min)/60*c('preco_kwh'),agua:num(o.agua_l)/1000*c('agua_m3')}};
-const xExtra=o=>{const u=xU(o);return Math.round((num(o.embalagem_total)+num(o.tempo_min)/60*num(CFG.valor_hora)+u.gas+u.luz+u.agua)/(num(o.rendimento)||1)*1e6)/1e6};
+const xc=k=>num(CFG[k])||XD[k]||0;
+const xHora=()=>{const h=xc('dias_sem')*xc('horas_dia')*4.33;return h>0?num(CFG.salario_desejado)/h:0};
+const xT=o=>{let t=o.tempos;if(typeof t==='string'){try{t=JSON.parse(t)}catch{t={}}}t=t||{};return{gas:num(t.gas??o.min_gas),panela:num(t.panela??o.min_panela),forno:num(t.forno??o.min_forno),bat:num(t.bat??o.min_bat),liq:num(t.liq??o.min_liq)}};
+const xParts=o=>{const t=xT(o);return{trab:num(o.tempo_min)/60*xHora(),gas:t.gas/60*(xc('botijao_preco')/13*0.25),luz:(t.panela*xc('w_panela')+t.forno*xc('w_forno')+t.bat*xc('w_bat')+t.liq*xc('w_liq'))/60000*xc('preco_kwh')}};
+const xExtra=o=>{const q=xParts(o);return Math.round((num(o.embalagem_total)+q.trab+q.gas+q.luz)/(num(o.rendimento)||1)*1e6)/1e6};
 const xCollect=collect;
-collect=(root,fields)=>{const o=xCollect(root,fields);if('embalagem_total' in o)o.custo_extra=xExtra(o);return o};
+collect=(root,fields)=>{const o=xCollect(root,fields);if('embalagem_total' in o){
+ o.tempos=JSON.stringify({gas:num(o.min_gas),panela:num(o.min_panela),forno:num(o.min_forno),bat:num(o.min_bat),liq:num(o.min_liq)});
+ ['min_gas','min_panela','min_forno','min_bat','min_liq'].forEach(k=>delete o[k]);o.custo_extra=xExtra(o)}return o};
 const xEdit=editRow;
-editRow=(tb,r,pre)=>xEdit(tb,tb==='produtos'&&r?{...r,embalagem_total:r.embalagem_total??Math.round(num(r.custo_extra)*(num(r.rendimento)||1)*100)/100}:r,pre);
+editRow=(tb,r,pre)=>{if(tb==='produtos'&&r){let t={};try{t=JSON.parse(r.tempos||'{}')}catch{}
+ r={...r,embalagem_total:r.embalagem_total??Math.round(num(r.custo_extra)*(num(r.rendimento)||1)*100)/100,min_gas:t.gas,min_panela:t.panela,min_forno:t.forno,min_bat:t.bat,min_liq:t.liq}}
+ return xEdit(tb,r,pre)};
 {const lv=prodLive;T.produtos.live=fm=>{lv(fm);const el=fm.querySelector('#calc');if(!el)return;
- const v=collect(fm,T.produtos.f.filter(f=>!(f[4]||'').includes('ro'))),r=num(v.rendimento)||1,h=num(CFG.valor_hora),u=xU(v),R=x=>brl4(x/r);
- const rows=`<div class=cpr><span>Embalagem e outros</span><b>${R(num(v.embalagem_total))}</b></div><div class=cpr><span>Mão de obra (${fmtN(num(v.tempo_min))} min × ${brl(h)}/h)</span><b>${R(num(v.tempo_min)/60*h)}</b></div>`
-  +(num(v.gas_min)?`<div class=cpr><span>Gás (${fmtN(num(v.gas_min))} min)</span><b>${R(u.gas)}</b></div>`:'')
-  +(num(v.luz_min)?`<div class=cpr><span>Luz (${fmtN(num(v.luz_min))} min)</span><b>${R(u.luz)}</b></div>`:'')
-  +(num(v.agua_l)?`<div class=cpr><span>Água (${fmtN(num(v.agua_l))} L)</span><b>${R(u.agua)}</b></div>`:'');
+ const v=collect(fm,T.produtos.f.filter(f=>!(f[4]||'').includes('ro'))),r=num(v.rendimento)||1,q=xParts(v),R=x=>brl4(x/r);
+ const rows=`<div class=cpr><span>Embalagem e outros</span><b>${R(num(v.embalagem_total))}</b></div><div class=cpr><span>Seu trabalho (${fmtN(num(v.tempo_min))} min × ${brl(xHora())}/h)</span><b>${brl4(q.trab/r)}</b></div>`
+  +(q.gas?`<div class=cpr><span>Gás</span><b>${brl4(q.gas/r)}</b></div>`:'')+(q.luz?`<div class=cpr><span>Energia dos equipamentos</span><b>${brl4(q.luz/r)}</b></div>`:'');
  const row=[...el.querySelectorAll('.cpr')].find(x=>/Embalagem, m/.test(x.textContent));if(row)row.outerHTML=rows;
  el.querySelector('.xh')?.remove();
- const miss=[num(v.tempo_min)>0&&!h&&'o valor da hora',num(v.gas_min)>0&&!num(CFG.botijao_preco)&&'o preço do botijão',num(v.luz_min)>0&&!num(CFG.preco_kwh)&&'o preço do kWh',num(v.agua_l)>0&&!num(CFG.agua_m3)&&'o preço do m³ de água'].filter(Boolean);
- if(miss.length)el.insertAdjacentHTML('beforeend',`<p class="hint xh" style="color:var(--ba)">Falta informar em <a href="#config">Configurações</a>: ${miss.join(', ')}. Sem isso esse custo fica zerado.</p>`)}}
+ if(num(v.tempo_min)>0&&!xHora())el.insertAdjacentHTML('beforeend','<p class="hint xh" style="color:var(--ba)">Para calcular o seu trabalho, diga em <a href="#config">Configurações</a> quanto quer ganhar por mês. O sistema descobre o valor da sua hora sozinho.</p>')}}
+const xCfg=cfgView;cfgView=async r=>{await xCfg(r);const cf=$('#cf');if(!cf)return;
+ Object.keys(XD).forEach(k=>{const e=cf.querySelector(`[name=${k}]`);if(e&&!e.value)e.value=XD[k]});
+ cf.querySelector('button').insertAdjacentHTML('beforebegin','<div class=cp id=kh style="margin-top:12px"></div>');
+ const up=()=>{const v=collect(cf,CF),h=num(v.dias_sem)*num(v.horas_dia)*4.33;
+  $('#kh').innerHTML=`<div class=cpr><span>Horas de trabalho por mês</span><b>${fmtN(Math.round(h))} h</b></div><div class="cpr big"><span>O valor da sua hora é</span><b>${brl(h>0?num(v.salario_desejado)/h:0)}</b></div>`};
+ cf.addEventListener('input',up);up()};
 boot();
 
 </script></body></html>
