@@ -122,6 +122,23 @@ input.pi{padding:7px 9px}
 #aiF{display:flex;gap:8px;padding:10px;border-top:1px solid var(--bd);align-items:flex-end}#aiF textarea{flex:1;resize:none}
 body.dr-open #aiB{display:none}
 @media(min-width:1000px){body.dr-open #aiP{right:498px}}
+/* chat mais bonito */
+#aiB{background:linear-gradient(135deg,var(--p),#a31848);box-shadow:0 10px 28px color-mix(in srgb,var(--p) 45%,transparent)}
+#aiP{border:0;border-radius:22px;box-shadow:0 24px 64px #2a1d1d40}
+.aih{background:linear-gradient(135deg,var(--p),#a31848);padding:14px 14px 14px 16px}
+.aih .t{display:flex;gap:10px;align-items:center}.aih .aav{width:38px;height:38px;border-radius:13px;background:#ffffff26;display:grid;place-items:center;font-size:20px}
+.aih b{font-size:15px;display:block}.aih small{display:block;opacity:.85;font-size:10.5px;line-height:1.3;max-width:200px}
+#aiM{background:#fdf8fa;padding:16px;gap:12px}
+.ai-msg{white-space:normal;box-shadow:0 1px 3px #2a1d1d12;border-radius:18px;padding:10px 14px}
+.ai-msg.user{background:linear-gradient(135deg,var(--p),#b8204f);border-bottom-right-radius:5px}
+.ai-msg.assistant{background:#fff;border:1px solid var(--bd);border-bottom-left-radius:5px}
+.aib{margin:3px 0;padding-left:2px}.aih2{font-weight:600;margin:6px 0 2px}
+.dots i{display:inline-block;width:7px;height:7px;margin:0 2px;border-radius:50%;background:var(--p);opacity:.35;animation:dt 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}@keyframes dt{50%{opacity:1;transform:translateY(-3px)}}
+#aiQ{background:#fdf8fa;padding:0 16px 10px}#aiQ button{background:#fff;border-radius:99px}
+#aiF{padding:12px;background:#fff;align-items:center}#aiF textarea{border-radius:14px;background:#fdf8fa;min-height:44px;padding:10px 12px}#aiF .btn{border-radius:14px;height:44px;padding:0 18px}
+#lowB{position:fixed;top:68px;right:16px;z-index:45;width:min(420px,calc(100vw - 32px));display:flex;gap:10px;align-items:center;background:#fff8ec;border:1px solid #f3d9a4;border-radius:14px;padding:10px 12px;box-shadow:0 10px 30px #2a1d1d26}
+#lowB>div{flex:1;min-width:0}#lowB b{display:block;font-size:13px}#lowB small{display:block;color:#7a5b1e;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#lowB .btn{padding:7px 12px;font-size:12.5px;white-space:nowrap}
 </style></head><body>
 <div id="root"></div><div id="ov"></div><aside id="dr"></aside><div id="tt"></div>
 <script>
@@ -248,13 +265,11 @@ const kpi=(l,i,v,sub='')=>`<div class="card kpi"><div class=ico>${ic(i,20)}</div
 
 /* ===== Analu IA — assistente flutuante, disponível em todas as telas ===== */
 let aiHistory=[],aiBusy=false;
-const AI_STORAGE=()=>`analu_ia_chat_${me?.id||'visitante'}`;
 const AIH={produtos:['Sugira ingredientes e quantidades para a receita: ','Como aumentar o rendimento sem perder qualidade?'],precos:['Quais receitas estão com lucro baixo e o que devo ajustar?','Como definir o preço de um produto novo?'],estoque:['Como calcular o custo por grama de um insumo?','Qual estoque mínimo devo manter?'],producao:['Como organizar a produção da semana?'],vendas:['Como fazer promoção sem perder lucro?'],_:['Como posso aumentar meu lucro?','Me ajude a calcular o custo de uma receita']};
 function aiFormat(text){
  let s=esc(text||'');
- s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
- return s.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>');
-}
+ s=s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,'<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+ return s.split('\n').map(l=>/^\s*[-*•]\s+/.test(l)?`<div class=aib>•&nbsp;${l.replace(/^\s*[-*•]\s+/,'')}</div>`:/^\s*\d+[.)]\s+/.test(l)?`<div class=aib>${l.trim()}</div>`:/^#{1,4}\s+/.test(l)?`<div class=aih2>${l.replace(/^#{1,4}\s+/,'')}</div>`:l.trim()===''?'<div style="height:6px"></div>':`<div>${l}</div>`).join('')}
 const aiBubble=(role,c)=>`<div class="ai-msg ${role}">${aiFormat(c)}</div>`;
 function aiRender(){const b=$('#aiM');if(!b)return;
  b.innerHTML=aiHistory.length?aiHistory.map(m=>aiBubble(m.role==='user'?'user':'assistant',m.content)).join(''):'<div class=ai-empty><div style="font-size:30px">👩‍🍳</div><strong>Olá! Eu sou a Analu IA.</strong><p>Posso ajudar com receitas, custos, preços, estoque e produção — em qualquer tela do sistema.</p></div>';
@@ -264,11 +279,11 @@ function aiHints(){const q=$('#aiQ');if(!q)return;
  q.querySelectorAll('button').forEach(b=>b.onclick=()=>aiOpen(b.dataset.q))}
 function aiOpen(q){const p=$('#aiP');if(!p)return;p.hidden=false;aiRender();const i=$('#aiI');if(q)i.value=q;i.focus();if(q&&!/:\s*$/.test(q))aiSend()}
 function aiDock(){if($('#aiD'))return;
- try{const s=JSON.parse(localStorage.getItem(AI_STORAGE())||'[]');aiHistory=Array.isArray(s)?s.slice(-30):[]}catch{aiHistory=[]}
+ aiHistory=[];try{Object.keys(localStorage).filter(k=>k.startsWith('analu_ia_chat_')).forEach(k=>localStorage.removeItem(k))}catch{}
  const d=document.createElement('div');d.id='aiD';
- d.innerHTML=`<button id=aiB>✦ Analu IA</button><div id=aiP hidden><div class=aih><b>✦ Analu IA</b><button class=ib id=aiX title=Fechar>${ic('x')}</button></div><div id=aiM></div><div id=aiQ></div><form id=aiF><textarea id=aiI rows=2 placeholder="Pergunte sobre receitas, custos, preços…" required></textarea><button class=btn id=aiSend>Enviar</button></form></div>`;
+ d.innerHTML=`<button id=aiB>✦ Analu IA</button><div id=aiP hidden><div class=aih><div class=t><div class=aav>👩‍🍳</div><div><b>Analu IA</b><small>Receitas, custos e preços · a conversa não fica salva</small></div></div><div><button class=ib id=aiN title="Nova conversa">${ic('trash')}</button><button class=ib id=aiX title=Fechar>${ic('x')}</button></div></div><div id=aiM></div><div id=aiQ></div><form id=aiF><textarea id=aiI rows=2 placeholder="Pergunte sobre receitas, custos, preços…" required></textarea><button class=btn id=aiSend>Enviar</button></form></div>`;
  document.body.append(d);
- $('#aiB').onclick=()=>$('#aiP').hidden?aiOpen():($('#aiP').hidden=true);$('#aiX').onclick=()=>$('#aiP').hidden=true;
+ $('#aiB').onclick=()=>$('#aiP').hidden?aiOpen():($('#aiP').hidden=true);$('#aiX').onclick=()=>$('#aiP').hidden=true;$('#aiN').onclick=()=>{aiHistory=[];aiRender()};
  $('#aiF').onsubmit=e=>{e.preventDefault();aiSend()};
  $('#aiI').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#aiF').requestSubmit()}};
  aiHints();aiRender()}
@@ -278,7 +293,7 @@ async function aiCtx(){const [I,P]=await Promise.all([all('insumos'),all('produt
 async function aiSend(){
  const inp=$('#aiI'),btn=$('#aiSend'),q=inp.value.trim();if(!q||aiBusy)return;
  aiBusy=true;aiHistory=[...aiHistory,{role:'user',content:q}].slice(-30);inp.value='';btn.disabled=true;aiRender();
- $('#aiM').insertAdjacentHTML('beforeend','<div class="ai-msg assistant">Pensando…</div>');$('#aiM').scrollTop=1e9;
+ $('#aiM').insertAdjacentHTML('beforeend','<div class="ai-msg assistant"><span class=dots><i></i><i></i><i></i></span></div>');$('#aiM').scrollTop=1e9;
  try{
   const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Sua sessão expirou. Entre novamente no sistema.');
   let ctx='';try{ctx=await aiCtx()}catch{}
@@ -287,10 +302,25 @@ async function aiSend(){
   const p=await res.json().catch(()=>({}));if(!res.ok)throw new Error(p.error||p.message||`Erro ${res.status} ao consultar a Analu IA.`);
   aiHistory.push({role:'assistant',content:p.answer||'Não consegui gerar uma resposta agora.'});
  }catch(err){aiHistory.push({role:'assistant',content:`Não consegui responder agora. ${err.message}\n\nConfira se a função analu-ia está publicada no Supabase e se a chave GEMINI_API_KEY foi configurada.`})}
- finally{aiHistory=aiHistory.slice(-30);try{localStorage.setItem(AI_STORAGE(),JSON.stringify(aiHistory))}catch{}aiBusy=false;btn.disabled=false;aiRender();inp.focus()}
+ finally{aiHistory=aiHistory.slice(-30);aiBusy=false;btn.disabled=false;aiRender();inp.focus()}
 }
 /* qualquer botão com data-aiq abre a IA já com a pergunta (se terminar com ": ", completa com o nome da receita do formulário) */
 document.addEventListener('click',e=>{const b=e.target.closest('[data-aiq]');if(!b)return;const q=b.dataset.aiq;aiOpen(/:\s*$/.test(q)?q+($('#fm [name=nome]')?.value||''):q)});
+
+/* ===== aviso de estoque baixo no WhatsApp ===== */
+const WA_DEF='55996905025';
+const waNum=()=>{let d=String(CFG.whatsapp_aviso||WA_DEF).replace(/\D/g,'');if(d.length<=11)d='55'+d;return d};
+let lowDis='';
+async function lowCheck(){
+ if(!me||!(ALLOW[me.nivel]||[]).includes('estoque'))return;
+ const {data,error}=await sb.from('insumos').select('nome,quantidade,minimo,unidade');if(error)return;
+ const low=data.filter(i=>num(i.quantidade)<=num(i.minimo)),sig=low.map(i=>i.nome+i.quantidade).sort().join('|');let b=$('#lowB');
+ if(!low.length||sig===lowDis){b?.remove();return}
+ if(!b){b=document.createElement('div');b.id='lowB';document.body.append(b)}
+ const txt=`⚠️ ${CFG.nome_doceria||'Doces da Analu'} — estoque baixo:\n`+low.map(i=>`• ${i.nome}: ${fmtN(i.quantidade)} ${i.unidade} (mín. ${fmtN(i.minimo)})`).join('\n')+'\n\nHora de comprar!';
+ b.innerHTML=`<div><b>⚠️ Estoque baixo</b><small>${low.length} item(ns): ${esc(low.slice(0,3).map(i=>i.nome).join(', '))}${low.length>3?'…':''}</small></div><button class=btn id=lowW>Avisar no WhatsApp</button><button class=ib id=lowX title=Fechar>${ic('x',16)}</button>`;
+ $('#lowW').onclick=()=>window.open(`https://wa.me/${waNum()}?text=${encodeURIComponent(txt)}`,'_blank');
+ $('#lowX').onclick=()=>{lowDis=sig;b.remove()}}
 
 /* ===== boot / login ===== */
 async function boot(){
@@ -307,7 +337,7 @@ async function boot(){
 }
 function viewSetup(){$('#root').innerHTML=`<div class=lg><div class=lp><div><img class=logo src="logo-branco.png" alt="Doces da Analu"><p>Conecte o seu banco de dados para começar.</p></div></div><div class=lf><form id=sf><h2>Conectar ao Supabase</h2><p class=mute>Project Settings → API</p><label>Project URL</label><input id=su1 required value="${SUPABASE_URL}" placeholder="https://xxxx.supabase.co"><label>anon public key</label><input id=sk required><button class="btn w100">Conectar</button></form></div></div>`;
  $('#sf').onsubmit=e=>{e.preventDefault();localStorage.setItem('sbcfg',JSON.stringify({u:$('#su1').value.trim().replace(/\/rest\/v1\/?$/,'').replace(/\/$/,''),k:$('#sk').value.trim()}));boot()}}
-function viewLogin(msg=''){me=null;$('#aiD')?.remove();aiHistory=[];
+function viewLogin(msg=''){me=null;$('#aiD')?.remove();$('#lowB')?.remove();lowDis='';aiHistory=[];
  $('#root').innerHTML=`<div class=lg><div class=lp><div><img class=logo src="logo-branco.png" alt="Doces da Analu"><p>Do custo do insumo ao preço de venda, com estoque, produção e finanças em um só lugar.</p></div></div><div class=lf><form id=lf><img class=logo-m src="logo.png" alt="Doces da Analu"><h2>Bem-vindo</h2><p class=mute>Entre para continuar</p><label>E-mail</label><input id=em type=email required autocomplete=username><label>Senha</label><input id=pw type=password required minlength=6 autocomplete=current-password><div class=err id=le>${esc(msg)}</div><button class="btn w100" id=lb>Entrar</button><button type=button class="btn-o w100" id=su>Criar conta</button><a href="#" id=fg>Esqueci a senha</a></form></div></div>`;
  $('#lf').onsubmit=async e=>{e.preventDefault();$('#lb').disabled=true;const {error}=await sb.auth.signInWithPassword({email:$('#em').value,password:$('#pw').value});
   if(error){$('#le').textContent='E-mail ou senha incorretos.';$('#lb').disabled=false}else start()};
@@ -335,7 +365,8 @@ async function go(r){
  route=r;aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
  $('#ttl').textContent=MOD[r].t;$('#main').onclick=$('#main').onchange=null;$('#main').innerHTML='<div class=sk></div>';
- try{await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,lista:listaView}[r]||mod)(r)}catch(e){$('#main').innerHTML=errBox(e)}}
+ try{await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,lista:listaView}[r]||mod)(r)}catch(e){$('#main').innerHTML=errBox(e)}
+ lowCheck()}
 
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
@@ -563,7 +594,7 @@ async function listaView(){
  $('#man').onclick=async e=>{const k=e.target.closest('[data-mk]'),d=e.target.closest('[data-md]'),c=e.target.closest('#mc');if(k)M[+k.dataset.mk].ok=k.checked;else if(d)M=M.filter((_,i)=>i!==+d.dataset.md);else if(c)M=M.filter(m=>!m.ok);else return;await saveManual(M);drawM()};
  drawM();
  const lc=$('#lc');if(lc){lc.onclick=async()=>{try{await navigator.clipboard.writeText(txt());toast('Lista copiada')}catch{toast('Não consegui copiar — use o botão do WhatsApp','bad')}};
-  $('#lw').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(txt()),'_blank')}}
+  $('#lw').onclick=()=>window.open('https://wa.me/'+waNum()+'?text='+encodeURIComponent(txt()),'_blank')}}
 
 /* ===== dashboard ===== */
 function chart(vals,labs){const W=640,H=170,p=26,mx=Math.max(...vals,1),st=(W-2*p)/(vals.length-1),pts=vals.map((v,i)=>[p+i*st,H-p-(v/mx)*(H-2*p)]),
@@ -618,10 +649,10 @@ async function rel(n){
  $('#per').value=n;$('#per').onchange=e=>rel(+e.target.value);$('#ex').onclick=()=>V.length&&csv(V,'vendas');}
 
 /* ===== configurações ===== */
-const CF=[['nome_doceria','Nome da doceria','text'],['telefone','Telefone / WhatsApp','text'],['endereco','Endereço','text'],['chave_pix','Chave Pix','text'],['taxa_pct','Taxas sobre cada venda — cartão, impostos (%) — entram no preço sugerido','number'],['custo_fixo_mes','Custos fixos do mês — aluguel, luz, gás, internet… (R$) — entram no custo de cada receita','money'],['producao_mes','Quantas unidades você produz por mês, em média (para dividir os custos fixos)','number'],['cor','Cor do sistema','color']];
+const CF=[['nome_doceria','Nome da doceria','text'],['telefone','Telefone / WhatsApp','text'],['endereco','Endereço','text'],['chave_pix','Chave Pix','text'],['taxa_pct','Taxas sobre cada venda — cartão, impostos (%) — entram no preço sugerido','number'],['custo_fixo_mes','Custos fixos do mês — aluguel, luz, gás, internet… (R$) — entram no custo de cada receita','money'],['producao_mes','Quantas unidades você produz por mês, em média (para dividir os custos fixos)','number'],['whatsapp_aviso','WhatsApp que recebe o aviso de estoque baixo e a lista de compras (com DDD, só números)','text'],['cor','Cor do sistema','color']];
 async function cfgView(){
  $('#main').innerHTML=`<div class=ph><div><h2>Configurações</h2><p>Dados da doceria, personalização e segurança</p></div></div><div class=g2>
- <form class="card pad" id=cf><h3>Dados da doceria</h3>${CF.map(f=>fld(f,CFG[f[0]])).join('')}<button class=btn>Salvar</button></form>
+ <form class="card pad" id=cf><h3>Dados da doceria</h3>${CF.map(f=>fld(f,CFG[f[0]]||(f[0]==='whatsapp_aviso'?WA_DEF:undefined))).join('')}<button class=btn>Salvar</button></form>
  <div><form class="card pad" id=pf style="margin-bottom:14px"><h3>Segurança</h3><div class=fl><label>Nova senha</label><input type=password id=np minlength=6 required></div><button class=btn>Alterar senha</button></form>
  <div class="card pad"><h3>Backup e dados</h3><p class=mute style="margin-bottom:12px">Baixe uma cópia de todas as tabelas em JSON.</p><button class=btn-o id=bk>${ic('download',16)} Baixar backup</button></div></div></div>`;
  $('#cf').onsubmit=async e=>{e.preventDefault();const v=collect($('#cf'),CF),{error}=await sb.from('configuracoes').upsert(CF.map(([k])=>({chave:k,valor:v[k]||''})));
