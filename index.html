@@ -773,7 +773,7 @@ CF.splice(5,0,
  ['w_liq','Potência do liquidificador (W)','number']);
 CF.find(x=>x[0]==='custo_fixo_mes')[1]='Outros custos fixos do mês — aluguel, internet, água, geladeira, contador… (R$). Gás e energia dos equipamentos já são calculados por receita';
 {const f=T.produtos.f,i=f.findIndex(x=>x[0]==='custo_extra');
- f.splice(i,1,['embalagem_total','Embalagem e outros — total da RECEITA INTEIRA (R$): caixinha, laço, sacola…','money',,'nolist'],
+ f.splice(i,1,['embalagem_total','Embalagem e outros — total da receita (R$)','money',,'nolist'],
   ['tempo_min','Seu tempo de trabalho (minutos) — do começo ao fim, incluindo embalar','tempo',,'nolist'],
   ['min_gas','Fogão / forno a gás aceso (minutos)','tempo',,'nolist'],
   ['min_panela','Panela elétrica mexedora ligada (minutos)','tempo',,'nolist'],
@@ -811,6 +811,21 @@ const xCfg=cfgView;cfgView=async r=>{await xCfg(r);const cf=$('#cf');if(!cf)retu
  const up=()=>{const v=collect(cf,CF),h=num(v.dias_sem)*num(v.horas_dia)*4.33;
   $('#kh').innerHTML=`<div class=cpr><span>Horas de trabalho por mês</span><b>${fmtN(Math.round(h))} h</b></div><div class="cpr big"><span>O valor da sua hora é</span><b>${brl(h>0?num(v.salario_desejado)/h:0)}</b></div>`};
  cf.addEventListener('input',up);up()};
+
+/* ===== Analu IA mais limpa ===== */
+{const s=document.createElement('style');s.textContent=`
+.aih small{display:none}.aih{padding:12px 14px}.aih .aav{width:32px;height:32px;font-size:17px}.aih b{font-size:14.5px}
+#aiM{padding:14px;gap:10px;background:#fff}
+.ai-msg{font-size:14px;line-height:1.5;box-shadow:none;max-width:100%;border-radius:16px}
+.ai-msg.assistant{background:#faf5f7;border:0}.ai-msg.user{max-width:85%}
+#aiQ{flex-wrap:nowrap;overflow-x:auto;padding:0 14px 10px;background:#fff;scrollbar-width:none}#aiQ::-webkit-scrollbar{display:none}
+#aiQ button{white-space:nowrap;font-size:12px;padding:6px 12px;flex:none}
+#aiF{padding:10px 12px;background:#fff}#aiF textarea{min-height:40px;padding:9px 12px;background:#faf5f7;border:0}#aiF .btn{height:40px;padding:0 16px;border-radius:12px}
+body.ai-open #lowB,body.ai-open #aiB{display:none}
+@media(max-width:700px){#aiP{right:0;bottom:0;width:100%;height:80vh;border-radius:22px 22px 0 0}#aiB{right:14px;bottom:14px;padding:10px 15px;font-size:13px}#lowB{top:64px}}`;document.head.append(s)}
+const xRender=aiRender;aiRender=()=>{xRender();const q=$('#aiQ');if(q)q.style.display=aiHistory.length?'none':'flex'};
+const xDock=aiDock;aiDock=()=>{xDock();const P=$('#aiP');if(P)new MutationObserver(()=>document.body.classList.toggle('ai-open',!P.hidden)).observe(P,{attributes:true,attributeFilter:['hidden']})};
+
 boot();
 
 </script></body></html>
