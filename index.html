@@ -206,7 +206,7 @@ const T={
 clientes:{t:'Clientes',s:'Cadastro, preferências e histórico de compras',one:'cliente',f:[['nome','Nome','text',,'req'],['telefone','Telefone','text'],['endereco','Endereço','text'],['preferencias','Preferências','area'],['observacoes','Observações','area']],acts:[['clock','Histórico de compras',histCli]]},
 produtos:{t:'Receitas',s:'Digite os ingredientes e a quantidade — o custo aparece na hora',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
  f:[['nome','Nome da receita / produto','text',,'req'],['categoria','Categoria','text'],['rendimento','Rende quantas unidades?','number',,'req'],
- ['ficha','Ingredientes — digite o nome (cadastrado em Insumos) e a quantidade usada na receita inteira','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'g'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',['g','kg','ml','L','un']]]},'nolist'],
+ ['ficha','Ingredientes — digite o nome e a quantidade usada na receita inteira (ex.: 2 un de leite condensado = 2 latas · 40 un de uva)','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'g'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',['g','kg','ml','L','un']]]},'nolist'],
  ['custo_extra','Embalagem, mão de obra e outros (R$ por unidade)','money',,'nolist'],['margem','Lucro que você quer (% do preço de venda)','number',,'nolist'],['calc','','info',,'nolist'],
  ['custo','Custo por unidade','money',,'ro'],['preco','Preço de venda (R$)','money',,'req'],['estoque','Em estoque','number',,'ro'],['ativo','Ativo','bool']],
  fmt:{custo:r=>cT(r)>0?brl(cT(r)):'<span class="bd warn">Sem custo</span>',rendimento:r=>fmtN(r.rendimento)+' un'},
@@ -217,10 +217,10 @@ vendas:{t:'Vendas',s:'Cada venda baixa o estoque e lança a receita automaticame
  fmt:{numero:r=>'#'+r.numero},acts:[['receipt','Comprovante',recibo],['x','Cancelar venda',r=>confirm('Cancelar esta venda? O estoque será devolvido.')&&upd('vendas',r.id,{status:'Cancelada'},'Venda cancelada'),r=>r.status!=='Cancelada']]},
 encomendas:{t:'Encomendas',s:'O sinal e o saldo a receber são lançados no financeiro automaticamente',one:'encomenda',f:[['cliente_id','Cliente','ref',['clientes','nome']],['descricao','Descrição','area',,'req'],['data_entrega','Entrega','date',,'req'],['valor','Valor total','money'],['sinal','Sinal pago','money'],['status','Status','select',['Novo','Em produção','Pronto','Entregue','Cancelado']]],
  acts:[['check','Marcar como entregue',r=>upd('encomendas',r.id,{status:'Entregue'},'Encomenda entregue'),r=>!['Entregue','Cancelado'].includes(r.status)]]},
-insumos:{t:'Insumos e embalagens',s:'Você coloca o que comprou e quanto pagou. O sistema calcula o custo por grama, por ml e por unidade.',one:'insumo',warn:r=>num(r.quantidade)<=num(r.minimo),live:insLive,def:{tipo:'Matéria-prima',unidade:'kg',qtd_embalagem:1,quantidade:0,minimo:0},
+insumos:{t:'Insumos e embalagens',s:'Você coloca o que comprou e quanto pagou. O sistema calcula o custo por grama, por ml e por unidade.',one:'insumo',warn:r=>num(r.quantidade)<=num(r.minimo),live:insLive,def:{tipo:'Matéria-prima',unidade:'un',qtd_embalagem:1,quantidade:0,minimo:1},
  check:v=>!(v.qtd_embalagem>0)?'Informe quanto você comprou (maior que zero).':v.quantidade<0||v.minimo<0?'Estoque não pode ser negativo.':null,
- f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Unidade de compra','select',['kg','g','L','ml','un'],'nolist'],['qtd_embalagem','Quanto comprei','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
- ['custo_unit','Custo por g / ml / un','money',,'ro'],['quantidade','Em estoque agora','number'],['minimo','Estoque mínimo (avisa quando chegar)','number']],
+ f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você conta este item (un = lata, caixa, forminha, uva…)','select',['un','kg','g','L','ml'],'nolist'],['qtd_embalagem','Quanto veio na embalagem (ex.: 1 lata, 50 forminhas, 80 uvas)','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
+ ['custo_unit','Custo por g / ml / un','money',,'ro'],['quantidade','Em estoque agora','number'],['minimo','Estoque mínimo — avisa quando sobrar essa quantidade ou menos (1 = avisa só com 1 sobrando)','number']],
  fmt:{qtd_embalagem:r=>`${fmtN(r.qtd_embalagem)} ${r.unidade||''} · ${brl(r.preco_embalagem)}`,
  custo_unit:r=>{if(!num(r.custo_unit))return '<span class="bd warn">Sem preço</span>';const b=baseCusto(r);return `${brl4(b.v)} <small class=mute>/${b.u}</small>`},
  quantidade:r=>{const q=num(r.quantidade),m=num(r.minimo),pc=m?Math.min(100,q/(m*2)*100):100;return `<div class=qb><span>${fmtN(q)} ${r.unidade||''}</span><i class=pb><b style="width:${pc}%" class="${q<=m?'ba':''}"></b></i></div>`}},
@@ -340,7 +340,8 @@ async function go(r){
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+'<div id=lst></div>';
+ $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div class=note>Estoque mínimo <b>1</b>: o app avisa quando sobrar só 1 unidade (com 2 ou mais não avisa). <button class=btn-o id=mn1 style="margin-left:8px">Definir mínimo 1 em todos os insumos</button></div>`:'')+'<div id=lst></div>';
+ $('#mn1')?.addEventListener('click',async()=>{if(!confirm('Definir o estoque mínimo como 1 em todos os insumos?'))return;const {error}=await sb.from('insumos').update({minimo:1}).neq('minimo',1);if(error)return fail(error);cache={};toast('Mínimo 1 aplicado');mod(r)});
  $('#main').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tabSel[r]=b.dataset.t;mod(r)});
  await list(t,$('#lst'))}
 const refsOf=d=>d.f.flatMap(f=>f[2]==='ref'?[f[3][0]]:f[2]==='lines'?f[3].cols.filter(c=>c[2]==='ref').map(c=>c[3][0]):[]);
@@ -442,7 +443,7 @@ function insLive(fm){
  const q=num(v.qtd_embalagem),pr=num(v.preco_embalagem),u=v.unidade;
  if(!(q>0))return setHtml(el,'<span class=mute>Informe quanto você comprou e quanto pagou para ver o custo.</span>');
  const cu=pr/q,b=baseCusto({custo_unit:cu,unidade:u});
- setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`)}
+ setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`+(u==='un'?'<p class=hint>Conte em unidades: 1 lata de leite condensado, 1 caixinha de creme de leite, 50 forminhas, 80 uvas… Nas receitas você usa também em “un” (ex.: 2 un = 2 latas), sem converter para ml ou g.</p>':''))}
 function fixUnits(fm){ /* em cada ingrediente só deixa unidades do mesmo tipo do insumo (peso, volume ou unidade) */
  fm.querySelectorAll('[data-l="ficha"] .ln').forEach(ln=>{
   const s=ln.querySelector('[name=insumo_id]'),u=ln.querySelector('[name=unidade]'),i=fnd('insumos',s?.value);if(!u||!i)return;
@@ -524,6 +525,8 @@ async function simView(){
  $('#si').onchange=()=>sync('p');$('#sp').oninput=()=>sync('p');$('#sn').oninput=()=>sync('n');sync('p')}
 
 /* ===== lista de compras ===== */
+const getManual=()=>{try{return JSON.parse(CFG.lista_manual||localStorage.getItem('lm')||'[]')}catch{return[]}};
+async function saveManual(a){CFG.lista_manual=JSON.stringify(a);try{localStorage.setItem('lm',CFG.lista_manual)}catch{}const {error}=await sb.from('configuracoes').upsert([{chave:'lista_manual',valor:CFG.lista_manual}]);if(error)toast('Anotação salva só neste aparelho','bad')}
 async function listaView(){
  const [I,P,F,O,C]=await Promise.all([all('insumos'),all('produtos'),all('ficha_tecnica'),
   sb.from('ordens_producao').select('*').in('status',['Planejada','Em produção']).then(r=>r.data||[]),sb.from('compras').select('*').eq('status','Pendente').then(r=>r.data||[])]);
@@ -532,12 +535,19 @@ async function listaView(){
  for(const c of C)inc[c.insumo_id]=(inc[c.insumo_id]||0)+num(c.quantidade);
  const rows=I.map(i=>{const d=dem[i.id]||0,c=inc[i.id]||0,disp=num(i.quantidade)+c-d,buy=disp<=num(i.minimo)?2*num(i.minimo)+d-num(i.quantidade)-c:0;return{i,d,c,buy:buy>1e-9?Math.ceil(buy*1000)/1000:0}}).filter(x=>x.buy>0).sort((a,b)=>a.i.nome.localeCompare(b.i.nome));
  const est=x=>x.buy*num(x.i.custo_unit),tot=rows.reduce((a,x)=>a+est(x),0),w=canW('compras');
- const txt=()=>'Lista de compras:\n'+rows.map(x=>`• ${x.i.nome} — ${fmtN(x.buy)} ${x.i.unidade}`).join('\n');
- $('#main').innerHTML=`<div class=ph><div><h2>Lista de compras</h2><p>Montada sozinha: o que está no mínimo ou vai faltar para a produção planejada, até ter o dobro do mínimo.</p></div><div class=tools>${rows.length?`<button class=btn-o id=lc>${ic('copy',16)} Copiar</button><button class=btn id=lw>Enviar no WhatsApp</button>`:''}</div></div>
+ let M=getManual();
+ const txt=()=>'Lista de compras:\n'+[...rows.map(x=>`• ${x.i.nome} — ${fmtN(x.buy)} ${x.i.unidade}`),...M.filter(m=>!m.ok).map(m=>`• ${m.t}`)].join('\n');
+ $('#main').innerHTML=`<div class=ph><div><h2>Lista de compras</h2><p>Montada sozinha: o que está no mínimo ou vai faltar para a produção planejada, até ter o dobro do mínimo.</p></div><div class=tools><button class=btn-o id=lc>${ic('copy',16)} Copiar</button><button class=btn id=lw>Enviar no WhatsApp</button></div></div>
+ <div class="card pad" id=man style="margin-bottom:14px"></div>
  <div class=kpis>${kpi('Itens para comprar','list',rows.length)}${kpi('Estimativa','wallet',brl(tot))}</div>
  <div class="card tw">${rows.length?`<table><thead><tr><th>Insumo</th><th>Em estoque</th><th>Mínimo</th><th>Produção planejada</th><th>A caminho</th><th>Comprar</th><th>Estimativa</th><th></th></tr></thead><tbody>${rows.map((x,n)=>`<tr><td>${esc(x.i.nome)}</td><td>${fmtN(x.i.quantidade)} ${x.i.unidade}</td><td>${fmtN(x.i.minimo)} ${x.i.unidade}</td><td>${x.d?fmtN(Math.round(x.d*1000)/1000)+' '+x.i.unidade:'—'}</td><td>${x.c?fmtN(x.c)+' '+x.i.unidade:'—'}</td><td><b>${fmtN(x.buy)} ${x.i.unidade}</b></td><td>${num(x.i.custo_unit)?brl(est(x)):'—'}</td><td class=ac>${w?`<button class=ib title="Registrar compra" data-b="${n}">${ic('truck')}</button>`:''}</td></tr>`).join('')}</tbody></table>`:`<div class=empty>${ic('check',40)}<p>Tudo em dia ✅ Nenhum insumo para repor.</p></div>`}</div>`;
  $('#main').onclick=e=>{const b=e.target.closest('[data-b]');if(!b)return;const x=rows[+b.dataset.b];
   editRow('compras',null,{insumo_id:x.i.id,quantidade:x.buy,valor:Math.round(est(x)*100)/100,status:'Pendente',data:today()})};
+ const drawM=()=>{$('#man').innerHTML=`<h3>✏️ Minhas anotações — o que preciso comprar</h3><div style="display:flex;gap:8px;margin-bottom:10px"><input id=mi placeholder="Escreva aqui (ex.: forminhas, uva, granulado…) e aperte Enter"><button class=btn id=ma>Adicionar</button></div>${M.length?M.map((m,i)=>`<div class=li><label class=ck style="margin:0"><input type=checkbox data-mk="${i}" ${m.ok?'checked':''}> <span style="${m.ok?'text-decoration:line-through;color:var(--mu)':''}">${esc(m.t)}</span></label><button class=ib data-md="${i}" title=Apagar>${ic('x',16)}</button></div>`).join('')+(M.some(m=>m.ok)?'<button class=btn-o id=mc style="margin-top:10px">Limpar comprados</button>':''):'<p class=mute>Nada anotado ainda.</p>'}`;
+  const add=async()=>{const v=$('#mi').value.trim();if(!v)return;M=[...M,{t:v,ok:false}];await saveManual(M);drawM();$('#mi').focus()};
+  $('#ma').onclick=add;$('#mi').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();add()}}};
+ $('#man').onclick=async e=>{const k=e.target.closest('[data-mk]'),d=e.target.closest('[data-md]'),c=e.target.closest('#mc');if(k)M[+k.dataset.mk].ok=k.checked;else if(d)M=M.filter((_,i)=>i!==+d.dataset.md);else if(c)M=M.filter(m=>!m.ok);else return;await saveManual(M);drawM()};
+ drawM();
  const lc=$('#lc');if(lc){lc.onclick=async()=>{try{await navigator.clipboard.writeText(txt());toast('Lista copiada')}catch{toast('Não consegui copiar — use o botão do WhatsApp','bad')}};
   $('#lw').onclick=()=>window.open('https://wa.me/?text='+encodeURIComponent(txt()),'_blank')}}
 
