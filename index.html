@@ -308,7 +308,7 @@ async function aiSend(){
 document.addEventListener('click',e=>{const b=e.target.closest('[data-aiq]');if(!b)return;const q=b.dataset.aiq;aiOpen(/:\s*$/.test(q)?q+($('#fm [name=nome]')?.value||''):q)});
 
 /* ===== aviso de estoque baixo no WhatsApp ===== */
-const WA_DEF='55996905025';
+const WA_DEF='83996905025';
 const waNum=()=>{let d=String(CFG.whatsapp_aviso||WA_DEF).replace(/\D/g,'');if(d.length<=11)d='55'+d;return d};
 let lowDis='';
 async function lowCheck(){
@@ -371,8 +371,8 @@ async function go(r){
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div class=note>Estoque mínimo <b>1</b>: o app avisa quando sobrar só 1 unidade (com 2 ou mais não avisa). <button class=btn-o id=mn1 style="margin-left:8px">Definir mínimo 1 em todos os insumos</button></div>`:'')+'<div id=lst></div>';
- $('#mn1')?.addEventListener('click',async()=>{if(!confirm('Definir o estoque mínimo como 1 em todos os insumos?'))return;const {error}=await sb.from('insumos').update({minimo:1}).neq('minimo',1);if(error)return fail(error);cache={};toast('Mínimo 1 aplicado');mod(r)});
+ $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div class=note>Estoque mínimo <b>1</b>: o app avisa quando sobrar só 1 unidade (com 2 ou mais não avisa). <button class=btn-o id=mn1 style="margin-left:8px">Definir mínimo 1 nos que estão sem mínimo</button></div>`:'')+'<div id=lst></div>';
+ $('#mn1')?.addEventListener('click',async()=>{if(!confirm('Definir mínimo 1 só nos insumos que estão sem mínimo? (os que já têm mínimo não mudam)'))return;const {error}=await sb.from('insumos').update({minimo:1}).or('minimo.is.null,minimo.eq.0');if(error)return fail(error);cache={};toast('Mínimo 1 aplicado');mod(r)});
  $('#main').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tabSel[r]=b.dataset.t;mod(r)});
  await list(t,$('#lst'))}
 const refsOf=d=>d.f.flatMap(f=>f[2]==='ref'?[f[3][0]]:f[2]==='lines'?f[3].cols.filter(c=>c[2]==='ref').map(c=>c[3][0]):[]);
