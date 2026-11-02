@@ -754,6 +754,18 @@ async function xRun(p,q,btn,force=false){
   if(['42883','PGRST202'].includes(error.code))return toast('Falta rodar o produzir.sql no Supabase.','bad');return fail(error)}
  toast(`${fmtN(q)} un de ${p.nome} produzidas — estoque baixado`);go('producao')}
 
+
+/* ===== correção: embalagem/mão de obra agora é o TOTAL DA RECEITA (o sistema divide pelo rendimento) ===== */
+{const f=T.produtos.f;
+ f.find(x=>x[0]==='custo_extra')[1]='Embalagem, mão de obra e outros — total da RECEITA INTEIRA (R$). O sistema divide pelas unidades sozinho';
+ f.find(x=>x[0]==='preco')[1]='Preço de venda de 1 unidade (R$)';
+ f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita INTEIRA — digite o nome, a quantidade total e a unidade (forminhas e caixas também entram aqui)'}
+const xCollect=collect;
+collect=(root,fields)=>{const o=xCollect(root,fields);
+ if(fields.some(f=>f[0]==='custo_extra')&&'custo_extra' in o)o.custo_extra=Math.round(num(o.custo_extra)/(num(o.rendimento)||1)*1e6)/1e6;return o};
+const xEdit=editRow;
+editRow=(tb,r,pre)=>xEdit(tb,tb==='produtos'&&r?{...r,custo_extra:Math.round(num(r.custo_extra)*(num(r.rendimento)||1)*100)/100}:r,pre);
+
 boot();
 
 </script></body></html>
