@@ -464,7 +464,6 @@ async function histCli(c){
 async function recibo(v){
  const {data:it}=await sb.from('venda_itens').select('*').eq('venda_id',v.id);if(!cache.clientes)cache.clientes=await all('clientes');const cl=cache.clientes.find(x=>x.id===v.cliente_id);
  const w=window.open('','_blank','width=380,height=640');if(!w)return toast('Libere pop-ups para imprimir','bad');
- /* OBS: sem fechar tags body/html aqui de propósito — o Live Server injeta seu script no primeiro fechamento de body que achar no arquivo */
  const linhas=(it||[]).map(i=>`${i.quantidade}x ${esc(i.produto_nome)}<span style="float:right">${brl(i.quantidade*i.preco)}</span><br>`).join('');
  w.document.write(`<div style="font:13px monospace;padding:16px"><h3 style="text-align:center">${esc(CFG.nome_doceria||'Doceria')}</h3><p style="text-align:center">${esc(CFG.telefone||'')}</p><hr>Venda nº ${v.numero} — ${dtt(v.created_at)}<br>${cl?'Cliente: '+esc(cl.nome):''}<hr>${linhas}<hr>Desconto<span style="float:right">${brl(v.desconto)}</span><br><b>Total<span style="float:right">${brl(v.total)}</span></b><br>Pagamento: ${esc(v.forma_pagamento||'')}<p style="text-align:center">Obrigado pela preferência! 🧁</p></div>`);w.document.close();w.print()}
 
@@ -487,7 +486,7 @@ function insLive(fm){
  const q=num(v.qtd_embalagem),pr=num(v.preco_embalagem),u=v.unidade;
  if(!(q>0))return setHtml(el,'<span class=mute>Informe quanto você comprou e quanto pagou para ver o custo.</span>');
  const cu=pr/q,b=baseCusto({custo_unit:cu,unidade:u});
- setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`+(u==='un'?'<p class=hint>Conte em unidades: 1 lata de leite condensado, 1 caixinha de creme de leite, 50 forminhas, 80 uvas… Na receita você escolhe a unidade que quiser (unidade, g, ml…). Se for diferente da compra, o sistema pergunta a equivalência uma vez só (ex.: 1 lata = 395 g).</p>':''))}
+ setHtml(el,`<div class=cpr><span>Você pagou</span><b>${brl(pr)} por ${fmtN(q)} ${u}</b></div>`+(u==='kg'||u==='L'?`<div class=cpr><span>Custo por ${u}</span><b>${brl(cu)}</b></div>`:'')+`<div class="cpr big"><span>Custo por ${b.u}</span><b>${brl4(b.v)}</b></div>`)}
 function fixUnits(fm){ /* ao escolher um insumo, a unidade da linha vira a dele; depois você troca por qualquer uma */
  fm.querySelectorAll('[data-l="ficha"] .ln').forEach(ln=>{
   const s=ln.querySelector('[name=insumo_id]'),u=ln.querySelector('[name=unidade]'),i=fnd('insumos',s?.value);if(!u||!i||u.dataset.ins===i.id)return;
@@ -507,7 +506,7 @@ function prodLive(fm){
   +(pr>0&&cus>0&&real!=null?`<div class=cpr style="margin-top:8px"><span>Com o preço de ${brl(pr)}, seu lucro é</span><b style="color:var(--${real<m-0.5?'ba':'ok'})">${Math.round(real)}% · ${brl(pr*(1-t/100)-cus)} por unidade</b></div>`:'')
   +mis.filter((m,k)=>mis.findIndex(x=>x[0].id===m[0].id)===k).map(([i,u])=>eqBox(i,u)).join('')
   +(v.__bad?.length?`<p class=hint style="color:var(--ba)">Ingrediente não encontrado: ${esc([...new Set(v.__bad)].join(', '))}. Cadastre em Insumos primeiro ou escolha um nome da lista.</p>`:'')
-  +(cus<=0?'<p class=hint>Adicione os ingredientes para ver o custo e o preço sugerido.</p>':'')
+  
   +(m+t>=100?'<p class=hint style="color:var(--ba)">Lucro desejado + taxas precisam somar menos de 100%.</p>':'')
   +(sem.length?`<p class=hint style="color:var(--ba)">Sem preço cadastrado: ${esc([...new Set(sem)].join(', '))}. O custo está incompleto.</p>`:''))}
 document.addEventListener('click',e=>{const b=e.target.closest('[data-use]');if(!b)return;const f=$('#fm [name=preco]');if(f){f.value=b.dataset.use;f.dispatchEvent(new Event('input',{bubbles:true}))}});
@@ -558,7 +557,7 @@ async function simView(){
  <div class="card pad" style="margin-bottom:14px"><div class=sim><div class=fl><label>Insumo</label><select id=si><option value="*">Todos os insumos</option>${op.map(i=>`<option value="${i.id}">${esc(i.nome)}</option>`).join('')}</select></div>
  <div class=fl><label>Variação (%)</label><input id=sp type=number step=any value=10></div>
  <div class=fl id=snw style="display:none"><label>ou novo preço pago (R$)</label><input id=sn type=number step=any min=0 inputmode=decimal></div></div>
- <p class=hint>É só uma simulação — nada é alterado. Para valer, atualize o preço do insumo em <a href="#estoque" style="color:var(--p)">Insumos</a>.</p></div><div id=so></div>`;
+ </div><div id=so></div>`;
  const run=()=>{const id=$('#si').value,f=1+num($('#sp').value)/100,adj=i=>id==='*'||i.id===id?f:1;
   const rows=PA.map(p=>{const a=custoIng(p,F,I2),b=custoIng(p,F,I2,adj),ex=num(p.custo_extra)+rateio();return{p,a:a+ex,b:b+ex,ch:Math.abs(b-a)>1e-9}}).filter(x=>x.ch).sort((x,y)=>(y.b/y.a)-(x.b/x.a));
   $('#so').innerHTML=rows.length?`<div class="card tw"><table><thead><tr><th>Receita</th><th>Custo hoje</th><th>Custo novo</th><th>Margem hoje</th><th>Margem nova</th><th>Preço atual</th><th>Preço sugerido</th></tr></thead><tbody>${rows.map(({p,a,b})=>{const m1=margemDe(p.preco,a),m2=margemDe(p.preco,b),s=sugeridoDe(b,p.margem),pior=m2!=null&&m2<num(p.margem)-0.5;
@@ -664,10 +663,14 @@ async function cfgView(){
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 <script>
-/* patch-analu.js — carregue DEPOIS do <script> principal e apague a última linha "boot();" dele. */
 (()=>{const s=document.createElement('style');s.textContent=`
 .lv-hero{background:linear-gradient(135deg,#fff,#ffe9f0);border:1px solid var(--bd);border-radius:22px;padding:22px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px}
 .lv-hero h2{font:400 34px/1.1 Satisfy,cursive;color:var(--p)}.lv-hero p{color:var(--mu);margin-top:4px}.lv-banner{display:block;max-width:100%;max-height:150px;width:auto;height:auto;border-radius:14px;object-fit:contain}
+.lv-hero h2,.lv-hero .lv-t{font:400 40px/1.1 Satisfy,cursive;color:var(--p);letter-spacing:.01em;text-shadow:0 2px 0 #fff}
+.lv-hero p{font:500 15px/1.4 Inter,sans-serif;color:#8b5a6a;margin-top:6px}
+.ph h2,.top h1{font-family:Satisfy,cursive;font-weight:400;color:var(--p);letter-spacing:.01em}.top h1{font-size:28px}.ph h2{font-size:26px}
+.rc-b h3{font:400 22px/1.15 Satisfy,cursive;color:var(--p)}
+.lv-chips button{font-weight:500;box-shadow:0 2px 8px #d72c6212}
 .lv-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.lv-chips button{background:#fff;border:1px solid var(--bd);border-radius:99px;padding:7px 13px;font-size:12.5px;color:var(--p)}.lv-chips button:hover{background:var(--ps)}
 .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .rc{background:#fff;border:1px solid var(--bd);border-radius:20px;overflow:hidden;box-shadow:0 6px 20px #d72c6214;transition:.2s}.rc:hover{transform:translateY(-3px)}
@@ -726,7 +729,7 @@ const xEmo=p=>{const c=nm((p.categoria||'')+' '+p.nome);return/brigad/.test(c)?'
 async function xLivro(){
  const [P0,F]=await Promise.all([all('produtos'),all('ficha_tecnica')]);cache.insumos=await all('insumos');
  const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome)),w=canW('produtos'),ab=P.filter(abaixo);
- $('#main').innerHTML=`<section class=lv-hero><div><img class=lv-banner src="https://i.ibb.co/chy6ZGBQ/605bd83e-c52e-4f85-9048-f35ccd71a006.jpg" alt="Vamos preparar o que hoje?" onerror="this.replaceWith(Object.assign(document.createElement('h2'),{textContent:'Vamos preparar o que hoje?'}))"><p>Seu livro de receitas — custos sempre atualizados com o preço dos insumos.</p></div><div class=tools><div class=sr>${ic('search',16)}<input id=q placeholder="Buscar receita…"></div>${w?`<button class=btn id=nr>${ic('plus',16)} Nova receita</button>`:''}</div></section>
+ $('#main').innerHTML=`<section class=lv-hero><div><img class=lv-banner src="https://i.ibb.co/DyPtsys/5eb5d5e7-9fb0-43d1-be55-2c46355a87cf.jpg" alt="Vamos preparar o que hoje?" onerror="this.replaceWith(Object.assign(document.createElement('h2'),{textContent:'Vamos preparar o que hoje?'}))"><p>Seu livro de receitas — custos sempre atualizados com o preço dos insumos.</p></div><div class=tools><div class=sr>${ic('search',16)}<input id=q placeholder="Buscar receita…"></div>${w?`<button class=btn id=nr>${ic('plus',16)} Nova receita</button>`:''}</div></section>
  <div class=lv-chips><button data-aiq="Me sugira 3 receitas lucrativas para vender essa semana, com ingredientes e rendimento.">✦ Sugerir receitas</button><button data-aiq="Analise minhas receitas e preços cadastrados. Quais estão com lucro baixo e o que devo reajustar?">✦ Reajustar preços${ab.length?` (${ab.length} abaixo da meta)`:''}</button><button data-aiq="Me dê dicas para aumentar o rendimento das minhas receitas sem perder qualidade.">✦ Dicas da Analu</button></div>
  ${P.length?`<div class=rg>${P.map((p,i)=>{const c=cT(p),m=margemReal(p);return `<article class=rc data-n="${esc(nm(p.nome))}"><div class=rc-h><span>${xEmo(p)}</span><em>${esc(p.categoria||'Receita')}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un · ${F.filter(f=>f.produto_id===p.id).length} ingredientes</small>
  <div class=rc-n><div><small>Custo/un</small><b>${c>0?brl(c):'—'}</b></div><div><small>Preço</small><b>${num(p.preco)?brl(p.preco):'—'}</b></div><div><small>Lucro</small>${c>0&&m!=null?`<span class="bd ${abaixo(p)?'warn':'ok'}">${Math.round(m)}%</span>`:'—'}</div></div>
@@ -804,7 +807,7 @@ editRow=(tb,r,pre)=>{if(tb==='produtos'&&r){let t={};try{t=JSON.parse(r.tempos||
   +(q.gas?`<div class=cpr><span>Gás</span><b>${brl4(q.gas/r)}</b></div>`:'')+(q.luz?`<div class=cpr><span>Energia dos equipamentos</span><b>${brl4(q.luz/r)}</b></div>`:'');
  const row=[...el.querySelectorAll('.cpr')].find(x=>/Embalagem, m/.test(x.textContent));if(row)row.outerHTML=rows;
  el.querySelector('.xh')?.remove();
- if(num(v.tempo_min)>0&&!xHora())el.insertAdjacentHTML('beforeend','<p class="hint xh" style="color:var(--ba)">Para calcular o seu trabalho, diga em <a href="#config">Configurações</a> quanto quer ganhar por mês. O sistema descobre o valor da sua hora sozinho.</p>')}}
+ }}
 const xCfg=cfgView;cfgView=async r=>{await xCfg(r);const cf=$('#cf');if(!cf)return;
  Object.keys(XD).forEach(k=>{const e=cf.querySelector(`[name=${k}]`);if(e&&!e.value)e.value=XD[k]});
  cf.querySelector('button').insertAdjacentHTML('beforebegin','<div class=cp id=kh style="margin-top:12px"></div>');
