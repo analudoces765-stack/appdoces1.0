@@ -702,7 +702,7 @@ const xStart=start;start=async()=>{await xStart();xLive()};
 
 async function go(r){
  if(!me)return;const ok=ALLOW[me.nivel]||[];if(!MOD[r]||!ok.includes(r))r='dashboard';
- xGoAt=Date.now();route=r;aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
+ xGoAt=Date.now();route=r;document.body.classList.remove('era-debut','era-1989','era-lover','era-fearless','era-reputation','era-speak-now','era-red','era-folklore','era-evermore','era-midnights');document.body.classList.add('era-'+(ALBUMS[r]?.era||'debut'));document.documentElement.style.setProperty('--era-ink',ALBUMS[r]?.ink||'#34202a');document.documentElement.style.setProperty('--era-bg',ALBUMS[r]?.bg||'#fdf5f7');aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
  $('#ttl').textContent=MOD[r].t;$('#main').onclick=$('#main').onchange=$('#main').oninput=null;$('#main').innerHTML='<div class=sk></div>';
  try{if(['dashboard','produtos','precos','producao','lista','estoque','config'].includes(r))await xSync();
@@ -714,20 +714,20 @@ async function go(r){
 
 /* ===== visual por eras/álbuns: cada área do app ganha uma identidade própria ===== */
 const ALBUMS={
- dashboard:{name:'Taylor Swift',era:'debut',font:'album-script',sub:'O começo de tudo',bg:'linear-gradient(110deg,#163e43,#75d7df)',ink:'#102c32'},
+ dashboard:{name:'Início',era:'debut',font:'album-script',sub:'O começo de tudo',bg:'linear-gradient(110deg,#163e43,#75d7df)',ink:'#102c32'},
  vendas:{name:'1989',era:'1989',font:'album-marker',sub:'Vendas e novos começos',bg:'linear-gradient(110deg,#ffe2a6,#f8c9a4)',ink:'#26354d'},
- encomendas:{name:'Lover',era:'lover',font:'album-script',sub:'Feito com carinho',bg:'linear-gradient(110deg,#ffb4d0,#f7d5e7)',ink:'#a21d55'},
- clientes:{name:'Fearless',era:'fearless',font:'album-serif',sub:'Cada cliente faz parte da história',bg:'linear-gradient(110deg,#8b632f,#d8b878)',ink:'#fff7df'},
- estoque:{name:'reputation',era:'reputation',font:'album-gothic',sub:'Controle total, sem perder o ritmo',bg:'linear-gradient(110deg,#080808,#282828)',ink:'#f7f7f7'},
- produtos:{name:'Speak Now',era:'speak-now',font:'album-script',sub:'Receitas que contam histórias',bg:'linear-gradient(110deg,#8d287e,#d18ac9)',ink:'#fff8ff'},
- precos:{name:'Red',era:'red',font:'album-oswald',sub:'Custos, margens e decisões',bg:'linear-gradient(110deg,#781d23,#c65c57)',ink:'#fff0e8'},
- producao:{name:'folklore',era:'folklore',font:'album-italic',sub:'Um capítulo de cada vez',bg:'linear-gradient(110deg,#252525,#77736f)',ink:'#f2f0ed'},
- lista:{name:'evermore',era:'evermore',font:'album-italic',sub:'Tudo preparado para a próxima produção',bg:'linear-gradient(110deg,#624638,#b48b72)',ink:'#ffe0cc'},
- compras:{name:'Midnights',era:'midnights',font:'album-midnights',sub:'Planeje a próxima compra',bg:'linear-gradient(110deg,#102d4b,#5279a7)',ink:'#e5edff'},
- financeiro:{name:'reputation',era:'reputation',font:'album-gothic',sub:'Números sob controle',bg:'linear-gradient(110deg,#080808,#282828)',ink:'#f7f7f7'},
+ encomendas:{name:'Lovers',era:'lover',font:'album-script',sub:'Feito com carinho',bg:'linear-gradient(110deg,#ffb4d0,#f7d5e7)',ink:'#a21d55'},
+ clientes:{name:'Clientes',era:'fearless',font:'album-serif',sub:'Cada cliente faz parte da história',bg:'linear-gradient(110deg,#8b632f,#d8b878)',ink:'#fff7df'},
+ estoque:{name:'Estoque',era:'reputation',font:'album-gothic',sub:'Controle total, sem perder o ritmo',bg:'linear-gradient(110deg,#080808,#282828)',ink:'#f7f7f7'},
+ produtos:{name:'Receitas',era:'speak-now',font:'album-script',sub:'Receitas que contam histórias',bg:'linear-gradient(110deg,#8d287e,#d18ac9)',ink:'#fff8ff'},
+ precos:{name:'Precificação',era:'red',font:'album-oswald',sub:'Custos, margens e decisões',bg:'linear-gradient(110deg,#781d23,#c65c57)',ink:'#fff0e8'},
+ producao:{name:'Produção',era:'folklore',font:'album-italic',sub:'Um capítulo de cada vez',bg:'linear-gradient(110deg,#252525,#77736f)',ink:'#f2f0ed'},
+ lista:{name:'Lista de produção',era:'evermore',font:'album-italic',sub:'Tudo preparado para a próxima produção',bg:'linear-gradient(110deg,#624638,#b48b72)',ink:'#ffe0cc'},
+ compras:{name:'Compras',era:'midnights',font:'album-midnights',sub:'Planeje a próxima compra',bg:'linear-gradient(110deg,#102d4b,#5279a7)',ink:'#e5edff'},
+ financeiro:{name:'Financeiro',era:'reputation',font:'album-gothic',sub:'Números sob controle',bg:'linear-gradient(110deg,#080808,#282828)',ink:'#f7f7f7'},
  relatorios:{name:'1989',era:'1989',font:'album-marker',sub:'Veja a história dos seus resultados',bg:'linear-gradient(110deg,#ffe2a6,#f8c9a4)',ink:'#26354d'},
- usuarios:{name:'Taylor Swift',era:'debut',font:'album-script',sub:'Quem faz parte do sistema',bg:'linear-gradient(110deg,#163e43,#75d7df)',ink:'#102c32'},
- config:{name:'evermore',era:'evermore',font:'album-italic',sub:'Ajuste os detalhes do seu universo',bg:'linear-gradient(110deg,#624638,#b48b72)',ink:'#ffe0cc'}
+ usuarios:{name:'Usuários',era:'debut',font:'album-script',sub:'Quem faz parte do sistema',bg:'linear-gradient(110deg,#163e43,#75d7df)',ink:'#102c32'},
+ config:{name:'Configurações',era:'evermore',font:'album-italic',sub:'Ajuste os detalhes do seu universo',bg:'linear-gradient(110deg,#624638,#b48b72)',ink:'#ffe0cc'}
 };
 function albumHeader(routeName){
  const a=ALBUMS[routeName];if(!a)return;
@@ -751,6 +751,48 @@ function albumHeader(routeName){
 .album-marker{font:400 clamp(31px,4.5vw,43px)/1 'Permanent Marker',cursive!important;letter-spacing:.03em!important}
 .album-midnights{font:600 clamp(32px,4.5vw,43px)/1 Inter,sans-serif!important;letter-spacing:-.05em!important}
 @media(max-width:600px){.album-era{min-height:112px;padding:17px 18px;border-radius:15px;margin-bottom:17px}.album-era-mark{font-size:32px;margin-right:2px}.album-era p{font-size:11px}.album-kicker{font-size:8px;letter-spacing:.13em}}
+/* Identidade de cada álbum aplicada à interface inteira, não só ao cabeçalho */
+body.era-debut{--p:#397f82;--ps:#e2f6f5;--bd:#cbe8e6;--ink:#173f43;--mu:#527a7c;--bg:#f1fbfa}
+body.era-1989{--p:#d6a34b;--ps:#fff4dc;--bd:#f0d9a9;--ink:#29364a;--mu:#7b6d58;--bg:#fffaf0}
+body.era-lover{--p:#df6b9b;--ps:#fff0f6;--bd:#f5d2e1;--ink:#782849;--mu:#a46b84;--bg:#fff6fa}
+body.era-fearless{--p:#9b7436;--ps:#f8edcf;--bd:#e8d6a9;--ink:#49341d;--mu:#8b7656;--bg:#fff9e9}
+body.era-reputation{--p:#242424;--ps:#eeeeee;--bd:#d8d8d8;--ink:#161616;--mu:#6c6c6c;--bg:#f5f5f5}
+body.era-speak-now{--p:#9a3c92;--ps:#faeafa;--bd:#ebc9e7;--ink:#51264e;--mu:#95678f;--bg:#fff7ff}
+body.era-red{--p:#a51f2b;--ps:#fae8e8;--bd:#edc6c6;--ink:#4b171c;--mu:#93666a;--bg:#fff6f5}
+body.era-folklore{--p:#55534f;--ps:#efeeeb;--bd:#d9d7d1;--ink:#2e2d2a;--mu:#77756f;--bg:#f7f6f2}
+body.era-evermore{--p:#80543d;--ps:#f4e9df;--bd:#e4d0c1;--ink:#4c3024;--mu:#927666;--bg:#fbf4ed}
+body.era-midnights{--p:#496c9d;--ps:#e8effb;--bd:#cbd8ed;--ink:#1b2c47;--mu:#7184a3;--bg:#f3f6fc}
+body.era-debut #main,body.era-lover #main,body.era-fearless #main,body.era-speak-now #main,body.era-evermore #main,body.era-folklore #main,body.era-red #main,body.era-1989 #main,body.era-reputation #main,body.era-midnights #main{color:var(--ink)}
+/* Títulos de página e seções usam a linguagem tipográfica da era ativa */
+body.era-debut #ttl,body.era-debut #main h2,body.era-debut #main h3{font-family:Satisfy,cursive;font-weight:400}
+body.era-lover #ttl,body.era-lover #main h2,body.era-lover #main h3,body.era-speak-now #ttl,body.era-speak-now #main h2,body.era-speak-now #main h3{font-family:Satisfy,cursive;font-weight:400;letter-spacing:.01em}
+body.era-1989 #ttl,body.era-1989 #main h2,body.era-1989 #main h3,body.era-1989 .card h3{font-family:'Permanent Marker',cursive;font-weight:400;letter-spacing:.01em}
+body.era-fearless #ttl,body.era-fearless #main h2,body.era-fearless #main h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+body.era-reputation #ttl,body.era-reputation #main h2,body.era-reputation #main h3{font-family:'UnifrakturCook',serif;font-weight:700;letter-spacing:.04em}
+body.era-red #ttl,body.era-red #main h2,body.era-red #main h3{font-family:Oswald,sans-serif;font-weight:400;letter-spacing:.04em;text-transform:uppercase}
+body.era-folklore #ttl,body.era-folklore #main h2,body.era-folklore #main h3,body.era-evermore #ttl,body.era-evermore #main h2,body.era-evermore #main h3{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;letter-spacing:.02em}
+body.era-midnights #ttl,body.era-midnights #main h2,body.era-midnights #main h3{font-family:Inter,sans-serif;font-weight:600;letter-spacing:-.045em}
+/* Subtítulos, etiquetas e textos secundários seguem o tratamento visual da capa */
+body.era-reputation .ph p,body.era-reputation .mute,body.era-reputation label{letter-spacing:.035em}
+body.era-1989 .ph p,body.era-1989 .mute{font-family:'Special Elite',monospace}
+body.era-folklore .ph p,body.era-folklore .mute,body.era-evermore .ph p,body.era-evermore .mute{font-family:'Cormorant Garamond',Georgia,serif;font-size:15px;font-style:italic}
+body.era-speak-now .ph p,body.era-speak-now .mute,body.era-lover .ph p,body.era-lover .mute{font-family:Satisfy,cursive;font-size:16px}
+body.era-red .ph p,body.era-red .mute{font-family:Oswald,sans-serif;letter-spacing:.04em}
+body.era-midnights .ph p,body.era-midnights .mute{font-family:Inter,sans-serif;letter-spacing:-.02em}
+/* Botões, navegação, cartões e formulários também recebem as cores da era */
+#side nav a.on{background:var(--p);color:#fff;box-shadow:0 5px 16px color-mix(in srgb,var(--p) 28%,transparent)}
+.top{background:color-mix(in srgb,var(--bg) 92%,transparent);border-color:var(--bd)}
+.card,.sr,.btn-o,.note{border-color:var(--bd)}
+.btn{background:var(--p);border-color:var(--p)}
+.btn-o:hover,.ib:hover{color:var(--p);border-color:var(--p)}
+input:focus,select:focus,textarea:focus{border-color:var(--p);box-shadow:0 0 0 3px var(--ps)}
+.tabs .on{color:var(--p);border-color:var(--p)}
+.album-era{border-radius:3px;box-shadow:none}
+body.era-lover .album-era,body.era-speak-now .album-era{border-radius:28px}
+body.era-reputation .album-era{border-radius:0;text-transform:lowercase}
+body.era-folklore .album-era,body.era-evermore .album-era{border-radius:2px}
+body.era-1989 .album-era{border-radius:0}
+body.era-midnights .album-era{border-radius:8px}
 `;document.head.append(st)})();
 
 /* ===== 3 · Livro de receitas ===== */
