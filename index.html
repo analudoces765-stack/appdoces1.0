@@ -864,6 +864,54 @@ async function xSobra(p,q){
  for(const [id,n] of Object.entries(need)){const i=Im.get(id),E=num(i.qtd_embalagem)||1,x=Math.ceil(n/E-1e-9)*E-n;
   if(x>1e-9)await sb.from('insumos').update({quantidade:Math.round((num(i.quantidade)-x)*1e6)/1e6}).eq('id',id)}}
 
+/* ===== Temas por aba: cada tela com sua própria faixa de cor, fonte e acento (menos Receitas) ===== */
+(()=>{
+ /* [faixa, texto na faixa, acento p/ títulos e botões, fonte, tamanho do título] */
+ const ERA={
+  dashboard:['#8fd3c9','#124d46','#1f7a70',"'Caveat',cursive",46],
+  precos:['#f7b733','#4a3000','#b97700',"'Josefin Sans',sans-serif",30],
+  producao:['#cdb8f0','#3a2466','#7a52c7',"'Dancing Script',cursive",42],
+  estoque:['#6d0f14','#ffe9e0','#8c1c24',"'Bebas Neue',sans-serif",40],
+  lista:['#cfe3f3','#1d2b38','#3b7ddd',"'Permanent Marker',cursive",30],
+  compras:['#141414','#f4f4f4','#222222',"'UnifrakturCook',serif",36],
+  vendas:['#f9cfe0','#9c2457','#d72c62',"'Great Vibes',cursive",46],
+  encomendas:['#c6c9c0','#1f2420','#5a6b55',"'Cormorant Garamond',serif",36],
+  clientes:['#8b6a50','#fff1e0','#7a5339',"'Playfair Display',serif",32],
+  financeiro:['#14214a','#cfe0ff','#1f3a8a',"'Righteous',sans-serif",32],
+  relatorios:['#3a3a3d','#f3ead8','#4a4a50',"'Cinzel',serif",30],
+  usuarios:['#f28a1f','#0e4f58','#c9640a',"'Anton',sans-serif",34],
+  config:['#e8dcc8','#3b2f20','#8a6d3b',"'Satisfy',cursive",38]
+ };
+ const l=document.createElement('link');l.rel='stylesheet';
+ l.href='https://fonts.googleapis.com/css2?family=Anton&family=Bebas+Neue&family=Caveat:wght@600&family=Cinzel:wght@600&family=Cormorant+Garamond:ital,wght@1,600&family=Dancing+Script:wght@700&family=Great+Vibes&family=Josefin+Sans:wght@700&family=Permanent+Marker&family=Playfair+Display:ital,wght@1,700&family=Righteous&family=UnifrakturCook:wght@700&display=swap';
+ document.head.append(l);
+ const s=document.createElement('style');
+ let css=`
+ body[data-r] .top{background:var(--eb);border-bottom:0;backdrop-filter:none;padding-top:14px;padding-bottom:14px;box-shadow:0 6px 0 color-mix(in srgb,var(--eb) 40%,#fff)}
+ body[data-r] .top h1{font-family:var(--ef);font-weight:400;font-size:var(--es);line-height:1.05;color:var(--ei);letter-spacing:.02em;text-shadow:none}
+ body[data-r] .top .ib,body[data-r] .date{color:var(--ei);opacity:.85}
+ body[data-r]{--p:var(--ea);--ps:color-mix(in srgb,var(--ea) 10%,#fff)}
+ body[data-r] .ph h2,body[data-r] .lv-hero h2{font-family:var(--ef);font-weight:400;color:var(--ea);letter-spacing:.02em;font-size:calc(var(--es)*.78);line-height:1.1;display:inline-block;padding-bottom:4px;border-bottom:5px solid var(--eb)}
+ body[data-r] .card h3,body[data-r] .lv-hero p{color:var(--ea)}
+ body[data-r] .card h3{font-weight:600}
+ body[data-r] th{color:var(--ea);background:color-mix(in srgb,var(--eb) 18%,#fff)}
+ body[data-r] .tabs .on{color:var(--ea);border-color:var(--ea)}
+ body[data-r] .kpi .ico{background:color-mix(in srgb,var(--eb) 35%,#fff);color:var(--ea)}
+ body[data-r] .card{border-top:4px solid var(--eb)}
+ body[data-r] .lv-hero{background:linear-gradient(135deg,#fff,color-mix(in srgb,var(--eb) 30%,#fff));border-color:var(--eb)}
+ #side nav a{border-left:6px solid transparent}
+ @media(max-width:900px){body[data-r] .top h1{font-size:calc(var(--es)*.8)}}
+ `;
+ for(const [k,[b,i,a,f,z]] of Object.entries(ERA)){
+  css+=`body[data-r="${k}"]{--eb:${b};--ei:${i};--ea:${a};--ef:${f};--es:${z}px}
+  #side nav a[data-r="${k}"]{border-left-color:${b}}
+  #side nav a[data-r="${k}"].on{background:${a};color:#fff}`}
+ s.textContent=css;document.head.append(s);
+ const setTheme=r=>{if(ERA[r])document.body.dataset.r=r;else delete document.body.dataset.r};
+ const _go=go;
+ go=async function(r){setTheme(r);await _go(r);setTheme(route)};
+})();
+
 boot();
 
 </script></body></html>
