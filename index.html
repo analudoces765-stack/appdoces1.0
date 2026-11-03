@@ -155,7 +155,7 @@ const num=v=>+v||0;
 /* unidades: peso (g, kg), volume (ml, L) e unidade (un) — receitas usam g/ml, insumos costumam ser comprados em kg/L */
 const FT={kg:1000,g:1,L:1000,ml:1,un:1},FAM={kg:'peso',g:'peso',L:'volume',ml:'volume',un:'un'},UNF={peso:['g','kg'],volume:['ml','L'],un:['un']};
 const conv=(q,de,para)=>num(q)*(FT[de]||1)/(FT[para]||1);
-const brl4=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:4});
+const brl4=n=>{n=Number(n||0);return n.toLocaleString('pt-BR',{style:'currency',currency:'BRL',minimumFractionDigits:2,maximumFractionDigits:Math.abs(n)>=0.1?2:3})};
 const baseCusto=i=>({v:num(i.custo_unit)/(FT[i.unidade]||1),u:{kg:'g',g:'g',L:'ml',ml:'ml',un:'un'}[i.unidade]||'un'});
 const dd=n=>{const d=new Date();d.setDate(d.getDate()-n);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
 const today=()=>dd(0);
