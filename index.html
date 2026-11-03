@@ -237,7 +237,7 @@ encomendas:{t:'Encomendas',s:'O sinal e o saldo a receber são lançados no fina
  acts:[['check','Marcar como entregue',r=>upd('encomendas',r.id,{status:'Entregue'},'Encomenda entregue'),r=>!['Entregue','Cancelado'].includes(r.status)]]},
 insumos:{t:'Insumos e embalagens',s:'O que você compra e quanto custa',one:'insumo',warn:r=>num(r.quantidade)<=num(r.minimo),live:insLive,def:{tipo:'Matéria-prima',unidade:'un',qtd_embalagem:1,quantidade:0,minimo:1},
  check:v=>!(v.qtd_embalagem>0)?'Informe quanto você comprou (maior que zero).':v.quantidade<0||v.minimo<0?'Estoque não pode ser negativo.':null,
- f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você compra / conta este item?','select',[['un','Por unidade (lata, caixa, forminha, uva…)'],['kg','Por quilo (kg)'],['g','Por grama (g)'],['L','Por litro (L)'],['ml','Por mililitro (ml)']],'nolist'],['qtd_embalagem','Quanto vem na embalagem','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
+ f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você compra / conta este item?','select',[['un','Por unidade (lata, caixa, forminha, uva…)'],['kg','Por quilo (kg)'],['g','Por grama (g)'],['L','Por litro (L)'],['ml','Por mililitro (ml)']],'nolist'],['qtd_embalagem','Quanto vem na embalagem','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['uso','Quantas vezes você usa este item?','select',[['varias','Aos poucos, em várias produções (ex.: manteiga)'],['uma','Uma vez só — uso a embalagem inteira (ex.: lata de leite condensado)']],'nolist'],['calc','','info',,'nolist'],
  ['custo_unit','Custo por g / ml / un','money',,'ro'],['quantidade','Em estoque agora','number'],['minimo','Estoque mínimo (avisa quando chegar nele)','number']],
  fmt:{qtd_embalagem:r=>`${fmtN(r.qtd_embalagem)} ${r.unidade||''} · ${brl(r.preco_embalagem)}`,
  custo_unit:r=>{if(!num(r.custo_unit))return '<span class="bd warn">Sem preço</span>';const b=baseCusto(r);return `${brl4(b.v)} <small class=mute>/${b.u}</small>`},
@@ -372,12 +372,8 @@ async function go(r){
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div style="margin-bottom:12px"><button class=btn-o id=zs>Zerar sobras de embalagem</button></div>`:'')+'<div id=lst></div>';
- $('#zs')?.addEventListener('click',async()=>{const I=await all('insumos'),S=I.filter(i=>num(i.quantidade)>0&&num(i.quantidade)<0.05*(num(i.qtd_embalagem)||1));
-  if(!S.length)return toast('Nenhuma sobra para acertar');
-  if(!confirm('Sobrou menos de 5% da embalagem nestes itens. Zerar o estoque deles?\n\n'+S.map(i=>'• '+i.nome+': '+fmtN(i.quantidade)+' '+i.unidade).join('\n')))return;
-  for(const i of S){const {error}=await sb.from('insumos').update({quantidade:0}).eq('id',i.id);if(error)return fail(error);await sb.from('movimentacoes').insert({item:i.nome,tipo:'Saída',quantidade:num(i.quantidade),origem:'Acerto de sobra'})}
-  cache={};toast('Sobras zeradas');mod(r)});
+ $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+'<div id=lst></div>';
+ 
  $('#main').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tabSel[r]=b.dataset.t;mod(r)});
  await list(t,$('#lst'))}
 const refsOf=d=>d.f.flatMap(f=>f[2]==='ref'?[f[3][0]]:f[2]==='lines'?f[3].cols.filter(c=>c[2]==='ref').map(c=>c[3][0]):[]);
@@ -406,9 +402,9 @@ async function editRow(tb,r,pre){
  if(L&&r)vals[L[0]]=(await sb.from(L[3].tb).select('*').eq(L[3].fk,r.id)).data||[];
  form({title:r?'Editar '+(d.one||d.t):(d.nl||'Novo '+(d.one||d.t)),fields:d.f.filter(f=>!(f[4]||'').includes('ro')),vals,onInput:d.live,save:async v=>{
   const m=d.check?.(v);if(m)return toast(m,'bad'),false;
-  const p={...(r?{}:d.def||{}),...v};if(L)delete p[L[0]];
+  const p={...(r?{}:d.def||{}),...v};(d.virt||[]).forEach(k=>delete p[k]);if(L)delete p[L[0]];
   const q=r?sb.from(tb).update(p).eq('id',r.id).select().single():sb.from(tb).insert(p).select().single();
-  const {data,error}=await q;if(error)return fail(error);
+  const {data,error}=await q;if(error)return fail(error);if(d.after)await d.after(v,data);
   if(L){const o=L[3],x=await sb.from(o.tb).delete().eq(o.fk,data.id);if(x.error)return fail(x.error);
    const nz=l=>{if(tb!=='produtos')return l;const i=(cache.insumos||[]).find(x=>x.id===l.insumo_id),q=i?convX(l.quantidade,l.unidade||i.unidade,i):null;return i&&q!=null?{...l,quantidade:Math.round(q*1e6)/1e6,unidade:i.unidade}:l};
    const ins=v[L[0]].map(l=>({...nz(l),[o.fk]:data.id}));if(ins.length){const y=await sb.from(o.tb).insert(ins);if(y.error)return fail(y.error)}}
@@ -687,7 +683,7 @@ async function xSync(){
    await xSet('insumos',i.id,'custo_unit',c,i.custo_unit)}}
   const Im=new Map(I.map(i=>[i.id,i]));
   for(const p of P){
-   const tot=F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=Im.get(f.insumo_id);if(!i)return a;const q=convX(f.quantidade,f.unidade||i.unidade,i);return q==null?a:a+q*num(i.custo_unit)},0);
+   const tot=F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=Im.get(f.insumo_id);if(!i)return a;const q=convX(f.quantidade,f.unidade||i.unidade,i);return q==null?a:a+(usoUma(i.id)?Math.ceil(q/(num(i.qtd_embalagem)||1)-1e-9)*num(i.preco_embalagem):q*num(i.custo_unit))},0);
    const c=Math.round(tot/(num(p.rendimento)||1)*1e6)/1e6;
    await xSet('produtos',p.id,'custo',c,p.custo);
    if(['embalagem_total','tempo_min','tempos'].some(k=>p[k]!=null)){const ce=xExtra(p);
@@ -748,7 +744,7 @@ async function xRun(p,q,btn,force=false){
  const {error}=await sb.rpc('produzir',{p_produto:p.id,p_qtd:q,p_forcar:force});btn.disabled=false;
  if(error){if(/insuficiente/i.test(error.message))return confirm(error.message+'\n\nProduzir mesmo assim? O estoque ficará negativo.')?xRun(p,q,btn,true):0;
   if(['42883','PGRST202'].includes(error.code))return toast('Falta rodar o produzir.sql no Supabase.','bad');return fail(error)}
- toast(`${fmtN(q)} un de ${p.nome} produzidas — estoque baixado`);go('producao')}
+ await xSobra(p,q);toast(`${fmtN(q)} un de ${p.nome} produzidas — estoque baixado`);go('producao')}
 
 
 /* ===== sua hora de trabalho ===== */
@@ -814,7 +810,7 @@ function recLive(fm){
  fixUnits(fm);
  const v=collect(fm,T.produtos.f.filter(f=>!(f[4]||'').includes('ro'))),I=cache.insumos||[],el=fm.querySelector('#calc');if(!el)return;
  let tot=0;const sem=[],mis=[];
- for(const l of v.ficha){const i=I.find(x=>x.id===l.insumo_id);if(!i)continue;if(!num(i.custo_unit))sem.push(i.nome);const q=convX(l.quantidade,l.unidade||i.unidade,i);if(q==null){mis.push([i,l.unidade||i.unidade]);continue}tot+=q*num(i.custo_unit)}
+ for(const l of v.ficha){const i=I.find(x=>x.id===l.insumo_id);if(!i)continue;if(!num(i.custo_unit))sem.push(i.nome);const q=convX(l.quantidade,l.unidade||i.unidade,i);if(q==null){mis.push([i,l.unidade||i.unidade]);continue}tot+=usoUma(i.id)?Math.ceil(q/(num(i.qtd_embalagem)||1)-1e-9)*num(i.preco_embalagem):q*num(i.custo_unit)}
  const r=num(v.rendimento)>0?num(v.rendimento):1;
  setHtml(el,`<div class=cpr><span>Custo dos ingredientes (receita inteira)</span><b>${brl(tot)}</b></div><div class="cpr big"><span>Custo por unidade</span><b>${brl4(tot/r)}</b></div><p class=hint>Embalagem, tempo de trabalho e preço de venda ficam na aba Precificação.</p>`
   +mis.filter((m,k)=>mis.findIndex(x=>x[0].id===m[0].id)===k).map(([i,u])=>eqBox(i,u)).join('')
@@ -854,6 +850,19 @@ function xPrecForm(p){
   save:async v=>{if(v.margem<0||v.margem+taxa()>=100)return toast('Lucro desejado + taxas precisam somar menos de 100%.','bad'),false;
    const o=mk(v),{error}=await sb.from('produtos').update({embalagem_total:v.embalagem_total,tempo_min:v.tempo_min,tempos:o.tempos,margem:v.margem,preco:v.preco,custo_extra:xExtra(o)}).eq('id',p.id);
    if(error)return fail(error);return true}})}
+
+const getUsoMap=()=>{try{return JSON.parse(CFG.uso_unico||localStorage.getItem('uso')||'{}')}catch{return{}}};
+const usoUma=id=>!!getUsoMap()[id];
+async function setUso(id,val){const M=getUsoMap();if(val==='uma')M[id]=1;else delete M[id];CFG.uso_unico=JSON.stringify(M);try{localStorage.setItem('uso',CFG.uso_unico)}catch{}
+ const {error}=await sb.from('configuracoes').upsert([{chave:'uso_unico',valor:CFG.uso_unico}]);if(error)toast('Esta escolha foi salva só neste aparelho','bad')}
+T.insumos.virt=['uso'];T.insumos.after=(v,row)=>setUso(row.id,v.uso);
+const xEdit2=editRow;editRow=(tb,r,pre)=>tb==='insumos'?xEdit2(tb,r,{uso:usoUma(r?.id)?'uma':'varias',...pre}):xEdit2(tb,r,pre);
+async function xSobra(p,q){
+ const [F,I]=await Promise.all([sb.from('ficha_tecnica').select('*').eq('produto_id',p.id).then(r=>r.data||[]),all('insumos')]);
+ const Im=new Map(I.map(i=>[i.id,i])),need={};
+ for(const f of F){const i=Im.get(f.insumo_id);if(!i||!usoUma(i.id))continue;const c=convX(f.quantidade,f.unidade||i.unidade,i);if(c!=null)need[i.id]=(need[i.id]||0)+c*q/(num(p.rendimento)||1)}
+ for(const [id,n] of Object.entries(need)){const i=Im.get(id),E=num(i.qtd_embalagem)||1,x=Math.ceil(n/E-1e-9)*E-n;
+  if(x>1e-9)await sb.from('insumos').update({quantidade:Math.round((num(i.quantidade)-x)*1e6)/1e6}).eq('id',id)}}
 
 boot();
 
