@@ -241,7 +241,7 @@ insumos:{t:'Insumos e embalagens',s:'O que você compra e quanto custa',one:'ins
  fmt:{qtd_embalagem:r=>`${fmtN(r.qtd_embalagem)} ${r.unidade||''} · ${brl(r.preco_embalagem)}`,
  custo_unit:r=>{if(!num(r.custo_unit))return '<span class="bd warn">Sem preço</span>';const b=baseCusto(r);return `${brl4(b.v)} <small class=mute>/${b.u}</small>`},
  quantidade:r=>{const q=num(r.quantidade),m=num(r.minimo),pc=m?Math.min(100,q/(m*2)*100):100;return `<div class=qb><span>${fmtN(Math.round(q*10)/10)} ${r.unidade||''}</span><i class=pb><b style="width:${pc}%" class="${q<=m?'ba':''}"></b></i></div>`}},
- acts:[['swap','Ajustar estoque',ajustar]]},
+ acts:[['swap','Ajustar estoque',ajustar],['box','Contar por unidade (lata, caixa…)',porUnidade,r=>r.unidade!=='un']]},
 movimentacoes:{t:'Movimentações',s:'Histórico automático de entradas e saídas',ro:1,f:[['created_at','Data','dt'],['item','Item','text'],['tipo','Tipo','select',['Entrada','Saída']],['quantidade','Quantidade','number'],['origem','Origem','text']]},
 ordens_producao:{t:'Ordens de produção',s:'Ao concluir, os insumos são baixados pela ficha técnica e o produto entra no estoque',one:'ordem',nl:'Nova ordem',f:[['produto_id','Receita / produto','ref',['produtos','nome'],'req'],['quantidade','Quantas unidades vai produzir?','number',,'req'],['data','Data','date',,'today'],['status','Status','select',['Planejada','Em produção','Concluída']]],
  check:v=>!(v.quantidade>0)?'Informe a quantidade a produzir.':null,
@@ -462,6 +462,16 @@ async function novaVenda(){
 function ajustar(r){form({title:'Ajustar estoque — '+r.nome,btn:'Aplicar',fields:[['tipo','Tipo','select',['Entrada','Saída']],['quantidade','Quantidade ('+r.unidade+')','number',,'req'],['obs','Motivo','text']],
  save:async v=>{const a=await sb.from('insumos').update({quantidade:num(r.quantidade)+(v.tipo==='Entrada'?v.quantidade:-v.quantidade)}).eq('id',r.id);if(a.error)return fail(a.error);
   await sb.from('movimentacoes').insert({item:r.nome,tipo:v.tipo,quantidade:v.quantidade,origem:v.obs||'Ajuste manual'});return true}})}
+async function porUnidade(i){
+ const E=num(i.qtd_embalagem);if(!(E>0)||i.unidade==='un')return toast('Informe quanto vem na embalagem antes','bad');
+ if(!confirm('Contar "'+i.nome+'" por unidade?\n\n1 unidade = '+fmtN(E)+' '+i.unidade+'\nO estoque e as receitas serão convertidos.'))return;
+ const {data:L,error:e0}=await sb.from('ficha_tecnica').select('*').eq('insumo_id',i.id);if(e0)return fail(e0);
+ for(const l of L||[]){const de=l.unidade||i.unidade;if(de!=='un'&&(FAM[de]||'un')!==(FAM[i.unidade]||'un'))continue;
+  const q=de==='un'?num(l.quantidade):conv(l.quantidade,de,i.unidade)/E;
+  const {error}=await sb.from('ficha_tecnica').update({quantidade:Math.round(q*1e6)/1e6,unidade:'un'}).eq('id',l.id);if(error)return fail(error)}
+ await setEq(i.id,E,i.unidade);
+ const {error}=await sb.from('insumos').update({unidade:'un',qtd_embalagem:1,quantidade:Math.round(num(i.quantidade)/E*100)/100,minimo:Math.max(1,Math.ceil(num(i.minimo)/E-1e-9)),custo_unit:num(i.preco_embalagem)}).eq('id',i.id);
+ if(error)return fail(error);cache={};toast('Agora é contado por unidade');go(route)}
 async function histCli(c){
  const {data}=await sb.from('vendas').select('*').eq('cliente_id',c.id).order('created_at',{ascending:false});const ok=(data||[]).filter(v=>v.status!=='Cancelada');
  panel('Histórico — '+esc(c.nome),`<p class=mute>${ok.length} compra(s) · total ${brl(ok.reduce((a,v)=>a+num(v.total),0))}</p><div style="margin-top:12px">${(data||[]).map(v=>`<div class=li><span>#${v.numero} · ${dtt(v.created_at)}</span><span>${brl(v.total)} ${badge(v.status)}</span></div>`).join('')||'<p class=mute>Nenhuma compra registrada.</p>'}</div>${c.preferencias?`<h3 style="margin-top:18px">Preferências</h3><p>${esc(c.preferencias)}</p>`:''}`)}
@@ -556,14 +566,14 @@ async function listaView(){
  const Pm=new Map(P.map(p=>[p.id,p])),Im=new Map(I.map(i=>[i.id,i])),dem={},inc={};
  for(const o of O){const p=Pm.get(o.produto_id);if(!p)continue;for(const f of F.filter(f=>f.produto_id===o.produto_id)){const i=Im.get(f.insumo_id);if(i)dem[i.id]=(dem[i.id]||0)+conv(f.quantidade,f.unidade||i.unidade,i.unidade)*num(o.quantidade)/(num(p.rendimento)||1)}}
  for(const c of C)inc[c.insumo_id]=(inc[c.insumo_id]||0)+num(c.quantidade);
- const rows=I.map(i=>{const d=dem[i.id]||0,c=inc[i.id]||0,disp=num(i.quantidade)+c-d,buy=disp<=num(i.minimo)?2*num(i.minimo)+d-num(i.quantidade)-c:0;return{i,d,c,buy:buy>1e-9?Math.ceil(buy*1000)/1000:0}}).filter(x=>x.buy>0).sort((a,b)=>a.i.nome.localeCompare(b.i.nome));
- const est=x=>x.buy*num(x.i.custo_unit),tot=rows.reduce((a,x)=>a+est(x),0),w=canW('compras');
+ const rows=I.map(i=>{const d=dem[i.id]||0,c=inc[i.id]||0,E=num(i.qtd_embalagem)||1,disp=num(i.quantidade)+c-d,need=disp<=num(i.minimo)?2*num(i.minimo)+d-num(i.quantidade)-c:0,pk=need>1e-9?Math.max(1,Math.ceil(need/E-1e-9)):0;return{i,d,c,E,pk,buy:pk*E}}).filter(x=>x.pk>0).sort((a,b)=>a.i.nome.localeCompare(b.i.nome));
+ const lbl=x=>x.E>1?`${x.pk} × ${fmtN(x.E)} ${x.i.unidade}`:`${x.pk} ${x.i.unidade}`,est=x=>x.pk*num(x.i.preco_embalagem),tot=rows.reduce((a,x)=>a+est(x),0),w=canW('compras');
  let M=getManual();
- const txt=()=>'Lista de compras:\n'+[...rows.map(x=>`• ${x.i.nome} — ${fmtN(x.buy)} ${x.i.unidade}`),...M.filter(m=>!m.ok).map(m=>`• ${m.t}`)].join('\n');
+ const txt=()=>'Lista de compras:\n'+[...rows.map(x=>`• ${x.i.nome} — ${lbl(x)}`),...M.filter(m=>!m.ok).map(m=>`• ${m.t}`)].join('\n');
  $('#main').innerHTML=`<div class=ph><div><h2>Lista de compras</h2><p>O que está acabando no estoque.</p></div><div class=tools><button class=btn-o id=lc>${ic('copy',16)} Copiar</button><button class=btn id=lw>Enviar no WhatsApp</button></div></div>
  <div class="card pad" id=man style="margin-bottom:14px"></div>
  <div class=kpis>${kpi('Itens para comprar','list',rows.length)}${kpi('Estimativa','wallet',brl(tot))}</div>
- <div class="card tw">${rows.length?`<table><thead><tr><th>Insumo</th><th>Em estoque</th><th>Mínimo</th><th>A caminho</th><th>Comprar</th><th>Estimativa</th><th></th></tr></thead><tbody>${rows.map((x,n)=>`<tr><td>${esc(x.i.nome)}</td><td>${fmtN(x.i.quantidade)} ${x.i.unidade}</td><td>${fmtN(x.i.minimo)} ${x.i.unidade}</td><td>${x.c?fmtN(x.c)+' '+x.i.unidade:'—'}</td><td><b>${fmtN(x.buy)} ${x.i.unidade}</b></td><td>${num(x.i.custo_unit)?brl(est(x)):'—'}</td><td class=ac>${w?`<button class=ib title="Registrar compra" data-b="${n}">${ic('truck')}</button>`:''}</td></tr>`).join('')}</tbody></table>`:`<div class=empty>${ic('check',40)}<p>Tudo em dia ✅ Nenhum insumo para repor.</p></div>`}</div>`;
+ <div class="card tw">${rows.length?`<table><thead><tr><th>Insumo</th><th>Em estoque</th><th>Mínimo</th><th>A caminho</th><th>Comprar</th><th>Estimativa</th><th></th></tr></thead><tbody>${rows.map((x,n)=>`<tr><td>${esc(x.i.nome)}</td><td>${fmtN(Math.round(num(x.i.quantidade)*10)/10)} ${x.i.unidade}</td><td>${fmtN(x.i.minimo)} ${x.i.unidade}</td><td>${x.c?fmtN(x.c)+' '+x.i.unidade:'—'}</td><td><b>${lbl(x)}</b></td><td>${num(x.i.preco_embalagem)?brl(est(x)):'—'}</td><td class=ac>${w?`<button class=ib title="Registrar compra" data-b="${n}">${ic('truck')}</button>`:''}</td></tr>`).join('')}</tbody></table>`:`<div class=empty>${ic('check',40)}<p>Tudo em dia ✅ Nenhum insumo para repor.</p></div>`}</div>`;
  $('#main').onclick=e=>{const b=e.target.closest('[data-b]');if(!b)return;const x=rows[+b.dataset.b];
   editRow('compras',null,{insumo_id:x.i.id,quantidade:x.buy,valor:Math.round(est(x)*100)/100,status:'Pendente',data:today()})};
  const drawM=()=>{$('#man').innerHTML=`<h3>✏️ Minhas anotações — o que preciso comprar</h3><div style="display:flex;gap:8px;margin-bottom:10px"><input id=mi placeholder="Escreva aqui (ex.: forminhas, uva, granulado…) e aperte Enter"><button class=btn id=ma>Adicionar</button></div>${M.length?M.map((m,i)=>`<div class=li><label class=ck style="margin:0"><input type=checkbox data-mk="${i}" ${m.ok?'checked':''}> <span style="${m.ok?'text-decoration:line-through;color:var(--mu)':''}">${esc(m.t)}</span></label><button class=ib data-md="${i}" title=Apagar>${ic('x',16)}</button></div>`).join('')+(M.some(m=>m.ok)?'<button class=btn-o id=mc style="margin-top:10px">Limpar comprados</button>':''):'<p class=mute>Nada anotado ainda.</p>'}`;
