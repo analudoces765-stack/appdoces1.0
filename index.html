@@ -768,11 +768,12 @@ CF.splice(5,0,['salario_desejado','Quanto você quer ganhar por mês (R$)','mone
 const XD={dias_sem:5,horas_dia:6};
 
 CF.find(x=>x[0]==='custo_fixo_mes')[1]='Custos fixos do mês — aluguel, luz, gás, internet… (R$)';
-{const f=T.produtos.f,i=f.findIndex(x=>x[0]==='custo_extra');
- f.splice(i,1,['embalagem_total','Embalagem e outros — total da receita (R$)','money',,'nolist'],
+{const f=T.produtos.f,i=f.findIndex(x=>x[0]==='ativo');
+ f.splice(i<0?f.length:i,0,
+  ['embalagem_total','Embalagem e outros — total da receita (R$)','money',,'nolist'],
   ['tempo_min','Seu tempo de trabalho na receita inteira','tempo',,'nolist']);
- f.find(x=>x[0]==='preco')[1]='Preço de venda de 1 unidade (R$)';
- f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita inteira'}
+ const pf=f.find(x=>x[0]==='preco');if(pf)pf[1]='Preço de venda de 1 unidade (R$)';
+ const fi=f.find(x=>x[0]==='ficha');if(fi)fi[1]='Ingredientes da receita inteira'}
 const xc=k=>num(CFG[k])||XD[k]||0;
 const xHora=()=>{const h=xc('dias_sem')*xc('horas_dia')*4.33;return h>0?num(CFG.salario_desejado)/h:0};
 const xT=o=>{let t=o.tempos;if(typeof t==='string'){try{t=JSON.parse(t)}catch{t={}}}t=t||{};return{gas:num(t.gas??o.min_gas),panela:num(t.panela??o.min_panela),forno:num(t.forno??o.min_forno),bat:num(t.bat??o.min_bat),liq:num(t.liq??o.min_liq)}};
@@ -861,6 +862,6 @@ async function xLivro(){
 @media(max-width:620px){.smart-controls{grid-template-columns:1fr 1fr}.smart-controls input{grid-column:1/-1}.smart-controls button{grid-column:1/-1}.price-section .tw table{min-width:760px}}
 `;document.head.append(st)})();
 
-boot();
+try{boot()}catch(e){document.getElementById('root').innerHTML='<pre style="padding:20px">'+e.message+'</pre>'}
 
 </script></body></html>
