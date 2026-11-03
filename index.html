@@ -223,8 +223,8 @@ const T={
 clientes:{t:'Clientes',s:'Cadastro, preferências e histórico de compras',one:'cliente',f:[['nome','Nome','text',,'req'],['telefone','Telefone','text'],['endereco','Endereço','text'],['preferencias','Preferências','area'],['observacoes','Observações','area']],acts:[['clock','Histórico de compras',histCli]]},
 produtos:{t:'Receitas',s:'Digite os ingredientes e a quantidade — o custo aparece na hora',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
  f:[['nome','Nome da receita / produto','text',,'req'],['categoria','Categoria','text'],['rendimento','Rende quantas unidades?','number',,'req'],
- ['ficha','Ingredientes — digite o nome, a quantidade da receita inteira e escolha a unidade que quiser (unidade, g, kg, ml, L)','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'un'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',[['un','unidade'],['g','g'],['kg','kg'],['ml','ml'],['L','L']]]]},'nolist'],
- ['custo_extra','Embalagem, mão de obra e outros (R$ por unidade)','money',,'nolist'],['margem','Lucro que você quer (% do preço de venda)','number',,'nolist'],['calc','','info',,'nolist'],
+ ['ficha','Ingredientes da receita inteira','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'un'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',[['un','unidade'],['g','g'],['kg','kg'],['ml','ml'],['L','L']]]]},'nolist'],
+ ['custo_extra','Embalagem e outros (R$ por unidade)','money',,'nolist'],['margem','Lucro que você quer (% do preço de venda)','number',,'nolist'],['calc','','info',,'nolist'],
  ['custo','Custo por unidade','money',,'ro'],['preco','Preço de venda (R$)','money',,'req'],['estoque','Em estoque','number',,'ro'],['ativo','Ativo','bool']],
  fmt:{custo:r=>cT(r)>0?brl(cT(r)):'<span class="bd warn">Sem custo</span>',rendimento:r=>fmtN(r.rendimento)+' un'},
  check:v=>!(v.rendimento>0)?'Informe quantas unidades a receita rende.':v.ficha.some(l=>!(l.quantidade>0))?'Informe a quantidade de cada ingrediente.':v.margem<0||v.margem+taxa()>=100?'Lucro desejado + taxas precisam somar menos de 100%.':ficBad(v)?'Há ingrediente com unidade diferente da compra. Preencha a equivalência no quadro amarelo.':null,
@@ -234,13 +234,13 @@ vendas:{t:'Vendas',s:'Cada venda baixa o estoque e lança a receita automaticame
  fmt:{numero:r=>'#'+r.numero},acts:[['receipt','Comprovante',recibo],['x','Cancelar venda',r=>confirm('Cancelar esta venda? O estoque será devolvido.')&&upd('vendas',r.id,{status:'Cancelada'},'Venda cancelada'),r=>r.status!=='Cancelada']]},
 encomendas:{t:'Encomendas',s:'O sinal e o saldo a receber são lançados no financeiro automaticamente',one:'encomenda',f:[['cliente_id','Cliente','ref',['clientes','nome']],['descricao','Descrição','area',,'req'],['data_entrega','Entrega','date',,'req'],['valor','Valor total','money'],['sinal','Sinal pago','money'],['status','Status','select',['Novo','Em produção','Pronto','Entregue','Cancelado']]],
  acts:[['check','Marcar como entregue',r=>upd('encomendas',r.id,{status:'Entregue'},'Encomenda entregue'),r=>!['Entregue','Cancelado'].includes(r.status)]]},
-insumos:{t:'Insumos e embalagens',s:'Você coloca o que comprou e quanto pagou. O sistema calcula o custo por grama, por ml e por unidade.',one:'insumo',warn:r=>num(r.quantidade)<=num(r.minimo),live:insLive,def:{tipo:'Matéria-prima',unidade:'un',qtd_embalagem:1,quantidade:0,minimo:1},
+insumos:{t:'Insumos e embalagens',s:'O que você compra e quanto custa',one:'insumo',warn:r=>num(r.quantidade)<=num(r.minimo),live:insLive,def:{tipo:'Matéria-prima',unidade:'un',qtd_embalagem:1,quantidade:0,minimo:1},
  check:v=>!(v.qtd_embalagem>0)?'Informe quanto você comprou (maior que zero).':v.quantidade<0||v.minimo<0?'Estoque não pode ser negativo.':null,
- f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você compra / conta este item?','select',[['un','Por unidade (lata, caixa, forminha, uva…)'],['kg','Por quilo (kg)'],['g','Por grama (g)'],['L','Por litro (L)'],['ml','Por mililitro (ml)']],'nolist'],['qtd_embalagem','Quanto veio na embalagem (ex.: 1 lata, 50 forminhas, 80 uvas)','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
- ['custo_unit','Custo por g / ml / un','money',,'ro'],['quantidade','Em estoque agora','number'],['minimo','Estoque mínimo — avisa quando sobrar essa quantidade ou menos (1 = avisa só com 1 sobrando)','number']],
+ f:[['nome','Nome','text',,'req'],['tipo','Tipo','select',['Matéria-prima','Embalagem']],['unidade','Como você compra / conta este item?','select',[['un','Por unidade (lata, caixa, forminha, uva…)'],['kg','Por quilo (kg)'],['g','Por grama (g)'],['L','Por litro (L)'],['ml','Por mililitro (ml)']],'nolist'],['qtd_embalagem','Quanto vem na embalagem','number',,'req'],['preco_embalagem','Quanto paguei (R$)','money',,'nolist'],['calc','','info',,'nolist'],
+ ['custo_unit','Custo por g / ml / un','money',,'ro'],['quantidade','Em estoque agora','number'],['minimo','Estoque mínimo (avisa quando chegar nele)','number']],
  fmt:{qtd_embalagem:r=>`${fmtN(r.qtd_embalagem)} ${r.unidade||''} · ${brl(r.preco_embalagem)}`,
  custo_unit:r=>{if(!num(r.custo_unit))return '<span class="bd warn">Sem preço</span>';const b=baseCusto(r);return `${brl4(b.v)} <small class=mute>/${b.u}</small>`},
- quantidade:r=>{const q=num(r.quantidade),m=num(r.minimo),pc=m?Math.min(100,q/(m*2)*100):100;return `<div class=qb><span>${fmtN(q)} ${r.unidade||''}</span><i class=pb><b style="width:${pc}%" class="${q<=m?'ba':''}"></b></i></div>`}},
+ quantidade:r=>{const q=num(r.quantidade),m=num(r.minimo),pc=m?Math.min(100,q/(m*2)*100):100;return `<div class=qb><span>${fmtN(Math.round(q*10)/10)} ${r.unidade||''}</span><i class=pb><b style="width:${pc}%" class="${q<=m?'ba':''}"></b></i></div>`}},
  acts:[['swap','Ajustar estoque',ajustar]]},
 movimentacoes:{t:'Movimentações',s:'Histórico automático de entradas e saídas',ro:1,f:[['created_at','Data','dt'],['item','Item','text'],['tipo','Tipo','select',['Entrada','Saída']],['quantidade','Quantidade','number'],['origem','Origem','text']]},
 ordens_producao:{t:'Ordens de produção',s:'Ao concluir, os insumos são baixados pela ficha técnica e o produto entra no estoque',one:'ordem',nl:'Nova ordem',f:[['produto_id','Receita / produto','ref',['produtos','nome'],'req'],['quantidade','Quantas unidades vai produzir?','number',,'req'],['data','Data','date',,'today'],['status','Status','select',['Planejada','Em produção','Concluída']]],
@@ -371,8 +371,12 @@ async function go(r){
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div class=note>Estoque mínimo <b>1</b>: o app avisa quando sobrar só 1 unidade (com 2 ou mais não avisa). <button class=btn-o id=mn1 style="margin-left:8px">Definir mínimo 1 nos que estão sem mínimo</button></div>`:'')+'<div id=lst></div>';
- $('#mn1')?.addEventListener('click',async()=>{if(!confirm('Definir mínimo 1 só nos insumos que estão sem mínimo? (os que já têm mínimo não mudam)'))return;const {error}=await sb.from('insumos').update({minimo:1}).or('minimo.is.null,minimo.eq.0');if(error)return fail(error);cache={};toast('Mínimo 1 aplicado');mod(r)});
+ $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div style="margin-bottom:12px"><button class=btn-o id=zs>Zerar sobras de embalagem</button></div>`:'')+'<div id=lst></div>';
+ $('#zs')?.addEventListener('click',async()=>{const I=await all('insumos'),S=I.filter(i=>num(i.quantidade)>0&&num(i.quantidade)<0.05*(num(i.qtd_embalagem)||1));
+  if(!S.length)return toast('Nenhuma sobra para acertar');
+  if(!confirm('Sobrou menos de 5% da embalagem nestes itens. Zerar o estoque deles?\n\n'+S.map(i=>'• '+i.nome+': '+fmtN(i.quantidade)+' '+i.unidade).join('\n')))return;
+  for(const i of S){const {error}=await sb.from('insumos').update({quantidade:0}).eq('id',i.id);if(error)return fail(error);await sb.from('movimentacoes').insert({item:i.nome,tipo:'Saída',quantidade:num(i.quantidade),origem:'Acerto de sobra'})}
+  cache={};toast('Sobras zeradas');mod(r)});
  $('#main').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{tabSel[r]=b.dataset.t;mod(r)});
  await list(t,$('#lst'))}
 const refsOf=d=>d.f.flatMap(f=>f[2]==='ref'?[f[3][0]]:f[2]==='lines'?f[3].cols.filter(c=>c[2]==='ref').map(c=>c[3][0]):[]);
@@ -502,7 +506,6 @@ function prodLive(fm){
   +(t?`<div class=cpr><span>Taxas sobre a venda</span><b>${fmtN(t)}%</b></div>`:'')
   +`<div class="cpr big"><span>Preço sugerido para ${fmtN(m)}% de lucro</span><b>${sug?brl(sug):'—'}</b></div>`
   +(sug?`<button type=button class=btn-o data-use="${sug}">Usar o preço sugerido</button> `:'')
-  +`<button type=button class=btn-o data-aiq="Sugira ingredientes, quantidades e rendimento para a receita: ">✦ Pedir ajuda à IA</button>`
   +(pr>0&&cus>0&&real!=null?`<div class=cpr style="margin-top:8px"><span>Com o preço de ${brl(pr)}, seu lucro é</span><b style="color:var(--${real<m-0.5?'ba':'ok'})">${Math.round(real)}% · ${brl(pr*(1-t/100)-cus)} por unidade</b></div>`:'')
   +mis.filter((m,k)=>mis.findIndex(x=>x[0].id===m[0].id)===k).map(([i,u])=>eqBox(i,u)).join('')
   +(v.__bad?.length?`<p class=hint style="color:var(--ba)">Ingrediente não encontrado: ${esc([...new Set(v.__bad)].join(', '))}. Cadastre em Insumos primeiro ou escolha um nome da lista.</p>`:'')
@@ -519,12 +522,9 @@ async function concluirProd(r){
  if(falta.length&&!confirm('Faltam insumos para esta produção:\n'+falta.join('\n')+'\n\nConcluir mesmo assim? O estoque desses itens ficará negativo.'))return;
  upd('ordens_producao',r.id,{status:'Concluída'},'Produção concluída — insumos baixados e estoque atualizado')}
 
-/* ===== 3 · PRECIFICAÇÃO INTELIGENTE (uma aba só: preços, simulador e histórico) ===== */
-async function precosView(){
- const t=tabSel.precos||'p';
- $('#main').innerHTML=`<div class=tabs>${[['p','Preços e margens'],['s','Simulador (e se o insumo subir?)'],['h','Histórico de preços']].map(([k,l])=>`<button class="${k===t?'on':''}" data-pt="${k}">${l}</button>`).join('')}</div><div id=pv></div>`;
- $('#main').querySelectorAll('[data-pt]').forEach(b=>b.onclick=()=>{tabSel.precos=b.dataset.pt;precosView()});
- await({p:precosTab,s:simView,h:()=>list('historico_precos',$('#pv'))}[t])()}
+/* ===== Precificação ===== */
+async function precosView(){$('#main').innerHTML='<div id=pv></div>';await precosTab()}
+
 async function precosTab(){
  const [P0,I,F]=await Promise.all([all('produtos'),all('insumos'),all('ficha_tecnica')]);
  const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>(abaixo(a)?0:1)-(abaixo(b)?0:1)||a.nome.localeCompare(b.nome)),w=canW('produtos'),t=taxa(),rt=rateio();
@@ -532,13 +532,11 @@ async function precosTab(){
  const semIns=I.filter(i=>!num(i.custo_unit)&&F.some(f=>f.insumo_id===i.id));
  const sit=p=>!(cT(p)>0)?'<span class="bd warn">Sem custo</span>':!(num(p.preco)>0)?'<span class="bd bad">Sem preço</span>':abaixo(p)?'<span class="bd bad">Abaixo da meta</span>':'<span class="bd ok">Na meta</span>';
  const pin=(p,f,v,max)=>`<input class=pi data-id="${p.id}" data-f="${f}" type=number step=any min=0 ${max?`max=${max}`:''} value="${num(v)}" style="width:92px">`;
- $('#pv').innerHTML=`<div class=ph><div><h2>Preços e margens</h2><p>Você diz quanto quer de lucro. O sistema devolve o preço de venda.</p></div><div class=tools>${w&&ab.length?`<button class=btn id=apl>${ic('check',16)} Aplicar sugerido em ${ab.length}</button>`:''}<button class=btn-o data-aiq="Analise minhas receitas e preços cadastrados. Quais estão com lucro baixo e o que devo ajustar?">✦ Pedir análise à IA</button></div></div>
+ $('#pv').innerHTML=`<div class=ph><div><h2>Preços e margens</h2></div><div class=tools>${w&&ab.length?`<button class=btn id=apl>${ic('check',16)} Aplicar sugerido em ${ab.length}</button>`:''}</div></div>
  <div class=kpis>${kpi('Receitas','bag',P.length)}${kpi('Abaixo da meta','alert',ab.length)}${kpi('Sem custo','clock',sem.length)}${kpi('Margem média','chart',ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length)+'%':'—')}</div>
- <div class=note><b>Como o preço é calculado:</b> preço = custo por unidade ÷ (1 − lucro% − taxas%). O custo soma ingredientes + embalagem/mão de obra${rt?` + rateio de custos fixos (${brl4(rt)} por unidade)`:''}. Taxas aplicadas: ${fmtN(t)}%. Edite o <b>lucro desejado</b> ou o <b>preço atual</b> direto na tabela.</div>
- ${!t&&!rt?`<div class="note w">Dica: para um preço mais realista, informe as <b>taxas</b> (cartão/impostos) e os <b>custos fixos do mês</b> em <a href="#config">Configurações</a>.</div>`:''}
  ${semIns.length?`<div class="note w"><b>Atenção:</b> estes insumos usados nas receitas estão sem preço, então o custo está incompleto: ${esc(semIns.map(i=>i.nome).join(', '))}. <a href="#estoque">Cadastrar preço</a></div>`:''}
- <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Ingredientes</th><th>Embalagem + fixos</th><th>Custo total</th><th>Preço mínimo</th><th>Lucro desejado</th><th>Preço sugerido</th><th>Preço atual</th><th>Lucro por un.</th><th>Margem real</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const c=cT(p),s=sugerido(p),m=margemReal(p),mn=sugeridoDe(c,0),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
-  return `<tr><td><b>${esc(p.nome)}</b><br><small class=mute>rende ${fmtN(p.rendimento)} un</small></td><td>${c>0?brl4(num(p.custo)):'—'}</td><td>${c>0?brl4(num(p.custo_extra)+rt):'—'}</td><td><b>${c>0?brl4(c):'—'}</b></td><td>${mn?brl(mn):'—'}</td><td>${w?pin(p,'margem',p.margem,95)+' %':fmtN(p.margem)+'%'}</td><td><b>${s?brl(s):'—'}</b></td><td>${w?pin(p,'preco',p.preco):brl(p.preco)}</td><td>${lu==null?'—':`<span style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</span>`}</td><td>${m!=null&&c>0?Math.round(m)+'%':'—'}</td><td>${sit(p)}</td><td class=ac>${w?`${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=ib title="Aplicar preço sugerido" data-ap="${i}">${ic('check')}</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button>`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
+ <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Custo</th><th>Lucro desejado</th><th>Preço sugerido</th><th>Preço atual</th><th>Lucro por un.</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const c=cT(p),s=sugerido(p),m=margemReal(p),mn=sugeridoDe(c,0),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
+  return `<tr><td><b>${esc(p.nome)}</b><br><small class=mute>rende ${fmtN(p.rendimento)} un</small></td><td><b>${c>0?brl4(c):'—'}</b></td><td>${w?pin(p,'margem',p.margem,95)+' %':fmtN(p.margem)+'%'}</td><td><b>${s?brl(s):'—'}</b></td><td>${w?pin(p,'preco',p.preco):brl(p.preco)}</td><td>${lu==null?'—':`<span style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</span>${m!=null?` <small class=mute>${Math.round(m)}%</small>`:''}`}</td><td>${sit(p)}</td><td class=ac>${w?`${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=ib title="Aplicar preço sugerido" data-ap="${i}">${ic('check')}</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button>`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
  $('#main').onclick=e=>{const a=e.target.closest('[data-ap]'),d=e.target.closest('[data-ed]');
   if(a){const p=P[+a.dataset.ap];upd('produtos',p.id,{preco:sugerido(p)},'Preço de “'+p.nome+'” atualizado')}
   if(d)editRow('produtos',P[+d.dataset.ed])};
@@ -548,25 +546,6 @@ async function precosTab(){
  const ap=$('#apl');if(ap)ap.onclick=async()=>{if(!confirm('Aplicar o preço sugerido nas '+ab.length+' receitas abaixo da meta?'))return;
   for(const p of ab){const s=sugerido(p);if(!s)continue;const {error}=await sb.from('produtos').update({preco:s}).eq('id',p.id);if(error)return fail(error)}
   cache={};toast('Preços atualizados');precosTab()}}
-
-/* ===== simulador ===== */
-async function simView(){
- const [I,P,F]=await Promise.all([all('insumos'),all('produtos'),all('ficha_tecnica')]);
- const used=new Set(F.map(f=>f.insumo_id)),op=I.filter(i=>used.has(i.id)).sort((a,b)=>a.nome.localeCompare(b.nome)),I2=new Map(I.map(i=>[i.id,i])),PA=P.filter(p=>p.ativo!==false);
- $('#pv').innerHTML=`<div class=ph><div><h2>Simulador</h2><p>E se um insumo ficar mais caro ou mais barato? Veja o efeito em cada receita antes de mexer nos preços.</p></div></div>
- <div class="card pad" style="margin-bottom:14px"><div class=sim><div class=fl><label>Insumo</label><select id=si><option value="*">Todos os insumos</option>${op.map(i=>`<option value="${i.id}">${esc(i.nome)}</option>`).join('')}</select></div>
- <div class=fl><label>Variação (%)</label><input id=sp type=number step=any value=10></div>
- <div class=fl id=snw style="display:none"><label>ou novo preço pago (R$)</label><input id=sn type=number step=any min=0 inputmode=decimal></div></div>
- </div><div id=so></div>`;
- const run=()=>{const id=$('#si').value,f=1+num($('#sp').value)/100,adj=i=>id==='*'||i.id===id?f:1;
-  const rows=PA.map(p=>{const a=custoIng(p,F,I2),b=custoIng(p,F,I2,adj),ex=num(p.custo_extra)+rateio();return{p,a:a+ex,b:b+ex,ch:Math.abs(b-a)>1e-9}}).filter(x=>x.ch).sort((x,y)=>(y.b/y.a)-(x.b/x.a));
-  $('#so').innerHTML=rows.length?`<div class="card tw"><table><thead><tr><th>Receita</th><th>Custo hoje</th><th>Custo novo</th><th>Margem hoje</th><th>Margem nova</th><th>Preço atual</th><th>Preço sugerido</th></tr></thead><tbody>${rows.map(({p,a,b})=>{const m1=margemDe(p.preco,a),m2=margemDe(p.preco,b),s=sugeridoDe(b,p.margem),pior=m2!=null&&m2<num(p.margem)-0.5;
-   return `<tr><td>${esc(p.nome)}</td><td>${brl4(a)}</td><td>${brl4(b)} <small class=mute>(${b>=a?'+':''}${fmtN(Math.round((b/a-1)*1000)/10)}%)</small></td><td>${m1==null?'—':Math.round(m1)+'%'}</td><td>${m2==null?'—':`<span class="bd ${pior?'bad':'ok'}">${Math.round(m2)}%</span>`}</td><td>${brl(p.preco)}</td><td><b>${s?brl(s):'—'}</b></td></tr>`}).join('')}</tbody></table></div>`
-   :`<div class="card empty">${ic('calc',40)}<p>Nenhuma receita usa esse insumo.</p></div>`};
- const sync=src=>{const i=I2.get($('#si').value),ok=!!i&&num(i.preco_embalagem)>0;$('#snw').style.display=ok?'':'none';
-  if(ok){if(src==='n')$('#sp').value=Math.round((num($('#sn').value)/num(i.preco_embalagem)-1)*10000)/100;else $('#sn').value=Math.round(num(i.preco_embalagem)*(1+num($('#sp').value)/100)*100)/100}
-  run()};
- $('#si').onchange=()=>sync('p');$('#sp').oninput=()=>sync('p');$('#sn').oninput=()=>sync('n');sync('p')}
 
 /* ===== lista de compras ===== */
 const getManual=()=>{try{return JSON.parse(CFG.lista_manual||localStorage.getItem('lm')||'[]')}catch{return[]}};
@@ -581,10 +560,10 @@ async function listaView(){
  const est=x=>x.buy*num(x.i.custo_unit),tot=rows.reduce((a,x)=>a+est(x),0),w=canW('compras');
  let M=getManual();
  const txt=()=>'Lista de compras:\n'+[...rows.map(x=>`• ${x.i.nome} — ${fmtN(x.buy)} ${x.i.unidade}`),...M.filter(m=>!m.ok).map(m=>`• ${m.t}`)].join('\n');
- $('#main').innerHTML=`<div class=ph><div><h2>Lista de compras</h2><p>Montada sozinha: o que está no mínimo ou vai faltar para a produção planejada, até ter o dobro do mínimo.</p></div><div class=tools><button class=btn-o id=lc>${ic('copy',16)} Copiar</button><button class=btn id=lw>Enviar no WhatsApp</button></div></div>
+ $('#main').innerHTML=`<div class=ph><div><h2>Lista de compras</h2><p>O que está acabando no estoque.</p></div><div class=tools><button class=btn-o id=lc>${ic('copy',16)} Copiar</button><button class=btn id=lw>Enviar no WhatsApp</button></div></div>
  <div class="card pad" id=man style="margin-bottom:14px"></div>
  <div class=kpis>${kpi('Itens para comprar','list',rows.length)}${kpi('Estimativa','wallet',brl(tot))}</div>
- <div class="card tw">${rows.length?`<table><thead><tr><th>Insumo</th><th>Em estoque</th><th>Mínimo</th><th>Produção planejada</th><th>A caminho</th><th>Comprar</th><th>Estimativa</th><th></th></tr></thead><tbody>${rows.map((x,n)=>`<tr><td>${esc(x.i.nome)}</td><td>${fmtN(x.i.quantidade)} ${x.i.unidade}</td><td>${fmtN(x.i.minimo)} ${x.i.unidade}</td><td>${x.d?fmtN(Math.round(x.d*1000)/1000)+' '+x.i.unidade:'—'}</td><td>${x.c?fmtN(x.c)+' '+x.i.unidade:'—'}</td><td><b>${fmtN(x.buy)} ${x.i.unidade}</b></td><td>${num(x.i.custo_unit)?brl(est(x)):'—'}</td><td class=ac>${w?`<button class=ib title="Registrar compra" data-b="${n}">${ic('truck')}</button>`:''}</td></tr>`).join('')}</tbody></table>`:`<div class=empty>${ic('check',40)}<p>Tudo em dia ✅ Nenhum insumo para repor.</p></div>`}</div>`;
+ <div class="card tw">${rows.length?`<table><thead><tr><th>Insumo</th><th>Em estoque</th><th>Mínimo</th><th>A caminho</th><th>Comprar</th><th>Estimativa</th><th></th></tr></thead><tbody>${rows.map((x,n)=>`<tr><td>${esc(x.i.nome)}</td><td>${fmtN(x.i.quantidade)} ${x.i.unidade}</td><td>${fmtN(x.i.minimo)} ${x.i.unidade}</td><td>${x.c?fmtN(x.c)+' '+x.i.unidade:'—'}</td><td><b>${fmtN(x.buy)} ${x.i.unidade}</b></td><td>${num(x.i.custo_unit)?brl(est(x)):'—'}</td><td class=ac>${w?`<button class=ib title="Registrar compra" data-b="${n}">${ic('truck')}</button>`:''}</td></tr>`).join('')}</tbody></table>`:`<div class=empty>${ic('check',40)}<p>Tudo em dia ✅ Nenhum insumo para repor.</p></div>`}</div>`;
  $('#main').onclick=e=>{const b=e.target.closest('[data-b]');if(!b)return;const x=rows[+b.dataset.b];
   editRow('compras',null,{insumo_id:x.i.id,quantidade:x.buy,valor:Math.round(est(x)*100)/100,status:'Pendente',data:today()})};
  const drawM=()=>{$('#man').innerHTML=`<h3>✏️ Minhas anotações — o que preciso comprar</h3><div style="display:flex;gap:8px;margin-bottom:10px"><input id=mi placeholder="Escreva aqui (ex.: forminhas, uva, granulado…) e aperte Enter"><button class=btn id=ma>Adicionar</button></div>${M.length?M.map((m,i)=>`<div class=li><label class=ck style="margin:0"><input type=checkbox data-mk="${i}" ${m.ok?'checked':''}> <span style="${m.ok?'text-decoration:line-through;color:var(--mu)':''}">${esc(m.t)}</span></label><button class=ib data-md="${i}" title=Apagar>${ic('x',16)}</button></div>`).join('')+(M.some(m=>m.ok)?'<button class=btn-o id=mc style="margin-top:10px">Limpar comprados</button>':''):'<p class=mute>Nada anotado ainda.</p>'}`;
@@ -730,10 +709,9 @@ async function xLivro(){
  const [P0,F]=await Promise.all([all('produtos'),all('ficha_tecnica')]);cache.insumos=await all('insumos');
  const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome)),w=canW('produtos'),ab=P.filter(abaixo);
  $('#main').innerHTML=`<section class=lv-hero><div><img class=lv-banner src="https://i.ibb.co/DyPtsys/5eb5d5e7-9fb0-43d1-be55-2c46355a87cf.jpg" alt="Vamos preparar o que hoje?" onerror="this.replaceWith(Object.assign(document.createElement('h2'),{textContent:'Vamos preparar o que hoje?'}))"><p>Seu livro de receitas — custos sempre atualizados com o preço dos insumos.</p></div><div class=tools><div class=sr>${ic('search',16)}<input id=q placeholder="Buscar receita…"></div>${w?`<button class=btn id=nr>${ic('plus',16)} Nova receita</button>`:''}</div></section>
- <div class=lv-chips><button data-aiq="Me sugira 3 receitas lucrativas para vender essa semana, com ingredientes e rendimento.">✦ Sugerir receitas</button><button data-aiq="Analise minhas receitas e preços cadastrados. Quais estão com lucro baixo e o que devo reajustar?">✦ Reajustar preços${ab.length?` (${ab.length} abaixo da meta)`:''}</button><button data-aiq="Me dê dicas para aumentar o rendimento das minhas receitas sem perder qualidade.">✦ Dicas da Analu</button></div>
  ${P.length?`<div class=rg>${P.map((p,i)=>{const c=cT(p),m=margemReal(p);return `<article class=rc data-n="${esc(nm(p.nome))}"><div class=rc-h><span>${xEmo(p)}</span><em>${esc(p.categoria||'Receita')}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un · ${F.filter(f=>f.produto_id===p.id).length} ingredientes</small>
  <div class=rc-n><div><small>Custo/un</small><b>${c>0?brl(c):'—'}</b></div><div><small>Preço</small><b>${num(p.preco)?brl(p.preco):'—'}</b></div><div><small>Lucro</small>${c>0&&m!=null?`<span class="bd ${abaixo(p)?'warn':'ok'}">${Math.round(m)}%</span>`:'—'}</div></div>
- <div class=rc-a>${canW('ordens_producao')?`<button class=btn data-pr>${ic('chef',15)} Produzir</button>`:''}${w?`<button class=ib title=Editar data-ed="${i}">${ic('edit')}</button><button class=ib title=Excluir data-dl="${i}">${ic('trash')}</button>`:''}<button class=ib title="Pedir ajuda à IA" data-aiq="Como posso melhorar a receita e o preço de ${esc(p.nome)}?">✦</button></div></div></article>`}).join('')}</div>`:`<div class="card empty">${ic('bag',40)}<p>Seu livro está vazio. Crie a primeira receita ou peça sugestões à Analu IA.</p></div>`}`;
+ <div class=rc-a>${canW('ordens_producao')?`<button class=btn data-pr>${ic('chef',15)} Produzir</button>`:''}${w?`<button class=ib title=Editar data-ed="${i}">${ic('edit')}</button><button class=ib title=Excluir data-dl="${i}">${ic('trash')}</button>`:''}</div></div></article>`}).join('')}</div>`:`<div class="card empty">${ic('bag',40)}<p>Seu livro está vazio. Crie a primeira receita ou peça sugestões à Analu IA.</p></div>`}`;
  $('#q').oninput=e=>{const v=nm(e.target.value);document.querySelectorAll('.rc').forEach(c=>c.hidden=!c.dataset.n.includes(v))};
  $('#nr')?.addEventListener('click',()=>editRow('produtos'));
  $('#main').onclick=e=>{const a=e.target.closest('[data-ed]'),d=e.target.closest('[data-dl]');
@@ -746,7 +724,7 @@ const xNd=(p,q)=>{const rend=num(p.rendimento)||1,a=xPD.F.filter(f=>f.produto_id
 async function xProd(){
  const [P0,I,F]=await Promise.all([all('produtos'),all('insumos'),all('ficha_tecnica')]);cache.insumos=I;
  xPD={F,I:new Map(I.map(i=>[i.id,i])),P:P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome))};
- $('#main').innerHTML=`<section class=lv-hero><div><h2>Produção rápida 🧁</h2><p>Digite quantas unidades vai fazer e clique. Os ingredientes saem do estoque sozinhos.</p></div><button class=btn-o data-aiq="Como organizar a produção de hoje para render mais?">✦ Pedir dica à IA</button></section>
+ $('#main').innerHTML=`<section class=lv-hero><div><h2>Produção rápida 🧁</h2><p>Os ingredientes saem do estoque ao produzir.</p></div></section>
  ${xPD.P.length?`<div class=rg>${xPD.P.map((p,i)=>`<article class=rc><div class=rc-h><span>${xEmo(p)}</span><em>em estoque: ${fmtN(p.estoque)}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>receita rende ${fmtN(p.rendimento)} un</small>
  <div class=pq><input type=number min=1 step=any inputmode=decimal data-pq="${i}" value="${num(p.rendimento)||1}"><span class=mute>unidades</span></div><div class=nd id="nd${i}">${xNd(p,num(p.rendimento)||1)}</div>
  <button class="btn w100" data-go="${i}">${ic('chef',16)} Produzir e baixar estoque</button></div></article>`).join('')}</div>`:`<div class="card empty">${ic('chef',40)}<p>Cadastre receitas no Livro de receitas para produzir aqui.</p></div>`}
@@ -762,33 +740,20 @@ async function xRun(p,q,btn,force=false){
  toast(`${fmtN(q)} un de ${p.nome} produzidas — estoque baixado`);go('producao')}
 
 
-/* ===== custo da cozinha automático: o sistema calcula a sua hora, o gás e a energia ===== */
-const XD={dias_sem:5,horas_dia:6,botijao_preco:115,preco_kwh:0.95,w_panela:800,w_forno:1500,w_bat:300,w_liq:500};
-CF.splice(5,0,
- ['salario_desejado','Quanto você quer ganhar por mês com a confeitaria? (R$) — o sistema calcula o valor da sua hora','money'],
- ['dias_sem','Quantos dias por semana você trabalha? (padrão 5)','number'],
- ['horas_dia','Quantas horas por dia? (padrão 6)','number'],
- ['botijao_preco','Gás: quanto você paga no botijão de 13 kg (R$) — padrão: média do Brasil, troque pelo seu','money'],
- ['preco_kwh','Luz: preço do kWh (R$) — padrão estimado; na sua conta: valor total ÷ kWh','money'],
- ['w_panela','Potência da panela mexedora (W) — está na etiqueta do aparelho','number'],
- ['w_forno','Potência do forno elétrico (W)','number'],
- ['w_bat','Potência da batedeira (W)','number'],
- ['w_liq','Potência do liquidificador (W)','number']);
-CF.find(x=>x[0]==='custo_fixo_mes')[1]='Outros custos fixos do mês — aluguel, internet, água, geladeira, contador… (R$). Gás e energia dos equipamentos já são calculados por receita';
+/* ===== sua hora de trabalho ===== */
+CF.splice(5,0,['salario_desejado','Quanto você quer ganhar por mês (R$)','money'],['dias_sem','Dias de trabalho por semana','number'],['horas_dia','Horas de trabalho por dia','number']);
+const XD={dias_sem:5,horas_dia:6};
+
+CF.find(x=>x[0]==='custo_fixo_mes')[1]='Custos fixos do mês — aluguel, luz, gás, internet… (R$)';
 {const f=T.produtos.f,i=f.findIndex(x=>x[0]==='custo_extra');
  f.splice(i,1,['embalagem_total','Embalagem e outros — total da receita (R$)','money',,'nolist'],
-  ['tempo_min','Seu tempo de trabalho (minutos) — do começo ao fim, incluindo embalar','tempo',,'nolist'],
-  ['min_gas','Fogão / forno a gás aceso (minutos)','tempo',,'nolist'],
-  ['min_panela','Panela elétrica mexedora ligada (minutos)','tempo',,'nolist'],
-  ['min_forno','Forno elétrico ligado (minutos)','tempo',,'nolist'],
-  ['min_bat','Batedeira ligada (minutos)','tempo',,'nolist'],
-  ['min_liq','Liquidificador ligado (minutos)','tempo',,'nolist']);
+  ['tempo_min','Seu tempo de trabalho na receita inteira','tempo',,'nolist']);
  f.find(x=>x[0]==='preco')[1]='Preço de venda de 1 unidade (R$)';
- f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita INTEIRA — digite o nome, a quantidade total e a unidade (forminhas e caixas também entram aqui)'}
+ f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita inteira'}
 const xc=k=>num(CFG[k])||XD[k]||0;
 const xHora=()=>{const h=xc('dias_sem')*xc('horas_dia')*4.33;return h>0?num(CFG.salario_desejado)/h:0};
 const xT=o=>{let t=o.tempos;if(typeof t==='string'){try{t=JSON.parse(t)}catch{t={}}}t=t||{};return{gas:num(t.gas??o.min_gas),panela:num(t.panela??o.min_panela),forno:num(t.forno??o.min_forno),bat:num(t.bat??o.min_bat),liq:num(t.liq??o.min_liq)}};
-const xParts=o=>{const t=xT(o);return{trab:num(o.tempo_min)/60*xHora(),gas:t.gas/60*(xc('botijao_preco')/13*0.25),luz:(t.panela*xc('w_panela')+t.forno*xc('w_forno')+t.bat*xc('w_bat')+t.liq*xc('w_liq'))/60000*xc('preco_kwh')}};
+const xParts=o=>({trab:num(o.tempo_min)/60*xHora(),gas:0,luz:0});
 const xExtra=o=>{const q=xParts(o);return Math.round((num(o.embalagem_total)+q.trab+q.gas+q.luz)/(num(o.rendimento)||1)*1e6)/1e6};
 const xInp=inp;
 inp=(f,v,lc)=>{if(f[2]!=='tempo')return xInp(f,v,lc);const h=num(v)>=60&&num(v)%60===0;
