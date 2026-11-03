@@ -140,29 +140,6 @@ body.dr-open #aiB{display:none}
 #lowB>div{flex:1;min-width:0}#lowB b{display:block;font-size:13px}#lowB small{display:block;color:#7a5b1e;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #lowB .btn{padding:7px 12px;font-size:12.5px;white-space:nowrap}
 
-/* ===== Busca inteligente de produtos ===== */
-.smart-search{margin-bottom:18px;border:1px solid var(--bd);background:linear-gradient(145deg,#fff,#fff8fa)}
-.smart-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-.smart-head h3{font:600 18px Fraunces,serif;color:var(--ink);margin:0 0 4px}
-.smart-head p{font-size:12px;color:var(--mu)}
-.smart-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.smart-tabs button{border:1px solid var(--bd);border-radius:99px;background:#fff;padding:7px 12px;color:var(--mu);font-size:12px}
-.smart-tabs button.on{background:var(--p);border-color:var(--p);color:#fff}
-.smart-bar{display:flex;gap:8px;align-items:center}
-.smart-bar input{flex:1;min-width:0}
-.smart-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;margin-top:14px}
-.smart-item{border:1px solid var(--bd);border-radius:13px;background:#fff;padding:10px;display:flex;gap:10px;min-width:0}
-.smart-item img{width:76px;height:88px;object-fit:contain;border-radius:9px;background:#faf6f7;flex:none}
-.smart-item .si-body{min-width:0;flex:1}
-.smart-item b{display:block;font-size:13px;line-height:1.35;overflow-wrap:anywhere}
-.smart-item small{display:block;color:var(--mu);font-size:11px;margin-top:4px;overflow-wrap:anywhere}
-.smart-item .si-source{font-size:10px;color:var(--mu);margin-top:7px}
-.smart-item .btn{margin-top:9px;padding:6px 10px;font-size:11.5px}
-.smart-state{font-size:12px;color:var(--mu);padding:12px 2px}
-.smart-state.bad{color:var(--ba)}
-.smart-manual{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.smart-manual small{color:var(--mu);font-size:11px}
-@media(max-width:600px){.smart-bar{flex-direction:column;align-items:stretch}.smart-bar .btn{justify-content:center}.smart-item img{width:66px;height:78px}}
 </style></head><body>
 <div id="root"></div><div id="ov"></div><aside id="dr"></aside><div id="tt"></div>
 <script>
@@ -395,8 +372,7 @@ async function go(r){
 /* ===== listas e CRUD genérico ===== */
 async function mod(r){
  const tabs=MOD[r].tabs||[r],t=tabSel[r]||tabs[0];
- $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div style="margin-bottom:12px"><button class=btn-o id=zs>Zerar sobras de embalagem</button></div>`:'')+(r==='estoque'&&t==='insumos'?smartSearchPanel():'')+'<div id=lst></div>';
- smartSearchInit();
+ $('#main').innerHTML=(tabs.length>1?`<div class=tabs>${tabs.map(x=>`<button class="${x===t?'on':''}" data-t="${x}">${T[x].t}</button>`).join('')}</div>`:'')+(r==='estoque'&&t==='insumos'&&canW('insumos')?`<div style="margin-bottom:12px"><button class=btn-o id=zs>Zerar sobras de embalagem</button></div>`:'')+'<div id=lst></div>';
  $('#zs')?.addEventListener('click',async()=>{const I=await all('insumos'),S=I.filter(i=>num(i.quantidade)>0&&num(i.quantidade)<0.05*(num(i.qtd_embalagem)||1));
   if(!S.length)return toast('Nenhuma sobra para acertar');
   if(!confirm('Sobrou menos de 5% da embalagem nestes itens. Zerar o estoque deles?\n\n'+S.map(i=>'• '+i.nome+': '+fmtN(i.quantidade)+' '+i.unidade).join('\n')))return;
@@ -558,75 +534,6 @@ async function concluirProd(r){
  upd('ordens_producao',r.id,{status:'Concluída'},'Produção concluída — insumos baixados e estoque atualizado')}
 
 
-/* ===== Busca inteligente — pesquisa externa sem alterar o cadastro até confirmar ===== */
-let smartKind='food',smartResults=[];
-function smartSearchPanel(){
- if(me?.nivel!=='Admin')return '';
- return `<section class="card pad smart-search" id="smartSearch">
-  <div class="smart-head"><div><h3>✦ Busca inteligente de produtos</h3><p>Encontre alimentos, embalagens e materiais para adicionar aos seus insumos.</p></div><span class="bd info">Pesquisa externa</span></div>
-  <div class="smart-tabs"><button type="button" data-smart-kind="food" class="on">Alimentos</button><button type="button" data-smart-kind="materials">Embalagens e materiais</button></div>
-  <div class="smart-bar"><input id="smartQ" type="search" maxlength="100" placeholder="Ex.: leite condensado, chocolate em barra…"><button class="btn" type="button" id="smartGo">${ic('search',16)} Pesquisar</button></div>
-  <div id="smartState" class="smart-state">Digite pelo menos 2 caracteres e pesquise. A busca só acontece quando você clicar.</div>
-  <div id="smartResults" class="smart-results"></div>
-  <div class="smart-manual"><button type="button" class="btn-o" id="smartManual">${ic('plus',15)} Cadastrar manualmente</button><small>Não encontrou? Cadastre o item normalmente, sem depender da pesquisa.</small></div>
- </section>`;
-}
-function smartSafeUrl(v){try{const u=new URL(String(v||''));return ['https:','http:'].includes(u.protocol)?u.href:''}catch{return ''}}
-function smartSearchInit(){
- const box=$('#smartSearch');if(!box)return;
- box.querySelectorAll('[data-smart-kind]').forEach(b=>b.onclick=()=>{
-  smartKind=b.dataset.smartKind;box.querySelectorAll('[data-smart-kind]').forEach(x=>x.classList.toggle('on',x===b));
-  $('#smartQ').placeholder=smartKind==='food'?'Ex.: leite condensado, chocolate em barra…':'Ex.: caixa para 12 brigadeiros, forminhas…';
-  $('#smartState').textContent=smartKind==='food'?'Pesquisa de alimentos industrializados no Open Food Facts.':'Pesquisas gratuitas em lojas: Google Shopping, Mercado Livre e Shopee. Os preços são mostrados pelas próprias lojas.';
-  $('#smartResults').innerHTML='';
- });
- $('#smartGo').onclick=smartSearch;
- $('#smartQ').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();smartSearch()}};
- $('#smartManual').onclick=()=>editRow('insumos');
- $('#smartResults').onclick=e=>{
-  const b=e.target.closest('[data-smart-use]');if(!b)return;
-  const item=smartResults[Number(b.dataset.smartUse)];if(!item)return;
-  const food=smartKind==='food';
-  const units={g:'g',kg:'kg',ml:'ml',l:'L',cl:'ml',un:'un'};
-  const unit=units[String(item.package_unit||'').toLowerCase()]||'un';
-  const qty=Number(item.package_value)>0?Number(item.package_value):1;
-  editRow('insumos',null,{
-   nome:item.name||'',tipo:food?'Matéria-prima':'Embalagem',unidade:unit,
-   qtd_embalagem:qty,preco_embalagem:0,quantidade:0,minimo:1,
-   
-  });
- };
-}
-async function smartSearch(){
- const q=$('#smartQ')?.value.trim(),state=$('#smartState'),results=$('#smartResults'),btn=$('#smartGo');
- if(!q||q.length<2)return toast('Digite pelo menos 2 caracteres para pesquisar.','bad');
- btn.disabled=true;state.className='smart-state';state.textContent='Pesquisando…';results.innerHTML='';smartResults=[];
- try{
-  const {data:{session}}=await sb.auth.getSession();if(!session)throw new Error('Sua sessão expirou. Entre novamente.');
-  const res=await fetch(`${SUPABASE_URL}/functions/v1/BUSCA-PRODUTOS`,{
-   method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_KEY},
-   body:JSON.stringify({q,kind:smartKind})
-  });
-  const data=await res.json().catch(()=>({}));
-  if(!res.ok)throw new Error(data.error||`Erro ${res.status} ao pesquisar.`);
-  smartResults=Array.isArray(data.results)?data.results:[];
-  if(!smartResults.length){
-   state.textContent=data.message||'Nenhum resultado encontrado. Você pode cadastrar manualmente.';
-   return;
-  }
-  state.textContent=data.message||`${smartResults.length} resultado(s) encontrado(s). Confira os dados antes de salvar.`;
-  results.innerHTML=smartResults.map((r,i)=>{
-   const img=smartSafeUrl(r.image),url=smartSafeUrl(r.source_url);
-   const meta=r.quantity||'';
-   return `<article class="smart-item">${img?`<img src="${esc(img)}" alt="${esc(r.name||'Produto')}" loading="lazy" referrerpolicy="no-referrer">`:`<div style="width:76px;height:88px;border-radius:9px;background:#faf6f7;display:grid;place-items:center;color:var(--mu);flex:none">${ic('box',26)}</div>`}
-    <div class="si-body"><b>${esc(r.name||'Produto sem nome')}</b>${meta?`<small>${esc(meta)}</small>`:''}
-     <div class="si-source">${esc(r.source||'Fonte externa')}</div>
-     ${r.search_link&&url?`<a class="btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">Abrir pesquisa</a>`:`<button type="button" class="btn" data-smart-use="${i}">Usar este produto</button>`}</div></article>`;
-  }).join('');
- }catch(e){state.className='smart-state bad';state.textContent=e.message||'Não foi possível pesquisar agora.'}
- finally{btn.disabled=false}
-}
-
 /* ===== Precificação ===== */
 async function precosView(){$('#main').innerHTML='<div id=pv></div>';await precosTab()}
 
@@ -640,8 +547,7 @@ async function precosTab(){
  $('#pv').innerHTML=`<div class=ph><div><h2>Preços e margens</h2><p>Preço = custo total ÷ (1 − lucro − taxas). O custo soma ingredientes, embalagem, seu trabalho e custos fixos.</p></div><div class=tools>${w&&ab.length?`<button class=btn id=apl>${ic('check',16)} Aplicar sugerido em ${ab.length}</button>`:''}</div></div>
  <div class=kpis>${kpi('Receitas','bag',P.length)}${kpi('Abaixo da meta','alert',ab.length)}${kpi('Sem custo','clock',sem.length)}${kpi('Margem média','chart',ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length)+'%':'—')}</div>
  ${semIns.length?`<div class="note w"><b>Atenção:</b> estes insumos usados nas receitas estão sem preço, então o custo está incompleto: ${esc(semIns.map(i=>i.nome).join(', '))}. <a href="#estoque">Cadastrar preço</a></div>`:''}
- <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Ingredientes</th><th>Embalagem e trabalho</th><th>Custo total</th><th>Lucro desejado</th><th>Preço mínimo</th><th>Preço sugerido</th><th>Preço atual</th><th>Lucro por un.</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const c=cT(p),s=sugerido(p),m=margemReal(p),mn=sugeridoDe(c,0),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
-  return `<tr><td><b>${esc(p.nome)}</b><br><small class=mute>rende ${fmtN(p.rendimento)} un</small></td><td>${c>0?brl4(num(p.custo)):'—'}</td><td>${c>0?brl4(num(p.custo_extra)):'—'}</td><td><b>${c>0?brl4(c):'—'}</b>${c>0&&rt?`<br><small class=mute>com ${brl4(rt)} de custos fixos</small>`:''}</td><td>${w?pin(p,'margem',p.margem,95)+' %':fmtN(p.margem)+'%'}</td><td>${mn?brl(mn):'—'}</td><td><b>${s?brl(s):'—'}</b></td><td>${w?pin(p,'preco',p.preco):brl(p.preco)}</td><td>${lu==null?'—':`<span style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</span>${m!=null?` <small class=mute>${Math.round(m)}%</small>`:''}`}</td><td>${sit(p)}</td><td class=ac>${w?`${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=ib title="Aplicar preço sugerido" data-ap="${i}">${ic('check')}</button>`:''}<button class=ib title="Embalagem, tempo e preço" data-pp="${i}">${ic('calc')}</button><button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button>`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
+ <div class=pcs>${P.length?P.map((p,i)=>xPC(p,i,w)).join(''):`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
  $('#main').onclick=e=>{const a=e.target.closest('[data-ap]'),d=e.target.closest('[data-ed]'),pp=e.target.closest('[data-pp]');
   if(a){const p=P[+a.dataset.ap];upd('produtos',p.id,{preco:sugerido(p)},'Preço de “'+p.nome+'” atualizado')}
   if(d)editRow('produtos',P[+d.dataset.ed]);if(pp)xPrecForm(P[+pp.dataset.pp])};
@@ -857,9 +763,10 @@ CF.find(x=>x[0]==='custo_fixo_mes')[1]='Custos fixos do mês — aluguel, luz, g
  f.find(x=>x[0]==='ficha')[1]='Ingredientes da receita inteira'}
 const xc=k=>num(CFG[k])||XD[k]||0;
 const xHora=()=>{const h=xc('dias_sem')*xc('horas_dia')*4.33;return h>0?num(CFG.salario_desejado)/h:0};
-const xT=o=>{let t=o.tempos;if(typeof t==='string'){try{t=JSON.parse(t)}catch{t={}}}t=t||{};return{gas:num(t.gas??o.min_gas),panela:num(t.panela??o.min_panela),forno:num(t.forno??o.min_forno),bat:num(t.bat??o.min_bat),liq:num(t.liq??o.min_liq)}};
-const xParts=o=>({trab:num(o.tempo_min)/60*xHora(),gas:0,luz:0});
-const xExtra=o=>{const q=xParts(o);return Math.round((num(o.embalagem_total)+q.trab+q.gas+q.luz)/(num(o.rendimento)||1)*1e6)/1e6};
+const xT=o=>{let t=o.tempos;if(typeof t==='string'){try{t=JSON.parse(t)}catch{t={}}}t=t||{};return{gas:num(t.gas??o.min_gas),panela:num(t.panela??o.min_panela),forno:num(t.forno??o.min_forno),bat:num(t.bat??o.min_bat),liq:num(t.liq??o.min_liq),agua:num(t.agua)}};
+const xK=()=>{const gh=num(CFG.gas_horas)*60,e=num(CFG.kwh)/60000;return{gas:gh>0?num(CFG.gas_preco)/gh:0,agua:num(CFG.agua_m3)/1000,pan:num(CFG.w_panela)*e,bat:num(CFG.w_bat)*e,forno:num(CFG.w_forno)*e,liq:num(CFG.w_liq)*e}};
+const xParts=o=>{const t=xT(o),k=xK();return{trab:num(o.tempo_min)/60*xHora(),gas:t.gas*k.gas,luz:t.panela*k.pan+t.bat*k.bat+t.forno*k.forno+t.liq*k.liq,agua:t.agua*k.agua}};
+const xExtra=o=>{const q=xParts(o);return Math.round((num(o.embalagem_total)+q.trab+q.gas+q.luz+q.agua)/(num(o.rendimento)||1)*1e6)/1e6};
 const xInp=inp;
 inp=(f,v,lc)=>{if(f[2]!=='tempo')return xInp(f,v,lc);const h=num(v)>=60&&num(v)%60===0;
  return `<div style="display:flex;gap:8px"><input name="${f[0]}" type=number step=any min=0 inputmode=decimal placeholder="0" value="${v?h?num(v)/60:num(v):''}" style="flex:1"><select name="${f[0]}_u" style="width:112px"><option value=min>minutos</option><option value=h ${h?'selected':''}>horas</option></select></div>`};
@@ -913,15 +820,39 @@ function recLive(fm){
   +mis.filter((m,k)=>mis.findIndex(x=>x[0].id===m[0].id)===k).map(([i,u])=>eqBox(i,u)).join('')
   +(v.__bad?.length?`<p class=hint style="color:var(--ba)">Ingrediente não encontrado: ${esc([...new Set(v.__bad)].join(', '))}. Cadastre em Insumos primeiro.</p>`:'')
   +(sem.length?`<p class=hint style="color:var(--ba)">Sem preço cadastrado: ${esc([...new Set(sem)].join(', '))}. O custo está incompleto.</p>`:''))}
+
+const css=document.createElement('style');css.textContent=`.pcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}.pc{padding:18px;border-radius:20px}.pc-h{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}.pc-h h3{font:600 17px Fraunces,serif;margin:0}
+.pcb{display:flex;height:10px;border-radius:99px;overflow:hidden;background:#f1ebe8;margin:12px 0}.pcb i{display:block;height:100%}.pc .cpr{font-size:13px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:8px}
+.pcr{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;padding-top:12px;border-top:1px dashed var(--bd)}.pcr small{display:block;color:var(--mu);font-size:11.5px}.pcr b{font-size:17px}.pcr .pi{width:100%}`;document.head.append(css);
+CF.splice(CF.findIndex(x=>x[0]==='horas_dia')+1,0,['gas_preco','Gás — preço do botijão (R$)','money'],['gas_horas','Gás — quantas horas de fogo dura 1 botijão','number'],['agua_m3','Água — preço por m³ (R$, está na conta de água)','money'],['kwh','Energia — preço do kWh (R$, está na conta de luz)','money'],['w_panela','Potência da panela mexedora (watts, na etiqueta)','number'],['w_bat','Potência da batedeira (watts)','number'],['w_forno','Potência do forno elétrico (watts)','number'],['w_liq','Potência do liquidificador (watts)','number']);
+const xCfg2=cfgView;cfgView=async r=>{await xCfg2(r);const cf=$('#cf');if(!cf)return;
+ cf.querySelector('button').insertAdjacentHTML('beforebegin','<div class=cp id=kc style="margin-top:8px"></div>');
+ const up=()=>{const v=collect(cf,CF),e=num(v.kwh)/1000,gh=num(v.gas_horas),R=(a,b)=>`<div class=cpr><span>${a}</span><b>${b}</b></div>`;
+  $('#kc').innerHTML=R('Gás aceso',brl4(gh>0?num(v.gas_preco)/gh:0)+' por hora')+R('Água',brl4(num(v.agua_m3)/1000)+' por litro')+R('Panela mexedora ligada',brl4(num(v.w_panela)*e)+' por hora')+R('Batedeira ligada',brl4(num(v.w_bat)*e)+' por hora')+R('Forno ligado',brl4(num(v.w_forno)*e)+' por hora')+R('Liquidificador ligado',brl4(num(v.w_liq)*e)+' por hora')};
+ cf.addEventListener('input',up);up()};
+function xPC(p,i,w){
+ const r=num(p.rendimento)||1,q=xParts(p),c=cT(p),t=taxa(),rt=c>0?rateio():0,oth=(q.trab+q.gas+q.luz+q.agua)/r,emb=Math.max(0,num(p.custo_extra)-oth);
+ const L=[['Ingredientes',num(p.custo),'#d72c62'],['Embalagem e outros',emb,'#f08aa8'],['Mão de obra',q.trab/r,'#e7a23b'],['Gás',q.gas/r,'#6a9bd8'],['Energia',q.luz/r,'#8c7ae6'],['Água',q.agua/r,'#4fb8c9'],['Custos fixos',rt,'#a8a0a4']].filter(x=>x[1]>1e-9);
+ const s=sugerido(p),mn=sugeridoDe(c,0),m=margemReal(p),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
+ const sit=!(c>0)?'<span class="bd warn">Sem custo</span>':!(num(p.preco)>0)?'<span class="bd bad">Sem preço</span>':abaixo(p)?'<span class="bd bad">Abaixo da meta</span>':'<span class="bd ok">Na meta</span>';
+ const pin=(f,v,max)=>w?`<input class=pi data-id="${p.id}" data-f="${f}" type=number step=any min=0 ${max?`max=${max}`:''} value="${num(v)}">`:`<b>${f==='margem'?fmtN(v)+'%':brl(v)}</b>`;
+ return `<article class="card pc"><div class=pc-h><div><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un</small></div><div>${sit}</div></div>
+ ${c>0?`<div class=pcb>${L.map(x=>`<i title="${x[0]}" style="width:${x[1]/c*100}%;background:${x[2]}"></i>`).join('')}</div>${L.map(x=>`<div class=cpr><span><span class=dot style="background:${x[2]}"></span>${x[0]}</span><b>${brl4(x[1])}</b></div>`).join('')}<div class="cpr big"><span>Custo total por unidade</span><b>${brl4(c)}</b></div>`:'<p class=mute style="margin:12px 0">Adicione ingredientes com preço na receita para calcular o custo.</p>'}
+ <div class=pcr><div><small>Lucro desejado (%)</small>${pin('margem',p.margem,95)}</div><div><small>Preço de venda</small>${pin('preco',p.preco)}</div><div><small>Preço mínimo</small><b>${mn?brl(mn):'—'}</b></div><div><small>Preço sugerido</small><b>${s?brl(s):'—'}</b></div><div><small>Lucro por unidade</small>${lu==null?'<b>—</b>':`<b style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</b>${m!=null?` <small>${Math.round(m)}%</small>`:''}`}</div><div><small>Lucro da receita inteira</small><b>${lu==null?'—':brl(lu*r)}</b></div></div>
+ ${w?`<div class=rc-a style="margin-top:12px"><button class=btn-o data-pp="${i}">${ic('calc',15)} Gás, água, tempo…</button>${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=btn data-ap="${i}">${ic('check',15)} Usar sugerido</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button></div>`:''}</article>`}
 function xPrecForm(p){
- const F=[['embalagem_total','Embalagem e outros — total da receita (R$)','money'],['tempo_min','Seu tempo de trabalho na receita inteira','tempo'],['margem','Lucro que você quer (% do preço de venda)','number'],['calc','','info'],['preco','Preço de venda de 1 unidade (R$)','money']];
- const vals={...p,embalagem_total:p.embalagem_total??Math.round(num(p.custo_extra)*(num(p.rendimento)||1)*100)/100};
- form({title:'Preço — '+p.nome,fields:F,vals,
+ const F=[['embalagem_total','Embalagem e outros — total da receita (R$)','money'],['tempo_min','Mão de obra: tempo que você trabalhou na receita inteira','tempo'],['min_panela','Panela mexedora ligada','tempo'],['min_bat','Batedeira ligada','tempo'],['min_forno','Forno ligado','tempo'],['min_liq','Liquidificador ligado','tempo'],['min_gas','Fogo (gás) aceso','tempo'],['agua_l','Água gasta (litros)','number'],['margem','Lucro que você quer (% do preço de venda)','number'],['calc','','info'],['preco','Preço de venda de 1 unidade (R$)','money']];
+ let tp={};try{tp=JSON.parse(p.tempos||'{}')}catch{}
+ const vals={...p,embalagem_total:p.embalagem_total??Math.round(num(p.custo_extra)*(num(p.rendimento)||1)*100)/100,min_gas:tp.gas,min_panela:tp.panela,min_forno:tp.forno,min_bat:tp.bat,min_liq:tp.liq,agua_l:tp.agua};
+ const mk=v=>{let z={};try{z=JSON.parse(v.tempos||'{}')}catch{}z.agua=num(v.agua_l);return{embalagem_total:v.embalagem_total,tempo_min:v.tempo_min,tempos:JSON.stringify(z),rendimento:p.rendimento}};
+ form({title:'Custos e preço — '+p.nome,fields:F,vals,
   onInput:fm=>{const v=collect(fm,F),el=fm.querySelector('#calc');if(!el)return;
-   const r=num(p.rendimento)||1,ing=num(p.custo),ex=num(v.embalagem_total)/r,tr=num(v.tempo_min)/60*xHora()/r,rat=ing+ex+tr>0?rateio():0,cus=ing+ex+tr+rat,m=num(v.margem),t=taxa(),mn=sugeridoDe(cus,0),sug=sugeridoDe(cus,m),pr=num(v.preco),real=margemDe(pr,cus);
-   setHtml(el,`<div class=cpr><span>Ingredientes (por unidade)</span><b>${brl4(ing)}</b></div><div class=cpr><span>Embalagem e outros</span><b>${brl4(ex)}</b></div><div class=cpr><span>Seu trabalho (${fmtN(num(v.tempo_min))} min × ${brl(xHora())}/h)</span><b>${brl4(tr)}</b></div>${rat?`<div class=cpr><span>Custos fixos rateados</span><b>${brl4(rat)}</b></div>`:''}<div class=cpr><span>Custo total por unidade</span><b>${brl4(cus)}</b></div>${t?`<div class=cpr><span>Taxas sobre a venda</span><b>${fmtN(t)}%</b></div>`:''}<div class=cpr><span>Preço mínimo (lucro zero)</span><b>${mn?brl(mn):'—'}</b></div><div class="cpr big"><span>Preço sugerido para ${fmtN(m)}% de lucro</span><b>${sug?brl(sug):'—'}</b></div>${sug?`<button type=button class=btn-o data-use="${sug}">Usar o preço sugerido</button>`:''}${pr>0&&cus>0&&real!=null?`<div class=cpr style="margin-top:8px"><span>Com ${brl(pr)}, seu lucro é</span><b style="color:var(--${real<m-0.5?'ba':'ok'})">${Math.round(real)}% · ${brl(pr*(1-t/100)-cus)} por unidade</b></div>`:''}${xHora()?'':'<p class=hint>Para cobrar seu trabalho, preencha “Quanto você quer ganhar por mês” em Configurações.</p>'}${ing>0?'':'<p class=hint style="color:var(--ba)">Esta receita ainda não tem ingredientes com preço.</p>'}`)},
+   const o=mk(v),q=xParts(o),k=xK(),z=JSON.parse(o.tempos),r=num(p.rendimento)||1,u=x=>x/r,ing=num(p.custo),emb=u(num(v.embalagem_total)),base=ing+emb+u(q.trab+q.gas+q.luz+q.agua),rat=base>0?rateio():0,cus=base+rat,m=num(v.margem),t=taxa(),mn=sugeridoDe(cus,0),sug=sugeridoDe(cus,m),pr=num(v.preco),real=margemDe(pr,cus);
+   const miss=[num(z.gas)&&!k.gas&&'gás',num(z.agua)&&!k.agua&&'água',(num(z.panela)||num(z.bat)||num(z.forno)||num(z.liq))&&!num(CFG.kwh)&&'energia (kWh)',num(v.tempo_min)&&!xHora()&&'mão de obra (quanto você quer ganhar)'].filter(Boolean);
+   const row=(a,b)=>b>0?`<div class=cpr><span>${a}</span><b>${brl4(b)}</b></div>`:'';
+   setHtml(el,row('Ingredientes',ing)+row('Embalagem e outros',emb)+row('Mão de obra',u(q.trab))+row('Gás',u(q.gas))+row('Energia',u(q.luz))+row('Água',u(q.agua))+row('Custos fixos',rat)+`<div class=cpr><span>Custo total por unidade</span><b>${brl4(cus)}</b></div>${t?`<div class=cpr><span>Taxas sobre a venda</span><b>${fmtN(t)}%</b></div>`:''}<div class=cpr><span>Preço mínimo (lucro zero)</span><b>${mn?brl(mn):'—'}</b></div><div class="cpr big"><span>Preço sugerido para ${fmtN(m)}% de lucro</span><b>${sug?brl(sug):'—'}</b></div>${sug?`<button type=button class=btn-o data-use="${sug}">Usar o preço sugerido</button>`:''}${pr>0&&cus>0&&real!=null?`<div class=cpr style="margin-top:8px"><span>Com ${brl(pr)}, seu lucro é</span><b style="color:var(--${real<m-0.5?'ba':'ok'})">${Math.round(real)}% · ${brl(pr*(1-t/100)-cus)} por unidade</b></div>`:''}${miss.length?`<p class=hint style="color:var(--ba)">Falta cadastrar em Configurações: ${miss.join(', ')}.</p>`:''}${ing>0?'':'<p class=hint style="color:var(--ba)">Esta receita ainda não tem ingredientes com preço.</p>'}`)},
   save:async v=>{if(v.margem<0||v.margem+taxa()>=100)return toast('Lucro desejado + taxas precisam somar menos de 100%.','bad'),false;
-   const {error}=await sb.from('produtos').update({embalagem_total:v.embalagem_total,tempo_min:v.tempo_min,margem:v.margem,preco:v.preco,custo_extra:xExtra({embalagem_total:v.embalagem_total,tempo_min:v.tempo_min,rendimento:p.rendimento})}).eq('id',p.id);
+   const o=mk(v),{error}=await sb.from('produtos').update({embalagem_total:v.embalagem_total,tempo_min:v.tempo_min,tempos:o.tempos,margem:v.margem,preco:v.preco,custo_extra:xExtra(o)}).eq('id',p.id);
    if(error)return fail(error);return true}})}
 
 boot();
