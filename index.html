@@ -165,7 +165,7 @@ const IC={home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1
 cart:'<circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M2 3h3l2.6 12h11.2L21 7H6"/>',
 cake:'<path d="M4 21h16M5 21v-7h14v7M5 14c2.3-2 4.7 2 7 0s4.7 2 7 0M12 10V6M12 3v1"/>',
 users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 21c0-4 3-6 7-6s7 2 7 6M16.5 4.5a3.5 3.5 0 0 1 0 7M22 21c0-3-1.5-5-4-5.7"/>',
-bag:'<path d="M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2"/>',box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/>',
+bag:'<path d="M5 8h14l-1 13H6zM9 8V6a3 3 0 0 1 6 0v2"/>',book:'<path d="M4 4h13a3 3 0 0 1 3 3v13H7a3 3 0 0 1-3-3zM7 4v16"/>',box:'<path d="M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/>',
 chef:'<path d="M7 15a4 4 0 0 1-1-7.8A4 4 0 0 1 12 4a4 4 0 0 1 6 3.2A4 4 0 0 1 17 15v5H7zM7 18h10"/>',
 truck:'<path d="M2 6h11v10H2zM13 9h4l4 4v3h-8z"/><circle cx="6" cy="18" r="1.6"/><circle cx="17" cy="18" r="1.6"/>',
 wallet:'<path d="M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7l2-3h12M16 13.5h2"/>',
@@ -195,20 +195,20 @@ let sb,me,CFG={},cache={},route='dashboard';const tabSel={};
 const all=t=>sb.from(t).select('*').then(r=>r.data||[]);
 const canW=tb=>{const n=me.nivel;return n==='Admin'||(n==='Gerente'&&!['perfis','configuracoes'].includes(tb))||(n==='Atendente'&&['vendas','venda_itens','clientes','encomendas'].includes(tb))||(n==='Produção'&&['ordens_producao','insumos','movimentacoes'].includes(tb))};
 const MOD={dashboard:{t:'Início',i:'home'},vendas:{t:'Vendas',i:'cart'},encomendas:{t:'Encomendas',i:'cake'},clientes:{t:'Clientes',i:'users'},
-estoque:{t:'Insumos e estoque',n:'1 · Insumos',i:'box',tabs:['insumos','movimentacoes']},produtos:{t:'Receitas',n:'2 · Receitas',i:'bag'},precos:{t:'Precificação inteligente',n:'3 · Precificação',i:'tag'},
+estoque:{t:'Estoque',n:'Estoque',i:'box',tabs:['insumos','movimentacoes']},produtos:{t:'Receitas',n:'Receitas',i:'bag'},precos:{t:'Precificação',n:'Precificação',i:'tag'},
 producao:{t:'Produção',i:'chef',tabs:['ordens_producao']},lista:{t:'Lista de compras',i:'list'},compras:{t:'Compras e fornecedores',n:'Compras',i:'truck',tabs:['compras','fornecedores']},
 financeiro:{t:'Financeiro',i:'wallet'},relatorios:{t:'Relatórios',i:'chart'},usuarios:{t:'Usuários',i:'shield',tabs:['perfis','atividades']},config:{t:'Configurações',i:'gear'}};
-const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos']],['Vendas',['vendas','encomendas','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']]];
+const NAV=[['Geral',['dashboard']],['Precificação',['precos','produtos']],['Produção e estoque',['producao','estoque','lista','compras']],['Vendas',['vendas','encomendas','clientes']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']]];
 const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config'].includes(k)),Atendente:['dashboard','vendas','encomendas','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
 /* regras de preço: lucro é % do PREÇO DE VENDA (30% de lucro = de cada R$100 vendidos, R$30 sobram). Taxas (cartão/imposto) saem do preço também.
    Preço = custo ÷ (1 − lucro% − taxas%). O custo inclui o rateio dos custos fixos (Configurações), se informado. */
 const taxa=()=>num(CFG.taxa_pct),rateio=()=>num(CFG.producao_mes)>0?num(CFG.custo_fixo_mes)/num(CFG.producao_mes):0;
 const cT=p=>{const b=num(p.custo)+num(p.custo_extra);return b>0?b+rateio():0};   // custo total de 1 unidade
 const sugeridoDe=(cus,m)=>{const d=1-(num(m)+taxa())/100;return d>0&&cus>0?Math.ceil(cus/d*100)/100:null};
-const sugerido=p=>sugeridoDe(cT(p),p.margem);
+const sugerido=p=>sugeridoDe(cT(p),num(p.margem)||40);
 const margemDe=(pr,cus)=>num(pr)>0?(num(pr)*(1-taxa()/100)-cus)/num(pr)*100:null;
 const margemReal=p=>margemDe(p.preco,cT(p));
-const abaixo=p=>{const m=margemReal(p);return m!=null&&cT(p)>0&&m<num(p.margem)-0.5};
+const abaixo=p=>{const m=margemReal(p);return m!=null&&cT(p)>0&&m<(num(p.margem)||40)-0.5};
 const custoIng=(p,F,I2,adj=()=>1)=>F.filter(f=>f.produto_id===p.id).reduce((a,f)=>{const i=I2.get(f.insumo_id);return i?a+conv(f.quantidade,f.unidade||i.unidade,i.unidade)*num(i.custo_unit)*adj(i):a},0)/(num(p.rendimento)||1);
 const FP=['Pix','Dinheiro','Débito','Crédito'];
 
@@ -221,14 +221,12 @@ const dls=()=>Object.keys(cache).filter(t=>Array.isArray(cache[t])).map(t=>`<dat
 /* ===== definição dos módulos ===== */
 const T={
 clientes:{t:'Clientes',s:'Cadastro, preferências e histórico de compras',one:'cliente',f:[['nome','Nome','text',,'req'],['telefone','Telefone','text'],['endereco','Endereço','text'],['preferencias','Preferências','area'],['observacoes','Observações','area']],acts:[['clock','Histórico de compras',histCli]]},
-produtos:{t:'Receitas',s:'Digite os ingredientes e a quantidade — o custo aparece na hora',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
- f:[['nome','Nome da receita / produto','text',,'req'],['categoria','Categoria','text'],['rendimento','Rende quantas unidades?','number',,'req'],
- ['ficha','Ingredientes da receita inteira','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'un'},cols:[['insumo_id','Digite o ingrediente','ref',['insumos','nome']],['quantidade','Qtd','number'],['unidade','Un','select',[['un','unidade'],['g','g'],['kg','kg'],['ml','ml'],['L','L']]]]},'nolist'],
- ['custo_extra','Embalagem e outros (R$ por unidade)','money',,'nolist'],['margem','Lucro que você quer (% do preço de venda)','number',,'nolist'],['calc','','info',,'nolist'],
- ['custo','Custo por unidade','money',,'ro'],['preco','Preço de venda (R$)','money',,'req'],['estoque','Em estoque','number',,'ro'],['ativo','Ativo','bool']],
- fmt:{custo:r=>cT(r)>0?brl(cT(r)):'<span class="bd warn">Sem custo</span>',rendimento:r=>fmtN(r.rendimento)+' un'},
- check:v=>!(v.rendimento>0)?'Informe quantas unidades a receita rende.':v.ficha.some(l=>!(l.quantidade>0))?'Informe a quantidade de cada ingrediente.':v.margem<0||v.margem+taxa()>=100?'Lucro desejado + taxas precisam somar menos de 100%.':ficBad(v)?'Há ingrediente com unidade diferente da compra. Preencha a equivalência no quadro amarelo.':null,
- x:[['Margem real',r=>{const m=margemReal(r);return m==null||!cT(r)?'<span class=mute>—</span>':`<span class="bd ${abaixo(r)?'warn':'ok'}" title="Meta: ${fmtN(r.margem)}%">${Math.round(m)}%</span>`}]]},
+produtos:{t:'Receitas',s:'Monte suas receitas com ingredientes e quantidades',one:'receita',nl:'Nova receita',live:prodLive,def:{rendimento:1,margem:40,custo_extra:0,ativo:true},
+ f:[['nome','Nome da receita','text',,'req'],['categoria','Categoria','text'],['rendimento','Rende quantas unidades?','number',,'req'],
+ ['ficha','Ingredientes da receita inteira','lines',{tb:'ficha_tecnica',fk:'produto_id',def:{unidade:'un'},cols:[['insumo_id','Ingrediente','ref',['insumos','nome']],['quantidade','Quantidade','number'],['unidade','Unidade','select',[['un','unidade'],['g','g'],['kg','kg'],['ml','ml'],['L','L']]]]},'nolist'],
+ ['ativo','Receita ativa','bool']],
+ fmt:{rendimento:r=>fmtN(r.rendimento)+' un'},
+ check:v=>!(v.rendimento>0)?'Informe quantas unidades a receita rende.':v.ficha.some(l=>!(l.quantidade>0))?'Informe a quantidade de cada ingrediente.':ficBad(v)?'Há ingrediente com unidade diferente da compra. Preencha a equivalência no quadro amarelo.':null},
 vendas:{t:'Vendas',s:'Cada venda baixa o estoque e lança a receita automaticamente',nl:'Nova venda',noedit:1,nodel:1,new:novaVenda,
  f:[['numero','Nº','number'],['created_at','Data','dt'],['cliente_id','Cliente','ref',['clientes','nome']],['forma_pagamento','Pagamento','select',FP],['desconto','Desconto','money'],['total','Total','money'],['status','Status','select',['Concluída','Cancelada']]],
  fmt:{numero:r=>'#'+r.numero},acts:[['receipt','Comprovante',recibo],['x','Cancelar venda',r=>confirm('Cancelar esta venda? O estoque será devolvido.')&&upd('vendas',r.id,{status:'Cancelada'},'Venda cancelada'),r=>r.status!=='Cancelada']]},
@@ -405,7 +403,7 @@ async function editRow(tb,r,pre){
  if(L&&r)vals[L[0]]=(await sb.from(L[3].tb).select('*').eq(L[3].fk,r.id)).data||[];
  form({title:r?'Editar '+(d.one||d.t):(d.nl||'Novo '+(d.one||d.t)),fields:d.f.filter(f=>!(f[4]||'').includes('ro')),vals,onInput:d.live,save:async v=>{
   const m=d.check?.(v);if(m)return toast(m,'bad'),false;
-  const p={...v};if(L)delete p[L[0]];
+  const p={...v};if(tb==='produtos'&&!r){p.margem=num(vals.margem)||40;p.preco=0;p.custo=0;p.custo_extra=0}if(tb==='insumos'&&!r){p.quantidade=0;p.minimo=1}if(L)delete p[L[0]];
   const q=r?sb.from(tb).update(p).eq('id',r.id).select().single():sb.from(tb).insert(p).select().single();
   const {data,error}=await q;if(error)return fail(error);
   if(L){const o=L[3],x=await sb.from(o.tb).delete().eq(o.fk,data.id);if(x.error)return fail(x.error);
@@ -537,25 +535,40 @@ async function precosView(){$('#main').innerHTML='<div id=pv></div>';await preco
 
 async function precosTab(){
  const [P0,I,F]=await Promise.all([all('produtos'),all('insumos'),all('ficha_tecnica')]);
- const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>(abaixo(a)?0:1)-(abaixo(b)?0:1)||a.nome.localeCompare(b.nome)),w=canW('produtos'),t=taxa(),rt=rateio();
+ const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>(abaixo(a)?0:1)-(abaixo(b)?0:1)||a.nome.localeCompare(b.nome));
+ const w=canW('produtos'),wi=canW('insumos'),t=taxa();
  const comC=P.filter(p=>cT(p)>0),ab=comC.filter(abaixo),sem=P.filter(p=>!(cT(p)>0)),ms=comC.map(margemReal).filter(m=>m!=null);
  const semIns=I.filter(i=>!num(i.custo_unit)&&F.some(f=>f.insumo_id===i.id));
- const sit=p=>!(cT(p)>0)?'<span class="bd warn">Sem custo</span>':!(num(p.preco)>0)?'<span class="bd bad">Sem preço</span>':abaixo(p)?'<span class="bd bad">Abaixo da meta</span>':'<span class="bd ok">Na meta</span>';
- const pin=(p,f,v,max)=>`<input class=pi data-id="${p.id}" data-f="${f}" type=number step=any min=0 ${max?`max=${max}`:''} value="${num(v)}" style="width:92px">`;
- $('#pv').innerHTML=`<div class=ph><div><h2>Preços e margens</h2></div><div class=tools>${w&&ab.length?`<button class=btn id=apl>${ic('check',16)} Aplicar sugerido em ${ab.length}</button>`:''}</div></div>
- <div class=kpis>${kpi('Receitas','bag',P.length)}${kpi('Abaixo da meta','alert',ab.length)}${kpi('Sem custo','clock',sem.length)}${kpi('Margem média','chart',ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length)+'%':'—')}</div>
- ${semIns.length?`<div class="note w"><b>Atenção:</b> estes insumos usados nas receitas estão sem preço, então o custo está incompleto: ${esc(semIns.map(i=>i.nome).join(', '))}. <a href="#estoque">Cadastrar preço</a></div>`:''}
- <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Custo</th><th>Lucro desejado</th><th>Preço sugerido</th><th>Preço atual</th><th>Lucro por un.</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const c=cT(p),s=sugerido(p),m=margemReal(p),mn=sugeridoDe(c,0),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
-  return `<tr><td><b>${esc(p.nome)}</b><br><small class=mute>rende ${fmtN(p.rendimento)} un</small></td><td><b>${c>0?brl4(c):'—'}</b></td><td>${w?pin(p,'margem',p.margem,95)+' %':fmtN(p.margem)+'%'}</td><td><b>${s?brl(s):'—'}</b></td><td>${w?pin(p,'preco',p.preco):brl(p.preco)}</td><td>${lu==null?'—':`<span style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</span>${m!=null?` <small class=mute>${Math.round(m)}%</small>`:''}`}</td><td>${sit(p)}</td><td class=ac>${w?`${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=ib title="Aplicar preço sugerido" data-ap="${i}">${ic('check')}</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button>`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class=empty>${ic('bag',40)}<p>Monte sua primeira receita para ver o preço.</p></div>`}</div>`;
- $('#main').onclick=e=>{const a=e.target.closest('[data-ap]'),d=e.target.closest('[data-ed]');
-  if(a){const p=P[+a.dataset.ap];upd('produtos',p.id,{preco:sugerido(p)},'Preço de “'+p.nome+'” atualizado')}
-  if(d)editRow('produtos',P[+d.dataset.ed])};
- $('#main').onchange=async e=>{const x=e.target.closest('.pi');if(!x)return;const f=x.dataset.f,v=num(x.value);
-  if(v<0||(f==='margem'&&v+taxa()>=100))return toast('Lucro desejado + taxas precisam somar menos de 100%.','bad');
-  const {error}=await sb.from('produtos').update({[f]:v}).eq('id',x.dataset.id);if(error)return fail(error);cache={};toast('Atualizado');precosTab()};
- const ap=$('#apl');if(ap)ap.onclick=async()=>{if(!confirm('Aplicar o preço sugerido nas '+ab.length+' receitas abaixo da meta?'))return;
-  for(const p of ab){const s=sugerido(p);if(!s)continue;const {error}=await sb.from('produtos').update({preco:s}).eq('id',p.id);if(error)return fail(error)}
-  cache={};toast('Preços atualizados');precosTab()}}
+ const sit=p=>!(cT(p)>0)?'<span class="bd warn">Sem custo</span>':!(num(p.preco)>0)?'<span class="bd bad">Definir preço</span>':abaixo(p)?'<span class="bd bad">Abaixo da meta</span>':'<span class="bd ok">Na meta</span>';
+ const unitCost=i=>{const b=baseCusto(i);return num(i.custo_unit)>0?`${brl4(b.v)} / ${b.u}`:'—'};
+ $('#pv').innerHTML=`
+ <div class="ph"><div><h2>Precificação</h2><p>Cadastre o que compra e acompanhe o custo e o preço de cada receita.</p><small class="mute">Preço sugerido = custo completo ÷ (1 − taxas − margem desejada).</small></div></div>
+ <div class="kpis">${kpi('Insumos','box',I.length)}${kpi('Receitas','bag',P.length)}${kpi('Abaixo da meta','alert',ab.length)}${kpi('Margem média','chart',ms.length?Math.round(ms.reduce((a,b)=>a+b,0)/ms.length)+'%':'—')}</div>
+ <section class="price-section"><div class="ph"><div><h2>Ingredientes e embalagens</h2><p>O custo por grama, ml ou unidade é calculado automaticamente.</p></div><div class="tools">${wi?`<button class="btn" id="newIns">${ic('plus',16)} Cadastrar insumo</button>`:''}</div></div>
+ <div class="card tw">${I.length?`<table><thead><tr><th>Item</th><th>Tipo</th><th>Embalagem</th><th>Preço pago</th><th>Custo unitário</th><th></th></tr></thead><tbody>${I.slice().sort((a,b)=>a.nome.localeCompare(b.nome)).map((i,n)=>`<tr><td><b>${esc(i.nome)}</b></td><td>${esc(i.tipo||'Matéria-prima')}</td><td>${fmtN(i.qtd_embalagem)} ${esc(i.unidade||'un')}</td><td>${num(i.preco_embalagem)>0?brl(i.preco_embalagem):'—'}</td><td><b>${unitCost(i)}</b></td><td class="ac">${wi?`<button class="ib" title="Editar" data-ins-edit="${n}">${ic('edit')}</button><button class="ib" title="Excluir" data-ins-del="${n}">${ic('trash')}</button>`:''}</td></tr>`).join('')}</tbody></table>`:`<div class="empty">${ic('box',36)}<p>Cadastre seus ingredientes e embalagens para calcular as receitas.</p></div>`}</div></section>
+ ${semIns.length?`<div class="note w"><b>Falta preço:</b> ${esc(semIns.map(i=>i.nome).join(', '))}. O custo das receitas que usam esses itens está incompleto.</div>`:''}
+ <section class="price-section" style="margin-top:26px"><div class="ph"><div><h2>Receitas precificadas</h2><p>Os custos vêm automaticamente das fichas técnicas cadastradas em Receitas: ingredientes, embalagem, mão de obra e rateio dos custos fixos.</p></div><div class="tools">${w?`<button class="btn-o" id="goRecipes">${ic('book',16)} Abrir receitas</button>${ab.length?`<button class="btn" id="apl">${ic('check',16)} Aplicar preços sugeridos</button>`:''}`:''}</div></div>
+ <div class="card tw">${P.length?`<table><thead><tr><th>Receita</th><th>Custo total/un.</th><th>Lucro desejado</th><th>Preço sugerido</th><th>Preço atual</th><th>Lucro/un.</th><th>Situação</th><th></th></tr></thead><tbody>${P.map((p,i)=>{const c=cT(p),s=sugerido(p),m=margemReal(p),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
+  return `<tr><td><b>${esc(p.nome)}</b><br><small class="mute">rende ${fmtN(p.rendimento)} un.</small></td><td><b>${c>0?brl4(c):'—'}</b></td><td>${w?`<input class="pi" data-id="${p.id}" data-f="margem" type="number" step="any" min="0" max="95" value="${num(p.margem)||40}" style="width:76px"> %`:`${fmtN(p.margem)}%`}</td><td><b>${s?brl(s):'—'}</b></td><td>${w?`<input class="pi" data-id="${p.id}" data-f="preco" type="number" step="0.01" min="0" value="${num(p.preco)}" style="width:92px">`:brl(p.preco)}</td><td>${lu==null?'—':`<b style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</b>${m!=null?` <small class="mute">${Math.round(m)}%</small>`:''}`}</td><td>${sit(p)}</td><td class="ac">${w?`<button class="ib" title="Custos adicionais e preço" data-price-edit="${i}">${ic('edit')}</button>${s&&Math.abs(s-num(p.preco))>=0.005?`<button class="ib" title="Aplicar preço sugerido" data-price-apply="${i}">${ic('check')}</button>`:''}`:''}</td></tr>`}).join('')}</tbody></table>`:`<div class="empty">${ic('tag',36)}<p>Quando você montar uma receita, ela aparecerá aqui com o custo calculado.</p></div>`}</div></section>`;
+ $('#newIns')?.addEventListener('click',()=>editRow('insumos'));
+ $('#goRecipes')?.addEventListener('click',()=>go('produtos'));
+ $('#main').onclick=async e=>{
+  const ie=e.target.closest('[data-ins-edit]'),id=e.target.closest('[data-ins-del]'),pe=e.target.closest('[data-price-edit]'),pa=e.target.closest('[data-price-apply]');
+  if(ie)editRow('insumos',I.slice().sort((a,b)=>a.nome.localeCompare(b.nome))[+ie.dataset.insEdit]);
+  if(id){const item=I.slice().sort((a,b)=>a.nome.localeCompare(b.nome))[+id.dataset.insDel];await delRow('insumos',item)}
+  if(pe)editPricing(P[+pe.dataset.priceEdit]);
+  if(pa){const p=P[+pa.dataset.priceApply],s=sugerido(p);if(s)await upd('produtos',p.id,{preco:s},'Preço sugerido aplicado');}
+  if(e.target.closest('#apl')){if(!confirm('Aplicar os preços sugeridos em todas as receitas abaixo da meta?'))return;for(const p of ab){const s=sugerido(p);if(s){const {error}=await sb.from('produtos').update({preco:s}).eq('id',p.id);if(error)return fail(error)}}cache={};toast('Preços sugeridos aplicados');precosTab()}
+ };
+ $('#main').onchange=async e=>{const x=e.target.closest('.pi');if(!x)return;const f=x.dataset.f,v=num(x.value);if(v<0||(f==='margem'&&v+t>=100))return toast('Lucro desejado + taxas precisam somar menos de 100%.','bad');const {error}=await sb.from('produtos').update({[f]:v}).eq('id',x.dataset.id);if(error)return fail(error);cache={};toast('Atualizado');precosTab()};
+}
+async function editPricing(p){
+ const fields=[['margem','Lucro desejado (% do preço de venda)','number'],['embalagem_total','Embalagens e complementos da receita inteira (R$)','money'],['tempo_min','Tempo de preparo da receita inteira (minutos)','number'],['preco','Preço de venda por unidade (R$)','money']];
+ form({title:'Precificar — '+esc(p.nome),fields,vals:{margem:num(p.margem)||40,embalagem_total:p.embalagem_total??Math.round(num(p.custo_extra)*(num(p.rendimento)||1)*100)/100,tempo_min:p.tempo_min??0,preco:p.preco},save:async v=>{
+  if(v.margem<0||v.margem+taxa()>=100)return toast('Lucro desejado + taxas precisam somar menos de 100%.','bad'),false;
+  const patch={margem:v.margem,embalagem_total:v.embalagem_total,tempo_min:v.tempo_min,preco:v.preco};patch.custo_extra=xExtra({...p,...patch});const {error}=await sb.from('produtos').update(patch).eq('id',p.id);if(error)return fail(error);return true;
+ }});
+}
 
 /* ===== lista de compras ===== */
 const getManual=()=>{try{return JSON.parse(CFG.lista_manual||localStorage.getItem('lm')||'[]')}catch{return[]}};
@@ -670,7 +683,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
 .pq{display:flex;gap:8px;align-items:center;margin:10px 0}.pq input{width:90px}
 .nd{font-size:12px;margin:8px 0;color:var(--mu)}.nd div{display:flex;justify-content:space-between;gap:8px;padding:2px 0}.nd .no{color:var(--ba);font-weight:600}`;document.head.append(s)})();
 
-MOD.produtos.t='Livro de receitas';MOD.producao={t:'Produção rápida',n:'Produção',i:'chef'};
+MOD.produtos.t='Receitas';MOD.producao={t:'Produção rápida',n:'Produção',i:'chef'};
 AIH.produtos=['Me sugira 3 receitas lucrativas para vender essa semana','Quais receitas devo reajustar o preço?','Como reduzir o custo do brigadeiro sem perder qualidade?'];
 AIH.producao=['Como organizar a produção do dia para perder menos tempo?'];
 
@@ -803,6 +816,50 @@ body.ai-open #lowB,body.ai-open #aiB{display:none}
 @media(max-width:700px){#aiP{right:0;bottom:0;width:100%;height:80vh;border-radius:22px 22px 0 0}#aiB{right:14px;bottom:14px;padding:10px 15px;font-size:13px}#lowB{top:64px}}`;document.head.append(s)}
 const xRender=aiRender;aiRender=()=>{xRender();const q=$('#aiQ');if(q)q.style.display=aiHistory.length?'none':'flex'};
 const xDock=aiDock;aiDock=()=>{xDock();const P=$('#aiP');if(P)new MutationObserver(()=>document.body.classList.toggle('ai-open',!P.hidden)).observe(P,{attributes:true,attributeFilter:['hidden']})};
+
+
+/* ===== Busca de insumos enxuta: só preenche os dados necessários ao custo ===== */
+const editRowBase=editRow;
+editRow=async function(tb,r,pre){
+ const d=T[tb],originalFields=d?.f;
+ if(tb==='insumos'&&route==='precos')d.f=originalFields.filter(f=>!['custo_unit','quantidade','minimo'].includes(f[0]));
+ await editRowBase(tb,r,pre);
+ if(tb==='insumos'&&route==='precos')d.f=originalFields;
+ if(tb!=='insumos')return;
+ const db=$('#fm .db');if(!db)return;
+ db.insertAdjacentHTML('afterbegin',`<section class="smart-search"><b>Buscar produto</b><div class="smart-controls"><input id="smartQ" placeholder="Ex.: leite condensado, granulado…"><select id="smartKind"><option value="food">Ingredientes</option><option value="materials">Embalagens e materiais</option></select><button type="button" class="btn" id="smartGo">Buscar</button></div><div id="smartResults"></div></section>`);
+ let found=[];
+ const run=async()=>{const q=$('#smartQ')?.value.trim(),kind=$('#smartKind')?.value;if(!q||q.length<2)return toast('Digite pelo menos 2 caracteres.','bad');const b=$('#smartGo'),out=$('#smartResults');b.disabled=true;b.textContent='Buscando…';out.innerHTML='';
+  try{const {data,error}=await sb.functions.invoke('BUSCA-PRODUTOS',{body:{q,kind}});if(error)throw error;found=data?.results||[];if(!found.length){out.innerHTML=`<p class="mute">${esc(data?.message||'Nenhum resultado. Você pode preencher manualmente.')}</p>`;return}
+   out.innerHTML=found.map((x,i)=>x.search_link?`<div class="smart-result"><div><b>${esc(x.name)}</b><small>${esc(x.source||'Pesquisa externa')}</small></div><a href="${esc(x.source_url)}" target="_blank" rel="noopener">Abrir pesquisa</a></div>`:`<div class="smart-result"><div><b>${esc(x.name)}</b><small>${x.quantity?esc(x.quantity):'Quantidade não identificada'}</small></div><button type="button" class="btn-o" data-smart-pick="${i}">Usar</button></div>`).join('');
+   if(data?.message)out.insertAdjacentHTML('beforeend',`<p class="mute" style="margin-top:7px">${esc(data.message)}</p>`);
+  }catch(e){out.innerHTML='<p class="hint" style="color:var(--ba)">Não foi possível pesquisar agora. Preencha os dados manualmente.</p>';}
+  finally{b.disabled=false;b.textContent='Buscar'}
+ };
+ $('#smartGo').onclick=run;$('#smartQ').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();run()}};
+ $('#smartResults').onclick=e=>{const b=e.target.closest('[data-smart-pick]');if(!b)return;const x=found[+b.dataset.smartPick];if(!x)return;
+  const set=(name,value)=>{const el=$(`#fm [name="${name}"]`);if(el&&value!=null&&value!==''){el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}))}};
+  set('nome',x.name);set('tipo',$('#smartKind').value==='food'?'Matéria-prima':'Embalagem');
+  const u=String(x.package_unit||'').toLowerCase();const unit=['kg','g','l','ml','un'].includes(u)?(u==='l'?'L':u):null;
+  if(unit)set('unidade',unit);if(Number(x.package_value)>0)set('qtd_embalagem',Number(x.package_value));
+  $('#smartResults').innerHTML='<p class="mute">Produto selecionado. Informe o preço que você pagou para concluir a precificação.</p>';
+  $('#fm [name="preco_embalagem"]')?.focus();
+ };
+};
+
+async function xLivro(){
+ const [P0,F]=await Promise.all([all('produtos'),all('ficha_tecnica')]);cache.insumos=await all('insumos');
+ const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome)),w=canW('produtos');
+ $('#main').innerHTML=`<section class="lv-hero"><div><h2>Livro de receitas</h2><p>Cadastre cada preparo, rendimento e ingredientes. O custo e o preço aparecem em Precificação.</p></div><div class="tools"><div class="sr">${ic('search',16)}<input id="q" placeholder="Buscar receita…"></div>${w?`<button class="btn" id="nr">${ic('plus',16)} Nova receita</button>`:''}</div></section>
+ ${P.length?`<div class="rg">${P.map((p,i)=>`<article class="rc" data-n="${esc(nm(p.nome))}"><div class="rc-h"><span>${xEmo(p)}</span><em>${esc(p.categoria||'Receita')}</em></div><div class="rc-b"><h3>${esc(p.nome)}</h3><small class="mute">Rende ${fmtN(p.rendimento)} un. · ${F.filter(f=>f.produto_id===p.id).length} ingredientes</small><div class="rc-a">${canW('ordens_producao')?`<button class="btn" data-pr="${i}">${ic('chef',15)} Produzir</button>`:''}${w?`<button class="ib" title="Editar receita" data-ed="${i}">${ic('edit')}</button><button class="ib" title="Excluir receita" data-dl="${i}">${ic('trash')}</button>`:''}</div></div></article>`).join('')}</div>`:`<div class="card empty">${ic('bag',40)}<p>Seu livro está vazio. Crie sua primeira receita.</p></div>`}`;
+ $('#q').oninput=e=>{const v=nm(e.target.value);document.querySelectorAll('.rc').forEach(c=>c.hidden=!c.dataset.n.includes(v))};
+ $('#nr')?.addEventListener('click',()=>editRow('produtos'));
+ $('#main').onclick=e=>{const a=e.target.closest('[data-ed]'),d=e.target.closest('[data-dl]'),pr=e.target.closest('[data-pr]');if(pr)location.hash='producao';if(a)editRow('produtos',P[+a.dataset.ed]);if(d)delRow('produtos',P[+d.dataset.dl])};
+}
+(()=>{const st=document.createElement('style');st.textContent=`
+.price-section{margin-top:18px}.price-section .ph{margin-bottom:10px}.price-section .ph h2{font-size:23px}.smart-search{background:#fff8fa;border:1px solid var(--bd);border-radius:13px;padding:12px;margin-bottom:16px}.smart-search>b{display:block;margin-bottom:8px}.smart-controls{display:grid;grid-template-columns:minmax(0,1fr) 145px auto;gap:7px}.smart-controls input,.smart-controls select{min-width:0}.smart-result{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-top:1px solid var(--bd)}.smart-result:first-child{margin-top:8px}.smart-result small{display:block;color:var(--mu);font-size:11px}.smart-result a{font-size:12px;color:var(--p);white-space:nowrap}.smart-result button{white-space:nowrap}.rc-a{display:flex;align-items:center;gap:5px;margin-top:12px}.rc-a .btn{padding:7px 10px;font-size:12px}.rc-b>small{display:block;margin-top:5px}.price-section .tw{margin-bottom:4px}
+@media(max-width:620px){.smart-controls{grid-template-columns:1fr 1fr}.smart-controls input{grid-column:1/-1}.smart-controls button{grid-column:1/-1}.price-section .tw table{min-width:760px}}
+`;document.head.append(st)})();
 
 boot();
 
