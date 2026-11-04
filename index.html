@@ -531,7 +531,11 @@ async function concluirProd(r){
 
 
 /* ===== Precificação ===== */
-async function precosView(){$('#main').innerHTML='<div id=pv></div>';await precosTab()}
+async function precosView(){
+ $('#main').onclick=$('#main').onchange=$('#main').oninput=null;
+ $('#main').innerHTML=`<div class=tabs id=ptabs>${[['normal','Venda direta'],['ifood','iFood'],['n99','99Food']].map(([k,l])=>`<button class="${PL.tab===k?'on':''}" data-pt="${k}">${BR[k]?`<i class=bdot style="background:${BR[k].c}"></i>`:''}${l}</button>`).join('')}</div><div id=pv></div>`;
+ $('#ptabs').onclick=e=>{const b=e.target.closest('[data-pt]');if(b){PL.tab=b.dataset.pt;precosView()}};
+ PL.tab==='normal'?await precosTab():await platView(PL.tab)}
 
 async function precosTab(){
  const [P0,I,F]=await Promise.all([all('produtos'),all('insumos'),all('ficha_tecnica')]);
@@ -949,6 +953,82 @@ async function xSobra(p,q){
  for(const [id,n] of Object.entries(need)){const i=Im.get(id),E=num(i.qtd_embalagem)||1,x=Math.ceil(n/E-1e-9)*E-n;
   if(x>1e-9)await sb.from('insumos').update({quantidade:Math.round((num(i.quantidade)-x)*1e6)/1e6}).eq('id',id)}}
 
-boot();
+/* ===== Precificação para iFood e 99Food ===== */
+const PLAT_DEF=()=>{const c=(id,nome,tipo,valor,ativo,fonte)=>({id,nome,tipo,valor,ativo,fonte,data:'',ok:false});
+ const FI='Fontes secundárias (Serasa, Remessa Online, TecMundo), consulta em 03/11/2026. Página oficial do iFood não conferida.',
+ F9='Imprensa 2026 (Seu Dinheiro/O Globo): 8,9% com entrega da 99Food e 10,9% com entrega própria. Depende do contrato e de promoções.',
+ P9='Guias de mercado citam 3,2%; a 99Food não publica o número na página pública.',
+ M9='Citada em guias de 2026; pode estar zerada em promoções. Confira no contrato.',
+ MI='Cobrada só acima de R$ 1.800 vendidos no mês. '+FI,EN='Informe se pagar entregador por pedido.';
+ return{ifood:{nome:'iFood',mods:[
+  {id:'basico',nome:'Plano Básico (você entrega)',cobr:[c('com','Comissão','pct',12,true,FI),c('pag','Pagamento online','pct',3.2,true,FI),c('ent','Entrega (R$ por pedido)','fixo',0,false,EN),c('men','Mensalidade (R$ por mês)','mensal',110,true,MI)]},
+  {id:'entrega',nome:'Plano Entrega (iFood entrega)',cobr:[c('com','Comissão','pct',23,true,FI),c('pag','Pagamento online','pct',3.2,true,FI),c('men','Mensalidade (R$ por mês)','mensal',150,true,MI)]}]},
+ n99:{nome:'99Food',mods:[
+  {id:'propria',nome:'Entrega própria',cobr:[c('com','Comissão','pct',10.9,true,F9),c('pag','Pagamento online','pct',3.2,true,P9),c('ent','Entrega (R$ por pedido)','fixo',0,false,EN),c('men','Mensalidade (R$ por mês)','mensal',150,true,M9)]},
+  {id:'n99',nome:'Entrega pela 99Food',cobr:[c('com','Comissão','pct',8.9,true,F9),c('pag','Pagamento online','pct',3.2,true,P9),c('log','Custo logístico (R$ por pedido, varia com a distância)','fixo',0,true,'Cobrado por distância; o valor está no portal/contrato. Informe a média.'),c('men','Mensalidade (R$ por mês)','mensal',150,true,M9)]}]}}};
+let PLAT=null;const PL={tab:'normal',prod:null,margem:null,geral:false,mod:{},off:{},preco:{}};
+const getPlat=()=>{if(PLAT)return PLAT;try{PLAT=JSON.parse(CFG.plataformas||localStorage.getItem('plat')||'null')}catch{}return PLAT||(PLAT=PLAT_DEF())};
+async function setPlat(){CFG.plataformas=JSON.stringify(PLAT);try{localStorage.setItem('plat',CFG.plataformas)}catch{}
+ const {error}=await sb.from('configuracoes').upsert([{chave:'plataformas',valor:CFG.plataformas}]);if(error)toast('Taxas salvas só neste aparelho','bad')}
+/* Preço = (custo + R$ fixos) ÷ (1 − Σ% − margem). Comissão, pagamento online e entrega são linhas separadas. */
+function platCalc(cus,m,off,margem,preco,geral){
+ const act=m.cobr.filter(c=>c.ativo&&!off[c.id]&&c.tipo!=='mensal'),pct=act.filter(c=>c.tipo==='pct').reduce((a,c)=>a+num(c.valor),0)+(geral?taxa():0),fix=act.filter(c=>c.tipo==='fixo').reduce((a,c)=>a+num(c.valor),0),d=1-(pct+num(margem))/100;
+ const sug=d>0&&cus>0?Math.ceil((cus+fix)/d*100-1e-9)/100:null,P=num(preco)>0?num(preco):sug;
+ if(!P)return{sug,P:null};
+ const L=act.map(c=>({n:c.nome,v:c.tipo==='pct'?P*num(c.valor)/100:num(c.valor),p:c.tipo==='pct'?num(c.valor):null}));
+ if(geral&&taxa())L.push({n:'Taxa geral (Configurações)',v:P*taxa()/100,p:taxa()});
+ const tx=L.reduce((a,x)=>a+x.v,0),liq=P-tx,lu=liq-cus;return{sug,P,L,tx,liq,lu,mg:lu/P*100}}
+const platOf=(kk,p)=>{const D=getPlat()[kk],m=D.mods.find(x=>x.id===PL.mod[kk])||D.mods[0],off={};m.cobr.forEach(c=>off[c.id]=PL.off[kk+'|'+m.id+'|'+c.id]);
+ return{D,m,off,r:platCalc(cT(p),m,off,PL.margem??num(p.margem),PL.preco[kk+p.id],PL.geral)}};
+async function platView(k){
+ $('#pv').dataset.plat=k;const w=canW('produtos'),P=(await all('produtos')).filter(p=>p.ativo!==false&&cT(p)>0).sort((a,b)=>a.nome.localeCompare(b.nome)),PD=getPlat()[k];
+ if(!P.length){$('#pv').innerHTML=`<div class=empty>${ic('bag',40)}<p>Cadastre receitas com ingredientes e preço para precificar no ${PD.nome}.</p></div>`;return}
+ const p=P.find(x=>x.id===PL.prod)||P[0];PL.prod=p.id;
+ const cus=cT(p),cur=platOf(k,p),R=cur.r,mg=PL.margem??num(p.margem),pk=k+p.id,hoje=new Date().toISOString().slice(0,10);
+ const pend=cur.m.cobr.filter(c=>c.ativo&&c.tipo!=='mensal'&&(!c.ok||(c.tipo==='fixo'&&!num(c.valor))&&!cur.off[c.id]));
+ const men=cur.m.cobr.filter(c=>c.ativo&&c.tipo==='mensal'&&num(c.valor)>0);
+ const opt=(a,v,f)=>a.map(x=>`<option value="${esc(f(x)[0])}" ${f(x)[0]===v?'selected':''}>${esc(f(x)[1])}</option>`).join('');
+ const direct=(()=>{const Pd=num(p.preco)>0?num(p.preco):sugerido(p)||0,tx=Pd*taxa()/100,lu=Pd-tx-cus;return{n:'Venda direta',sug:sugerido(p),P:Pd,tx,liq:Pd-tx,lu,mg:Pd?lu/Pd*100:null}})();
+ const cols=[direct,...['ifood','n99'].map(kk=>{const o=platOf(kk,p);return{k:kk,n:o.D.nome+' · '+o.m.nome,...o.r}})];
+ const row=(l,f)=>`<tr><th>${l}</th>${cols.map(c=>`<td>${c.P?f(c):'—'}</td>`).join('')}</tr>`;
+ $('#pv').innerHTML=`<div class=pban style="background:${BR[k].c};color:${BR[k].t}"><div class=pbl>${PD.logo||LOGO[k]?`<img src="${PD.logo||LOGO[k]}" alt="${esc(PD.nome)}">`:`<span class=pw style="color:${BR[k].w}">${PD.nome}</span>`}</div><div><h2 style="color:${BR[k].t}">Precificação ${PD.nome}</h2><p>Preço = (custo + taxas fixas) ÷ (1 − taxas % − lucro). O custo vem das suas receitas: ingredientes, embalagem, gás, energia, mão de obra e custos fixos.</p></div></div>
+ ${pend.length?`<div class="note w"><b>Atenção:</b> estas cobranças ainda precisam ser conferidas no portal oficial (ou estão sem valor): ${esc(pend.map(c=>c.nome).join('; '))}. Os percentuais iniciais vêm de fontes secundárias. Revise em “Taxas e modalidades”, abaixo.</div>`:''}
+ <div class="card pf"><div class=pgrid>
+  <div><label>Produto</label><select data-pf=prod>${opt(P,p.id,x=>[x.id,x.nome])}</select></div>
+  <div><label>Modalidade</label><select data-pf=mod>${opt(PD.mods,cur.m.id,x=>[x.id,x.nome])}</select></div>
+  <div><label>Lucro desejado (% do preço)</label><input data-pf=margem type=number step=any min=0 value="${mg}"></div>
+  <div><label>Preço no app (vazio = calcular)</label><input data-pf=preco type=number step=any min=0 placeholder="${R.sug?brl(R.sug):''}" value="${esc(PL.preco[pk]||'')}"></div></div>
+  <div class=pchk>${cur.m.cobr.filter(c=>c.ativo&&c.tipo!=='mensal').map(c=>`<label class=chk><input type=checkbox data-pf=off data-id="${cur.m.id}|${c.id}" ${cur.off[c.id]?'':'checked'}> ${esc(c.nome)} ${c.tipo==='pct'?fmtN(c.valor)+'%':brl(c.valor)}</label>`).join('')}${taxa()>0?`<label class=chk><input type=checkbox data-pf=geral ${PL.geral?'checked':''}> Incluir taxa geral das Configurações (${fmtN(taxa())}%)</label>`:''}</div></div>
+ <div class="card pf"><h3>Resultado no ${PD.nome}</h3>${R.P?`<div class=cpr><span>Custo de produção (1 un)</span><b>${brl(cus)}</b></div><div class=cpr><span>Preço de venda</span><b>${brl(R.P)}</b></div>${R.L.map(x=>`<div class=cpr><span>− ${esc(x.n)}${x.p!=null?` (${fmtN(x.p)}%)`:''}</span><b>${brl(x.v)}</b></div>`).join('')}<div class=cpr><span>Total descontado em taxas</span><b>${brl(R.tx)}</b></div><div class="cpr big"><span>Você recebe</span><b>${brl(R.liq)}</b></div><div class="cpr big"><span>Lucro líquido por unidade</span><b style="color:var(--${R.lu<0?'ba':'ok'})">${brl(R.lu)} · ${Math.round(R.mg)}%</b></div>`:'<p class=mute>Defina uma margem menor: com as taxas escolhidas não sobra espaço para esse lucro.</p>'}${men.length?`<p class=hint>Mensalidade de ${men.map(c=>brl(c.valor)).join(' + ')} por mês não entra no preço por unidade.</p>`:''}</div>
+ <div class="card pf tw"><h3>Comparação — ${esc(p.nome)}</h3><table class=pcmp><thead><tr><th></th>${cols.map(c=>`<th style="border-top:4px solid ${BR[c.k]?BR[c.k].c:'var(--p)'}">${esc(c.n)}</th>`).join('')}</tr></thead><tbody>${row('Preço sugerido',c=>c.sug?brl(c.sug):'—')}${row('Preço usado',c=>brl(c.P))}${row('Taxas descontadas',c=>brl(c.tx))}${row('Valor recebido',c=>brl(c.liq))}${row('Lucro líquido',c=>`<b style="color:var(--${c.lu<0?'ba':'ok'})">${brl(c.lu)}</b>`)}${row('Margem',c=>Math.round(c.mg)+'%')}</tbody></table></div>
+ <details class="card pf" ${PL.cfg?'open':''}><summary><b>Taxas e modalidades do ${PD.nome}</b></summary>
+ <div class=pmod style="border:0;margin:0 0 6px;padding:0"><label class=btn-o>Enviar logo do ${PD.nome}<input type=file accept=image/* hidden data-logo></label> ${PD.logo?'<button class=btn-o data-nologo=1>Remover logo</button>':''}</div><p class=hint>Edite os percentuais, ative ou desative cobranças e registre a origem e a data em que conferiu no portal do parceiro. “Conferida” remove o aviso.</p>
+ ${PD.mods.map((m,mi)=>`<div class=pmod><div class=pmh><input class=pn data-m=${mi} data-k=nome value="${esc(m.nome)}"><button class=ib data-delm=${mi} title="Remover modalidade">✕</button></div><div class=tw><table><thead><tr><th>Ativa</th><th>Cobrança</th><th>Tipo</th><th>Valor</th><th>Origem</th><th>Conferido em</th><th>Conferida</th><th></th></tr></thead><tbody>${m.cobr.map((c,ci)=>{const d=`data-m=${mi} data-c=${ci}`;return`<tr><td><input type=checkbox ${d} data-k=ativo ${c.ativo?'checked':''}></td><td><input ${d} data-k=nome value="${esc(c.nome)}"></td><td><select ${d} data-k=tipo>${opt([['pct','% do pedido'],['fixo','R$ por pedido'],['mensal','R$ por mês']],c.tipo,x=>x)}</select></td><td><input type=number step=any min=0 style="width:84px" ${d} data-k=valor value="${num(c.valor)}"></td><td><input ${d} data-k=fonte value="${esc(c.fonte||'')}"></td><td><input type=date ${d} data-k=data value="${esc(c.data||'')}"></td><td><input type=checkbox ${d} data-k=ok ${c.ok?'checked':''}></td><td><button class=ib data-delc="${mi}.${ci}">✕</button></td></tr>`}).join('')}</tbody></table></div><button class=btn-o data-addc=${mi}>+ Cobrança</button></div>`).join('')}
+ <div class=pmod><button class=btn-o data-addm=1>+ Modalidade</button> <button class=btn-o data-reset=1>Restaurar valores iniciais</button></div></details>`;
+ if(!w)$('#pv').querySelectorAll('details input,details select,details button').forEach(x=>x.disabled=true);
+ const det=$('#pv details');det.ontoggle=()=>{PL.cfg=det.open};
+ $('#main').onchange=async e=>{
+  const lg=e.target.closest('[data-logo]');if(lg){const fl=lg.files[0];if(!fl||!w)return;const img=new Image();img.onload=async()=>{const h=Math.min(120,img.height),cv=document.createElement('canvas');cv.height=h;cv.width=Math.round(img.width*h/img.height);cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);PD.logo=cv.toDataURL('image/png');await setPlat();platView(k)};img.src=URL.createObjectURL(fl);return}
+  const f=e.target.closest('[data-pf]');
+  if(f){const n=f.dataset.pf;if(n==='prod'){PL.prod=f.value;PL.margem=null}else if(n==='mod')PL.mod[k]=f.value;else if(n==='margem'){if(num(f.value)<0)return;PL.margem=num(f.value)}else if(n==='preco')PL.preco[pk]=f.value;else if(n==='geral')PL.geral=f.checked;else if(n==='off')PL.off[k+'|'+f.dataset.id]=!f.checked;return platView(k)}
+  const x=e.target.closest('[data-k]');if(!x||!w)return;const m=PD.mods[+x.dataset.m],c=x.dataset.c!=null?m.cobr[+x.dataset.c]:m,kk=x.dataset.k;
+  c[kk]=x.type==='checkbox'?x.checked:x.type==='number'?num(x.value):x.value;if(kk==='ok'&&x.checked&&!c.data)c.data=hoje;await setPlat();platView(k)};
+ $('#main').onclick=async e=>{if(!w)return;const t=e.target.closest('button');if(!t)return;const d=t.dataset;
+  if(d.addc!=null)PD.mods[+d.addc].cobr.push({id:'x'+Date.now(),nome:'Nova cobrança',tipo:'pct',valor:0,ativo:true,fonte:'',data:'',ok:false});
+  else if(d.delc){const [a,b]=d.delc.split('.').map(Number);if(!confirm('Remover esta cobrança?'))return;PD.mods[a].cobr.splice(b,1)}
+  else if(d.nologo)delete PD.logo;
+  else if(d.addm)PD.mods.push({id:'m'+Date.now(),nome:'Nova modalidade',cobr:[{id:'com',nome:'Comissão',tipo:'pct',valor:0,ativo:true,fonte:'',data:'',ok:false},{id:'pag',nome:'Pagamento online',tipo:'pct',valor:0,ativo:true,fonte:'',data:'',ok:false}]});
+  else if(d.delm!=null){if(PD.mods.length<2)return toast('Mantenha ao menos uma modalidade.','bad');if(!confirm('Remover esta modalidade?'))return;PD.mods.splice(+d.delm,1);delete PL.mod[k]}
+  else if(d.reset){if(!confirm('Voltar às taxas iniciais deste app? Suas edições serão perdidas.'))return;PLAT[k]=PLAT_DEF()[k];delete PL.mod[k]}
+  else return;
+  await setPlat();platView(k)}}
+const LOGO={ifood:'https://i.ibb.co/Y7p66tRb/images.png',n99:'https://i.ibb.co/HvYPKW1/images.png'};
+const BR={ifood:{c:'#EA1D2C',t:'#fff',w:'#EA1D2C'},n99:{c:'#FFC800',t:'#1a1a1a',w:'#1a1a1a'}};
+const cssP=document.createElement('style');cssP.textContent=`#pv[data-plat=ifood]{--p:#EA1D2C;--ps:#fdecee}#pv[data-plat=n99]{--p:#9a7400;--ps:#fff7d6}.tabs button[data-pt=ifood].on{color:#EA1D2C;border-color:#EA1D2C}.tabs button[data-pt=n99].on{color:#9a7400;border-color:#FFC800}
+.pban{display:flex;align-items:center;gap:16px;padding:18px 20px;border-radius:20px;margin-bottom:16px}.pban h2{margin:0;font-size:22px}.pban p{margin:4px 0 0;font-size:13px;opacity:.92;color:inherit}.pbl{background:#fff;border-radius:14px;padding:8px 16px;min-width:96px;text-align:center;flex:none}.pbl img{height:46px;display:block;max-width:160px;object-fit:contain}.pw{font:800 24px Inter,sans-serif;letter-spacing:-.02em}.bdot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px}.pf{padding:18px;margin-bottom:16px}.pf h3{margin:0 0 10px}.pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}.pgrid label{display:block;font-size:12px;color:var(--mu);margin-bottom:4px}.pgrid select,.pgrid input{width:100%}
+.pchk{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--bd)}.chk{display:flex;gap:6px;align-items:center;font-size:13px}.pcmp{width:100%;border-collapse:collapse}.pcmp th,.pcmp td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--bd);font-size:13px}.pcmp th:first-child{text-align:left}
+.pmod{border-top:1px dashed var(--bd);padding-top:12px;margin-top:14px}.pmh{display:flex;gap:8px;margin-bottom:8px}.pn{font-weight:600;flex:1}details.pf summary{cursor:pointer}`;document.head.append(cssP);
+
+boot()
 
 </script></body></html>
