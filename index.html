@@ -533,7 +533,7 @@ async function concluirProd(r){
 /* ===== Precificação ===== */
 async function precosView(){
  $('#main').onclick=$('#main').onchange=$('#main').oninput=null;
- $('#main').innerHTML=`<div class=tabs id=ptabs>${[['normal','Venda direta'],['ifood','iFood'],['n99','99Food']].map(([k,l])=>`<button class="${PL.tab===k?'on':''}" data-pt="${k}">${LOGO[k]?`<img class=tlg src="${getPlat()[k].logo||LOGO[k]}" alt="">`:''}${l}</button>`).join('')}</div><div id=pv></div>`;
+ $('#main').innerHTML=`<div class=tabs id=ptabs>${[['normal','Precificação'],['ifood','iFood'],['n99','99Food']].map(([k,l])=>`<button class="${PL.tab===k?'on':''}" data-pt="${k}">${LOGO[k]?`<img class=tlg src="${getPlat()[k].logo||LOGO[k]}" alt="">`:''}${l}</button>`).join('')}</div><div id=pv></div>`;
  $('#ptabs').onclick=e=>{const b=e.target.closest('[data-pt]');if(b){PL.tab=b.dataset.pt;precosView()}};
  PL.tab==='normal'?await precosTab():await platView(PL.tab)}
 
@@ -915,7 +915,8 @@ function xPC(p,i,w){
  const s=sugerido(p),mn=sugeridoDe(c,0),m=margemReal(p),lu=c>0&&num(p.preco)>0?num(p.preco)*(1-t/100)-c:null;
  const sit=!(c>0)?'<span class="bd warn">Sem custo</span>':!(num(p.preco)>0)?'<span class="bd bad">Sem preço</span>':abaixo(p)?'<span class="bd bad">Abaixo da meta</span>':'<span class="bd ok">Na meta</span>';
  const pin=(f,v,max)=>w?`<input class=pi data-id="${p.id}" data-f="${f}" type=number step=any min=0 ${max?`max=${max}`:''} value="${num(v)}">`:`<b>${f==='margem'?fmtN(v)+'%':brl(v)}</b>`;
- return `<article class="card pc"><div class=pc-h><div><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un</small></div><div>${sit}</div></div>
+ const pcc=['#d72c62','#e7a23b','#2fa8bd','#7a63e0','#3aa56c','#4b86d6','#c0488a','#e0743c'],pch=[...String(p.nome||'')].reduce((h,ch)=>(h*31+ch.charCodeAt(0))>>>0,7);
+ return `<article class="card pc" style="--pc:${pcc[pch%pcc.length]}"><div class=pc-h><div><h3><span class=pcn>${i+1}</span>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un</small></div><div>${sit}</div></div>
  ${c>0?`<div class=pcb>${L.map(x=>`<i title="${x[0]}" style="width:${x[1]/c*100}%;background:${x[2]}"></i>`).join('')}</div>${L.map(x=>`<div class=cpr><span><span class=dot style="background:${x[2]}"></span>${x[0]}</span><b>${brl4(x[1])}</b></div>`).join('')}<div class="cpr big"><span>Custo total por unidade</span><b>${brl4(c)}</b></div>`:'<p class=mute style="margin:12px 0">Adicione ingredientes com preço na receita para calcular o custo.</p>'}
  <div class=pcr><div><small>Lucro desejado (%)</small>${pin('margem',p.margem,95)}</div><div><small>Preço de venda</small>${pin('preco',p.preco)}</div><div><small>Preço mínimo</small><b>${mn?brl(mn):'—'}</b></div><div><small>Preço sugerido</small><b>${s?brl(s):'—'}</b></div><div><small>Lucro por unidade</small>${lu==null?'<b>—</b>':`<b style="color:var(--${lu<0?'ba':'ok'})">${brl(lu)}</b>${m!=null?` <small>${Math.round(m)}%</small>`:''}`}</div><div><small>Lucro da receita inteira</small><b>${lu==null?'—':brl(lu*r)}</b></div></div>
  ${w?`<div class=rc-a style="margin-top:12px"><button class=btn-o data-pp="${i}">${ic('calc',15)} Gás, água, tempo…</button>${s&&Math.abs(s-num(p.preco))>=0.005?`<button class=btn data-ap="${i}">${ic('check',15)} Usar sugerido</button>`:''}<button class=ib title="Editar receita" data-ed="${i}">${ic('edit')}</button></div>`:''}</article>`}
@@ -986,8 +987,7 @@ async function platView(k){
  const cols=[direct,...['ifood','n99'].map(kk=>{const o=platOf(kk,p);return{k:kk,n:o.D.nome+' · '+o.m.nome,...o.r}})];
  const row=(l,f)=>`<tr><th>${l}</th>${cols.map(c=>`<td>${c.P?f(c):'—'}</td>`).join('')}</tr>`;
  $('#pv').innerHTML=`<div class=pban>${BANNER[k]?`<img class=pbimg src="${BANNER[k]}" alt="${esc(PD.nome)}">`:''}<div class=pbl ${BANNER[k]?'hidden':''}>${PD.logo||LOGO[k]?`<img src="${PD.logo||LOGO[k]}" alt="${esc(PD.nome)}">`:`<span class=pw style="color:${BR[k].w}">${PD.nome}</span>`}</div></div>
- ${pend.length?`<div class="note w"><b>Atenção:</b> estas cobranças ainda precisam ser conferidas no portal oficial (ou estão sem valor): ${esc(pend.map(c=>c.nome).join('; '))}. Os percentuais iniciais vêm de fontes secundárias. Revise em “Taxas e modalidades”, abaixo.</div>`:''}
- <div class="card pf"><div class=pgrid>
+  <div class="card pf"><div class=pgrid>
   <div><label>Produto</label><select data-pf=prod>${opt(P,p.id,x=>[x.id,x.nome])}</select></div>
   <div><label>Modalidade</label><select data-pf=mod>${opt(PD.mods,cur.m.id,x=>[x.id,x.nome])}</select></div>
   <div><label>Lucro desejado (% do preço)</label><input data-pf=margem type=number step=any min=0 value="${mg}"></div>
@@ -1117,6 +1117,16 @@ header.top .bk b:nth-child(3){transform:translateX(1%) rotate(.5deg)}
 body:not(.is-home) header.top h1#ttl,body:not(.is-home) header.top .bk,body:not(.is-home) header.top .date{display:none}
 body:not(.is-home) header.top{min-height:0;padding-top:10px;padding-bottom:6px;background:none!important;box-shadow:none}
 @media(min-width:901px){body:not(.is-home) header.top{display:none}}
+`;document.head.append(st)}
+
+{const st=document.createElement('style');st.textContent=`
+/* receitas da Precificação bem marcadas */
+.pcs{gap:22px}
+.pcs .pc{--pc:#d72c62;position:relative;overflow:hidden;border:2px solid color-mix(in srgb,var(--pc) 38%,#fff);border-top:7px solid var(--pc);box-shadow:0 14px 28px -16px color-mix(in srgb,var(--pc) 70%,transparent),0 2px 0 #fff inset}
+.pcs .pc .pc-h{margin:-18px -18px 14px;padding:14px 18px;background:color-mix(in srgb,var(--pc) 16%,#fff);border-bottom:2px solid color-mix(in srgb,var(--pc) 30%,#fff)}
+.pcs .pc .pc-h h3{display:flex;align-items:center;gap:10px;font-size:20px;color:color-mix(in srgb,var(--pc) 62%,#000)}
+.pcs .pc .pcn{flex:none;display:inline-grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--pc);color:#fff;font:700 13px Inter,sans-serif}
+.pcs .pc .cpr.big{border-top:2px dashed color-mix(in srgb,var(--pc) 40%,#fff);padding-top:8px;margin-top:4px}
 `;document.head.append(st)}
 
 boot()
