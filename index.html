@@ -282,7 +282,7 @@ function aiOpen(q){const p=$('#aiP');if(!p)return;p.hidden=false;aiRender();cons
 function aiDock(){if($('#aiD'))return;
  aiHistory=[];try{Object.keys(localStorage).filter(k=>k.startsWith('analu_ia_chat_')).forEach(k=>localStorage.removeItem(k))}catch{}
  const d=document.createElement('div');d.id='aiD';
- d.innerHTML=`<button id=aiB>✦ Onze te ajuda</button><div id=aiP hidden><div class=aih><div class=t><div class=aav>11</div><div><b>Onze te ajuda</b><small>Receitas, custos e preços · a conversa não fica salva</small></div></div><div><button class=ib id=aiN title="Nova conversa">${ic('trash')}</button><button class=ib id=aiX title=Fechar>${ic('x')}</button></div></div><div id=aiM></div><div id=aiQ></div><form id=aiF><textarea id=aiI rows=2 placeholder="Pergunte sobre receitas, custos, preços…" required></textarea><button class=btn id=aiSend>Enviar</button></form></div>`;
+ d.innerHTML=`<button id=aiB>✦ Onze te ajuda</button><div id=aiP hidden><div class=aih><div class=t><div class=aav>11</div><div><b>Onze te ajuda</b><small>Receitas, custos e preços · a conversa não fica salva</small></div></div><div><button class=ib id=aiN title="Nova conversa">${ic('trash')}</button><button class=ib id=aiX title=Fechar>${ic('x')}</button></div><div class=stl aria-hidden=true><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div><div id=aiM></div><div id=aiQ></div><form id=aiF><textarea id=aiI rows=2 placeholder="Pergunte sobre receitas, custos, preços…" required></textarea><button class=btn id=aiSend>Enviar</button></form></div>`;
  document.body.append(d);
  $('#aiB').onclick=()=>$('#aiP').hidden?aiOpen():($('#aiP').hidden=true);$('#aiX').onclick=()=>$('#aiP').hidden=true;$('#aiN').onclick=()=>{aiHistory=[];aiRender()};
  $('#aiF').onsubmit=e=>{e.preventDefault();aiSend()};
@@ -358,7 +358,7 @@ const theme=()=>CFG.cor&&CFG.cor!=='#b4506f'&&document.documentElement.style.set
 function shell(){
  const ok=ALLOW[me.nivel]||['dashboard'];
  const nav=NAV.map(([g,it])=>{it=it.filter(i=>ok.includes(i));return it.length?`<div class=ng>${g}</div>`+it.map(i=>`<a href="#${i}" data-r="${i}">${ic(MOD[i].i)}<span>${MOD[i].n||MOD[i].t}</span></a>`).join(''):''}).join('');
- $('#root').innerHTML=`<div class=app><aside id=side><div class=brand><img src="logo.png" alt="Doces da Analu"><small>Sistema de gestão</small></div><nav>${nav}</nav><div class=me><div class=av>${esc((me.nome||'?')[0]).toUpperCase()}</div><div><b>${esc(me.nome)}</b><small>${me.nivel}</small></div><button class=ib id=lo title=Sair>${ic('logout')}</button></div></aside><div id=sc></div><div class=ct><header class=top><button class="ib mb" id=bg>${ic('menu',22)}</button><h1 id=ttl></h1><span class=date>${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</span></header><main id=main></main></div></div>`;
+ $('#root').innerHTML=`<div class=app><aside id=side><div class=brand><img src="logo.png" alt="Doces da Analu"><small>Sistema de gestão</small></div><nav>${nav}</nav><div class=me><div class=av>${esc((me.nome||'?')[0]).toUpperCase()}</div><div><b>${esc(me.nome)}</b><small>${me.nivel}</small></div><button class=ib id=lo title=Sair>${ic('logout')}</button></div></aside><div id=sc></div><div class=ct><header class=top><button class="ib mb" id=bg>${ic('menu',22)}</button><h1 id=ttl></h1><span class=date>${new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'})}</span><div class=bk aria-hidden=true><b>Gilmore Girls</b><b>Café<i>♥</i></b><b>Doces<i>♥</i></b></div></header><main id=main></main></div></div>`;
  $('#lo').onclick=()=>sb.auth.signOut();$('#bg').onclick=()=>document.body.classList.add('nav-open');$('#sc').onclick=()=>document.body.classList.remove('nav-open');
  window.onhashchange=()=>go(location.hash.slice(1));aiDock()}
 async function go(r){
@@ -706,7 +706,7 @@ const xStart=start;start=async()=>{await xStart();xLive()};
 
 async function go(r){
  if(!me)return;const ok=ALLOW[me.nivel]||[];if(!MOD[r]||!ok.includes(r))r='dashboard';
- xGoAt=Date.now();route=r;document.body.classList.remove('era-debut','era-1989','era-lover','era-fearless','era-reputation','era-speak-now','era-red','era-folklore','era-evermore','era-midnights');document.body.classList.add('era-'+(ALBUMS[r]?.era||'debut'));document.documentElement.style.setProperty('--era-ink',ALBUMS[r]?.ink||'#34202a');document.documentElement.style.setProperty('--era-bg',ALBUMS[r]?.bg||'#fdf5f7');aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
+ xGoAt=Date.now();route=r;document.body.classList.toggle('is-home',r==='dashboard');document.body.classList.remove('era-debut','era-1989','era-lover','era-fearless','era-reputation','era-speak-now','era-red','era-folklore','era-evermore','era-midnights');document.body.classList.add('era-'+(ALBUMS[r]?.era||'debut'));document.documentElement.style.setProperty('--era-ink',ALBUMS[r]?.ink||'#34202a');document.documentElement.style.setProperty('--era-bg',ALBUMS[r]?.bg||'#fdf5f7');aiHints();history.replaceState(null,'','#'+r);document.body.classList.remove('nav-open');cache={};
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
  $('#ttl').textContent='Doces da Analu';$('#main').onclick=$('#main').onchange=$('#main').oninput=null;$('#main').innerHTML='<div class=sk></div>';
  try{if(['dashboard','produtos','precos','producao','lista','estoque','config'].includes(r))await xSync();
@@ -1032,8 +1032,7 @@ document.head.insertAdjacentHTML('beforeend','<link href="https://fonts.googleap
 #aiP .aih b{font-family:'Rozha One',Georgia,serif;font-weight:400;font-size:19px;letter-spacing:.04em;color:#ff5563;text-shadow:0 0 6px #ff1e2e,0 0 16px #ff1e2e99}
 #aiP .aih .aav{background:#2a1e42;color:#ff5563;font:400 17px 'Rozha One',Georgia,serif;border:1px solid #ff556388;box-shadow:0 0 12px #ff2d3f66}
 #aiP .aih .ib{color:#ffd9dd}
-#aiP .aih::after{content:'';position:absolute;left:0;right:0;bottom:-9px;height:18px;pointer-events:none;background:radial-gradient(circle,#ffd84a 0 2.5px,#ffd84a66 3.5px,transparent 7px) 8px 0/84px 18px repeat-x,radial-gradient(circle,#ff5563 0 2.5px,#ff556366 3.5px,transparent 7px) 29px 0/84px 18px repeat-x,radial-gradient(circle,#4db8ff 0 2.5px,#4db8ff66 3.5px,transparent 7px) 50px 0/84px 18px repeat-x,radial-gradient(circle,#6dff8a 0 2.5px,#6dff8a66 3.5px,transparent 7px) 71px 0/84px 18px repeat-x}
-#aiP #aiM{background:linear-gradient(rgba(44,30,68,.2),rgba(44,30,68,.45)),url(https://i.ibb.co/chrr36r4/9679bf53-8fe2-418a-b0e0-00f019ec0a21.jpg) center/cover;padding:24px 14px 14px}
+#aiP #aiM{background:linear-gradient(rgba(20,12,30,.08),rgba(20,12,30,.32)),url(https://i.ibb.co/gb50LxSk/6703fdde-4b53-4751-9f26-861e090f25ca.jpg) center/cover;padding:40px 14px 14px}
 #aiP .ai-msg.assistant{background:rgba(250,244,252,.95);color:#2a2040;border:0}
 #aiP .ai-msg.user{background:linear-gradient(135deg,#d4182a,#8f1020);color:#fff}
 #aiP .ai-empty{margin:auto 0 0;color:#fff;background:linear-gradient(transparent,rgba(30,20,48,.82) 40%);padding:70px 10px 8px;text-shadow:0 1px 8px #000a}
@@ -1058,12 +1057,11 @@ button,.btn,.btn-o,.ib{transition:transform .15s,box-shadow .2s,background .2s,c
 *{scrollbar-width:thin;scrollbar-color:#e0b9a8 transparent}
 /* topo */
 header.top{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:14px;min-height:84px;padding:12px clamp(16px,3vw,32px);border:0!important;backdrop-filter:none;
- background:radial-gradient(120% 140% at 0% 0%,#fff4ec99 0,transparent 55%),linear-gradient(180deg,#fbe3d5,#f6d2c0)!important;
- box-shadow:inset 0 3px 0 #7b2d3b,inset 0 -1px 0 #e9bfae,0 12px 24px -16px #7b2d3b77}
-header.top .mb{color:#7b2d3b;background:#ffffff70;border-radius:14px;box-shadow:inset 0 0 0 1px #e9bfae}
+ background:radial-gradient(120% 140% at 0% 0%,#ffffff99 0,transparent 55%),linear-gradient(180deg,#fcd3e0,#f5a9c2)!important;
+ box-shadow:inset 0 3px 0 #7b2d3b,inset 0 -1px 0 #eca3bb,0 12px 24px -16px #7b2d3b77}
+header.top .mb{color:#7b2d3b;background:#ffffff70;border-radius:14px;box-shadow:inset 0 0 0 1px #eca3bb}
 header.top h1#ttl{flex:none;position:relative;margin:0;padding:0 6px 18px;white-space:nowrap;font:400 clamp(36px,9.5vw,50px)/1 'Great Vibes','Satisfy',cursive!important;color:#7b2d3b!important;text-transform:none!important;letter-spacing:0!important;text-shadow:0 1px 0 #fff9,0 6px 14px #7b2d3b22}
 header.top h1#ttl::after{content:'';position:absolute;left:6px;right:0;bottom:0;height:16px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 24' fill='none' stroke='%237b2d3b' stroke-width='1.4' stroke-linecap='round'%3E%3Cpath d='M2 15C40 24 90 6 150 12S250 21 274 11'/%3E%3Cpath d='M287 17c-4-3-7-5-7-8a3.5 3.5 0 0 1 7-1 3.5 3.5 0 0 1 7 1c0 3-3 5-7 8z'/%3E%3C/svg%3E") center/100% 100% no-repeat;clip-path:inset(0 100% 0 0);animation:flo 1.4s .3s cubic-bezier(.65,0,.2,1) forwards}
-header.top::after{content:'';margin-left:auto;flex:none;width:clamp(56px,16vw,76px);aspect-ratio:64/60;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 60' fill='none' stroke='%236b3d36' stroke-width='1.8' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpath d='M32 26C25 11 6 9 7 21s17 13 25 5z' fill='%23f9e4d8'/%3E%3Cpath d='M32 26c7-15 26-17 25-5S40 34 32 26z' fill='%23f9e4d8'/%3E%3Cpath d='M13 17c5-1 10 1 15 7M51 17c-5-1-10 1-15 7M12 24c5 1 10 0 16 2M52 24c-5 1-10 0-16 2' stroke-width='1' opacity='.6'/%3E%3Cpath d='M29 31L17 55h10l5-14zM35 31l12 24H37l-5-14z' fill='%23efc7b4'/%3E%3Crect x='26' y='21' width='12' height='14' rx='5' fill='%23e5b29e'/%3E%3C/svg%3E") center/contain no-repeat;filter:drop-shadow(0 6px 8px #7b2d3b33);transform-origin:50% 40%;animation:sway 5s ease-in-out infinite}
 @keyframes flo{to{clip-path:inset(0 0 0 0)}}@keyframes sway{50%{transform:rotate(4deg) translateY(-2px)}}@keyframes rise{from{opacity:0;transform:translateY(10px)}}
 /* cartões do painel */
 .kpis{gap:clamp(10px,2vw,16px)}
@@ -1089,6 +1087,37 @@ html,body,.app,.ct,#main,main{background:#fff!important}
 .kpi .art{width:clamp(56px,36cqw,100px);background:none;box-shadow:none;border-radius:0;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
 .kpi .art svg{width:100%;height:100%;filter:none;stroke-width:initial}
 .kpi.kart:hover .art{transform:translateY(-3px) scale(1.06)}`;document.head.append(st)}
+
+{const st=document.createElement('style');st.textContent=`
+/* ===== luzinhas Stranger Things (chat) ===== */
+#aiP .stl{position:absolute;left:0;right:0;top:100%;height:36px;display:flex;pointer-events:none;z-index:3}
+#aiP .stl i{flex:1;position:relative;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20' preserveAspectRatio='none'%3E%3Cpath d='M0 1Q50 17 100 1' fill='none' stroke='%23120c0a' stroke-width='1.8' vector-effect='non-scaling-stroke'/%3E%3C/svg%3E") 0 0/100% 18px no-repeat;--c:#ff3345;--d:3.3s;--l:0s}
+#aiP .stl i:nth-child(6n+2){--c:#ffd84a}#aiP .stl i:nth-child(6n+3){--c:#4db8ff}#aiP .stl i:nth-child(6n+4){--c:#6dff8a}#aiP .stl i:nth-child(6n+5){--c:#ff8a3d}#aiP .stl i:nth-child(6n){--c:#d56bff}
+#aiP .stl i:nth-child(2n){--d:2.6s}#aiP .stl i:nth-child(3n){--d:4.1s}#aiP .stl i:nth-child(2n+1){--l:-1.1s}#aiP .stl i:nth-child(3n){--l:-2.2s}#aiP .stl i:nth-child(5n){--l:-.6s}
+#aiP .stl i::before{content:'';position:absolute;left:50%;top:7px;width:5px;height:6px;margin-left:-2.5px;border-radius:1px 1px 2px 2px;background:#1c1411}
+#aiP .stl i::after{content:'';position:absolute;left:50%;top:12px;width:9px;height:14px;margin-left:-4.5px;color:var(--c);border-radius:50% 50% 50% 50%/36% 36% 64% 64%;background:radial-gradient(circle at 38% 28%,#fff 0 9%,var(--c) 38%,color-mix(in srgb,var(--c) 55%,#000) 100%);box-shadow:0 0 6px 1px var(--c),0 0 16px 4px color-mix(in srgb,var(--c) 55%,transparent);animation:stf var(--d) var(--l) infinite}
+@keyframes stf{0%,7%,12%,41%,48%,78%,100%{opacity:1;filter:brightness(1.15)}8%{opacity:.12;filter:brightness(.35)}9%{opacity:1}10%{opacity:.18;filter:brightness(.4)}42%,47%{opacity:.22;filter:brightness(.4)}79%{opacity:.5;filter:brightness(.6)}}
+
+/* ===== livros Gilmore Girls (topo) ===== */
+header.top .bk{margin-left:auto;flex:none;width:clamp(78px,22vw,132px);container-type:inline-size;display:flex;flex-direction:column;filter:drop-shadow(0 6px 8px #7b2d3b44)}
+header.top .bk b{position:relative;display:flex;align-items:center;justify-content:center;height:21cqw;margin-top:-1px;border-radius:2px 5px 5px 2px;
+ background:linear-gradient(90deg,#f3e0c6 0 4.5%,#cdb08a 4.5% 5.5%,transparent 5.5%),linear-gradient(180deg,#9c3652,#7b2638 55%,#651c2e);
+ color:#f0d3a2;font:600 8.6cqw/1 Fraunces,Georgia,serif;letter-spacing:.02em;white-space:nowrap;text-shadow:0 1px 0 #3d0f1a;
+ box-shadow:inset 0 1px 0 #ffffff33,inset 0 -2px 0 #0000002e}
+header.top .bk b::before,header.top .bk b::after{content:'';position:absolute;top:0;bottom:0;width:5cqw;background:linear-gradient(90deg,#e2bd82 0 30%,transparent 30% 62%,#e2bd82 62% 100%);opacity:.95}
+header.top .bk b::before{left:13cqw}header.top .bk b::after{right:9cqw}
+header.top .bk b i{position:absolute;right:16cqw;font-style:normal;font-size:8cqw;color:#efb9a6}
+header.top .bk b:nth-child(1){transform:translateX(3%) rotate(-.8deg)}
+header.top .bk b:nth-child(2){transform:translateX(-2%)}
+header.top .bk b:nth-child(3){transform:translateX(1%) rotate(.5deg)}
+`;document.head.append(st)}
+
+{const st=document.createElement('style');st.textContent=`
+/* aba de cima (rosa + livros) só na página inicial */
+body:not(.is-home) header.top h1#ttl,body:not(.is-home) header.top .bk,body:not(.is-home) header.top .date{display:none}
+body:not(.is-home) header.top{min-height:0;padding-top:10px;padding-bottom:6px;background:none!important;box-shadow:none}
+@media(min-width:901px){body:not(.is-home) header.top{display:none}}
+`;document.head.append(st)}
 
 boot()
 
