@@ -664,7 +664,7 @@ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch((
 .lv-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.lv-chips button{background:#fff;border:1px solid var(--bd);border-radius:99px;padding:7px 13px;font-size:12.5px;color:var(--p)}.lv-chips button:hover{background:var(--ps)}
 .rg{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
 .rc{background:#fff;border:1px solid var(--bd);border-radius:20px;overflow:hidden;box-shadow:0 6px 20px #d72c6214;transition:.2s}.rc:hover{transform:translateY(-3px)}
-.rc-h{height:92px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:linear-gradient(135deg,#ffe3ec,#fff1d6)}.rc-h span{font-size:46px}
+.rc-h{height:92px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:linear-gradient(135deg,#ffe3ec,#fff1d6)}.rc-h span{font-size:46px;display:flex;align-items:center}.rc-img{height:74px;width:auto;max-width:110px;object-fit:contain;display:block;border-radius:10px}
 .rc-h em{font-style:normal;font-size:11.5px;background:#ffffffcc;padding:3px 10px;border-radius:99px;color:var(--p)}
 .rc-b{padding:14px 16px}.rc-b h3{font:600 17px Fraunces,serif;margin:0}.rc-n{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:12px 0}.rc-n small{display:block;color:var(--mu);font-size:11px}
 .rc-a{display:flex;gap:4px;flex-wrap:wrap;align-items:center}.rc-a .btn{padding:7px 12px}
@@ -794,7 +794,7 @@ body.era-midnights .album-era{border-radius:8px}
 `;document.head.append(st)})();
 
 /* ===== 3 · Livro de receitas ===== */
-const xEmo=p=>{const c=nm((p.categoria||'')+' '+p.nome);return/brigad/.test(c)?'🍫':/bolo/.test(c)?'🍰':/torta|pave/.test(c)?'🥧':/cookie|biscoit/.test(c)?'🍪':/pao/.test(c)?'🥐':/trufa|bombom/.test(c)?'🍬':/sorvete|gelad/.test(c)?'🍨':/cupcake/.test(c)?'🧁':'🍮'};
+const xEmo=p=>{const c=nm((p.categoria||'')+' '+p.nome);return/brigad/.test(c)?'<img class="rc-img" src="https://i.ibb.co/PZLf49JW/3453fbe0-908b-4cb2-9f72-835781a41a74.jpg" alt="Brigadeiro">':/bolo/.test(c)?'🍰':/torta|pave/.test(c)?'🥧':/cookie|biscoit/.test(c)?'🍪':/pao/.test(c)?'🥐':/trufa|bombom/.test(c)?'🍬':/sorvete|gelad/.test(c)?'🍨':/cupcake/.test(c)?'🧁':'🍮'};
 async function xLivro(){
  const [P0,F]=await Promise.all([all('produtos'),all('ficha_tecnica')]);cache.insumos=await all('insumos');
  const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome)),w=canW('produtos'),ab=P.filter(abaixo);
@@ -1160,6 +1160,12 @@ body.era-ttpd #main,body.era-showgirl #main{color:var(--ink)}
 body.era-ttpd #ttl,body.era-ttpd #main h2,body.era-ttpd #main h3{font-family:'Cormorant Garamond',Georgia,serif;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 body.era-showgirl #ttl,body.era-showgirl #main h2,body.era-showgirl #main h3{font-family:Oswald,sans-serif;font-weight:400;letter-spacing:.03em;text-transform:uppercase}
 @media(max-width:600px){.eb{min-height:96px;padding:16px 18px;border-radius:14px}}
+`;document.head.append(st)}
+
+{const st=document.createElement('style');st.textContent=`
+/* ===== rosa do topo do Início, mais sofisticado ===== */
+header.top{background:radial-gradient(90% 170% at 6% 0%,#fffffff2 0,#fff0 55%),radial-gradient(75% 150% at 100% 110%,#ff7fab99 0,#ff7fab00 62%),linear-gradient(160deg,#ffdbe8 0%,#fcbad1 50%,#f595b8 100%)!important;box-shadow:inset 0 3px 0 #7b2d3b,inset 0 -1px 0 #f2a0bf,0 16px 28px -18px #c2457aaa!important;border-radius:0 0 24px 24px}
+header.top .mb{color:#7b2d3b;background:#ffffffb3;box-shadow:inset 0 0 0 1px #f2a0bf,0 4px 10px -4px #c2457a66}
 `;document.head.append(st)}
 
 boot()
