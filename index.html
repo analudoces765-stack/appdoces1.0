@@ -794,18 +794,22 @@ body.era-midnights .album-era{border-radius:8px}
 `;document.head.append(st)})();
 
 /* ===== 3 · Livro de receitas ===== */
-const xEmo=p=>{const c=nm((p.categoria||'')+' '+p.nome);return/brigad/.test(c)?'🍫':/bolo/.test(c)?'🍰':/torta|pave/.test(c)?'🥧':/cookie|biscoit/.test(c)?'🍪':/pao/.test(c)?'🥐':/trufa|bombom/.test(c)?'🍬':/sorvete|gelad/.test(c)?'🍨':/cupcake/.test(c)?'🧁':'🍮'};
+const SUG=[{k:/brownie/,nome:'Brownie',img:'https://i.ibb.co/4Z9Rf8LF/c09aba15-d92e-4103-a837-6b2b0506f609.jpg'},{k:/cannol/,nome:'Cannoli',img:'https://i.ibb.co/LXZb35G6/1ccb5496-7525-40e9-9fd7-137095e33081.jpg'},{k:/cookie/,nome:'Cookie',img:'https://i.ibb.co/hxK2bFQD/4c1dac86-f721-4c75-9482-c8c117754345.jpg'},{k:/pastel/,nome:'Pastel de leite Ninho',img:'https://i.ibb.co/tVnSXJc/d7b2b340-6b13-4020-ba3c-8fd5c60a3663.jpg'},{k:/maracuj/,nome:'Torta de maracujá',img:'https://i.ibb.co/twbgngcX/ab4c4b28-ebb6-4107-848f-42c2cadaf36e.jpg'},{k:/brigad/,nome:'Brigadeiro de chocolate',img:'https://i.ibb.co/bMQv1SY2/ca78d0151e88522851eb7a5354e9bc70-L.webp'}];
+const sugOf=p=>{const c=nm((p.categoria||'')+' '+p.nome);return SUG.findIndex(s=>s.k.test(c))};
+const xEmo0=p=>{const c=nm((p.categoria||'')+' '+p.nome);return/brigad/.test(c)?'🍫':/bolo/.test(c)?'🍰':/torta|pave/.test(c)?'🥧':/cookie|biscoit/.test(c)?'🍪':/pao/.test(c)?'🥐':/trufa|bombom/.test(c)?'🍬':/sorvete|gelad/.test(c)?'🍨':/cupcake/.test(c)?'🧁':'🍮'};
+const xEmo=p=>{const e=xEmo0(p),i=sugOf(p);return i<0?e:`<img class=rph src="${SUG[i].img}" alt="${esc(p.nome)}" loading=lazy onerror="this.parentNode.textContent='${e}'">`};
+const xSug=P=>{const has=new Set(P.map(sugOf)),L=SUG.map((s,i)=>[s,i]).filter(([s,i])=>!has.has(i));return L.length&&canW('produtos')?`<section class=sg><h3>Sugestões para começar</h3><p class=mute>Toque numa foto para criar a receita com o nome já preenchido e só completar os ingredientes.</p><div class=sg-row>${L.map(([s,i])=>`<button class=sg-c data-sug="${i}"><img src="${s.img}" alt="${esc(s.nome)}" loading=lazy><b>${esc(s.nome)}</b><span>+ Criar receita</span></button>`).join('')}</div></section>`:''};
 async function xLivro(){
  const [P0,F]=await Promise.all([all('produtos'),all('ficha_tecnica')]);cache.insumos=await all('insumos');
  const P=P0.filter(p=>p.ativo!==false).sort((a,b)=>a.nome.localeCompare(b.nome)),w=canW('produtos'),ab=P.filter(abaixo);
  $('#main').innerHTML=`<section class=lv-hero><div><img class=lv-banner src="https://i.ibb.co/DyPtsys/5eb5d5e7-9fb0-43d1-be55-2c46355a87cf.jpg" alt="Vamos preparar o que hoje?" onerror="this.replaceWith(Object.assign(document.createElement('h2'),{textContent:'Vamos preparar o que hoje?'}))"><p>Seu livro de receitas — custos sempre atualizados com o preço dos insumos.</p></div><div class=tools><div class=sr>${ic('search',16)}<input id=q placeholder="Buscar receita…"></div>${w?`<button class=btn id=nr>${ic('plus',16)} Nova receita</button>`:''}</div></section>
- ${P.length?`<div class=rg>${P.map((p,i)=>{const c=cT(p),m=margemReal(p);return `<article class=rc data-n="${esc(nm(p.nome))}"><div class=rc-h><span>${xEmo(p)}</span><em>${esc(p.categoria||'Receita')}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un · ${F.filter(f=>f.produto_id===p.id).length} ingredientes</small>
+ ${xSug(P)}${P.length?`<div class=rg>${P.map((p,i)=>{const c=cT(p),m=margemReal(p);return `<article class=rc data-n="${esc(nm(p.nome))}"><div class=rc-h><span>${xEmo(p)}</span><em>${esc(p.categoria||'Receita')}</em></div><div class=rc-b><h3>${esc(p.nome)}</h3><small class=mute>rende ${fmtN(p.rendimento)} un · ${F.filter(f=>f.produto_id===p.id).length} ingredientes</small>
  <div class=rc-n><div><small>Custo/un</small><b>${c>0?brl(c):'—'}</b></div><div><small>Preço</small><b>${num(p.preco)?brl(p.preco):'—'}</b></div><div><small>Lucro</small>${c>0&&m!=null?`<span class="bd ${abaixo(p)?'warn':'ok'}">${Math.round(m)}%</span>`:'—'}</div></div>
  <div class=rc-a>${canW('ordens_producao')?`<button class=btn data-pr>${ic('chef',15)} Produzir</button>`:''}${w?`<button class=ib title=Editar data-ed="${i}">${ic('edit')}</button><button class=ib title=Excluir data-dl="${i}">${ic('trash')}</button>`:''}</div></div></article>`}).join('')}</div>`:`<div class="card empty">${ic('bag',40)}<p>Seu livro está vazio. Crie a primeira receita ou peça sugestões à Onze.</p></div>`}`;
  $('#q').oninput=e=>{const v=nm(e.target.value);document.querySelectorAll('.rc').forEach(c=>c.hidden=!c.dataset.n.includes(v))};
  $('#nr')?.addEventListener('click',()=>editRow('produtos'));
- $('#main').onclick=e=>{const a=e.target.closest('[data-ed]'),d=e.target.closest('[data-dl]');
-  if(e.target.closest('[data-pr]'))location.hash='producao';if(a)editRow('produtos',P[+a.dataset.ed]);if(d)delRow('produtos',P[+d.dataset.dl])}}
+ $('#main').onclick=e=>{const a=e.target.closest('[data-ed]'),d=e.target.closest('[data-dl]'),sg=e.target.closest('[data-sug]');
+  if(sg)return editRow('produtos',null,{nome:SUG[+sg.dataset.sug].nome});if(e.target.closest('[data-pr]'))location.hash='producao';if(a)editRow('produtos',P[+a.dataset.ed]);if(d)delRow('produtos',P[+d.dataset.dl])}}
 
 /* ===== 5 · Produção rápida (1 clique, via RPC transacional) ===== */
 let xPD={};
@@ -1166,6 +1170,20 @@ body.era-showgirl #ttl,body.era-showgirl #main h2,body.era-showgirl #main h3{fon
 /* ===== rosa do topo do Início, mais sofisticado ===== */
 header.top{background:radial-gradient(90% 170% at 6% 0%,#fffffff2 0,#fff0 55%),radial-gradient(75% 150% at 100% 110%,#ff7fab99 0,#ff7fab00 62%),linear-gradient(160deg,#ffdbe8 0%,#fcbad1 50%,#f595b8 100%)!important;box-shadow:inset 0 3px 0 #7b2d3b,inset 0 -1px 0 #f2a0bf,0 16px 28px -18px #c2457aaa!important;border-radius:0 0 24px 24px}
 header.top .mb{color:#7b2d3b;background:#ffffffb3;box-shadow:inset 0 0 0 1px #f2a0bf,0 4px 10px -4px #c2457a66}
+`;document.head.append(st)}
+
+{const st=document.createElement('style');st.textContent=`
+/* fotos nas receitas + sugestões */
+.rc-h:has(.rph){position:relative;height:150px;padding:0;overflow:hidden}
+.rc-h .rph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.rc-h:has(.rph) em{position:absolute;right:10px;top:10px;z-index:1;box-shadow:0 2px 8px #0003}
+.sg{margin:0 0 18px}.sg h3{font:600 16px Fraunces,serif;color:var(--ink,#34202a);margin:0 0 2px}.sg p{margin:0 0 10px;font-size:13px}
+.sg-row{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.sg-c{flex:none;width:156px;scroll-snap-align:start;padding:0;text-align:left;cursor:pointer;background:#fff;border:1px solid var(--bd);border-radius:18px;overflow:hidden;box-shadow:0 6px 18px #d72c6214;transition:.2s;font:inherit;color:inherit}
+.sg-c:hover{transform:translateY(-3px)}
+.sg-c img{display:block;width:100%;height:112px;object-fit:cover;background:#ffe9f0}
+.sg-c b{display:block;padding:9px 11px 2px;font:600 13.5px/1.25 Inter,sans-serif}
+.sg-c span{display:block;padding:0 11px 11px;font:600 12px Inter,sans-serif;color:var(--p)}
 `;document.head.append(st)}
 
 boot()
