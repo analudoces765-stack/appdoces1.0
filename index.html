@@ -194,13 +194,13 @@ const csv=(rows,n)=>{const k=Object.keys(rows[0]||{});dl(new Blob(['\ufeff'+[k.j
 /* ===== estado ===== */
 let sb,me,CFG={},cache={},route='dashboard';const tabSel={};
 const all=t=>sb.from(t).select('*').then(r=>r.data||[]);
-const canW=tb=>{const n=me.nivel;return n==='Admin'||(n==='Gerente'&&!['perfis','configuracoes'].includes(tb))||(n==='Atendente'&&['vendas','venda_itens','clientes','encomendas'].includes(tb))||(n==='Produção'&&['ordens_producao','insumos','movimentacoes'].includes(tb))};
-const MOD={dashboard:{t:'Início',i:'home'},vendas:{t:'Vendas',i:'cart'},encomendas:{t:'Encomendas',i:'cake'},clientes:{t:'Clientes',i:'users'},
+const canW=tb=>{const n=me.nivel;return n==='Admin'||(n==='Gerente'&&!['perfis','configuracoes'].includes(tb))||(n==='Atendente'&&['vendas','venda_itens','clientes','encomendas','orcamentos'].includes(tb))||(n==='Produção'&&['ordens_producao','insumos','movimentacoes'].includes(tb))};
+const MOD={dashboard:{t:'Início',i:'home'},vendas:{t:'Vendas',i:'cart'},encomendas:{t:'Encomendas',i:'cake'},orcamentos:{t:'Orçamentos',i:'receipt'},clientes:{t:'Clientes',i:'users'},
 estoque:{t:'Insumos e estoque',n:'1 · Insumos',i:'box',tabs:['insumos','movimentacoes']},produtos:{t:'Receitas',n:'2 · Receitas',i:'bag'},precos:{t:'Precificação inteligente',n:'3 · Precificação',i:'tag'},
 producao:{t:'Produção',i:'chef',tabs:['ordens_producao']},lista:{t:'Lista de compras',i:'list'},compras:{t:'Compras e fornecedores',n:'Compras',i:'truck',tabs:['compras','fornecedores']},
 financeiro:{t:'Financeiro',i:'wallet'},relatorios:{t:'Relatórios',i:'chart'},usuarios:{t:'Usuários',i:'shield',tabs:['perfis','atividades']},config:{t:'Configurações',i:'gear'}};
-const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos']],['Vendas',['vendas','encomendas','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']]];
-const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config'].includes(k)),Atendente:['dashboard','vendas','encomendas','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
+const NAV=[['Geral',['dashboard']],['Precificação',['estoque','produtos','precos']],['Vendas',['vendas','encomendas','orcamentos','clientes']],['Produção e compras',['producao','lista','compras']],['Gestão',['financeiro','relatorios']],['Sistema',['usuarios','config']]];
+const ALLOW={Admin:Object.keys(MOD),Gerente:Object.keys(MOD).filter(k=>!['usuarios','config'].includes(k)),Atendente:['dashboard','vendas','encomendas','orcamentos','clientes','produtos'],'Produção':['dashboard','producao','estoque','produtos','lista']};
 /* regras de preço: lucro é % do PREÇO DE VENDA (30% de lucro = de cada R$100 vendidos, R$30 sobram). Taxas (cartão/imposto) saem do preço também.
    Preço = custo ÷ (1 − lucro% − taxas%). O custo inclui o rateio dos custos fixos (Configurações), se informado. */
 const taxa=()=>num(CFG.taxa_pct),rateio=()=>num(CFG.producao_mes)>0?num(CFG.custo_fixo_mes)/num(CFG.producao_mes):0;
@@ -647,7 +647,7 @@ async function cfgView(){
  $('#cf').onsubmit=async e=>{e.preventDefault();const v=collect($('#cf'),CF),{error}=await sb.from('configuracoes').upsert(CF.map(([k])=>({chave:k,valor:v[k]||''})));
   if(error)return fail(error);CFG={...CFG,...v};theme();shell();go('config');toast('Configurações salvas')};
  $('#pf').onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.updateUser({password:$('#np').value});error?fail(error):(toast('Senha alterada'),$('#np').value='')};
- $('#bk').onclick=async()=>{const o={};for(const t of['clientes','fornecedores','insumos','produtos','ficha_tecnica','vendas','venda_itens','encomendas','ordens_producao','compras','financeiro','movimentacoes','configuracoes','perfis'])o[t]=await all(t);
+ $('#bk').onclick=async()=>{const o={};for(const t of['clientes','fornecedores','insumos','produtos','ficha_tecnica','vendas','venda_itens','encomendas','ordens_producao','compras','financeiro','movimentacoes','configuracoes','perfis','orcamentos'])o[t]=await all(t);
   dl(new Blob([JSON.stringify(o,null,1)],{type:'application/json'}),'backup-doceria-'+today()+'.json')}}
 
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
@@ -710,7 +710,7 @@ async function go(r){
  document.querySelectorAll('#side nav a').forEach(a=>a.classList.toggle('on',a.dataset.r===r));
  $('#ttl').textContent='Doces da Analu';$('#main').onclick=$('#main').onchange=$('#main').oninput=null;$('#main').innerHTML='<div class=sk></div>';
  try{if(['dashboard','produtos','precos','producao','lista','estoque','config'].includes(r))await xSync();
-  await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,lista:listaView,produtos:xLivro,producao:xProd}[r]||mod)(r);
+  await({dashboard:dash,relatorios:rel,config:cfgView,precos:precosView,lista:listaView,produtos:xLivro,producao:xProd,orcamentos:orcView}[r]||mod)(r);
   albumHeader(r);eraCustom(r)}
  catch(e){$('#main').innerHTML=errBox(e)}
  lowCheck()}
@@ -720,6 +720,7 @@ async function go(r){
 const ALBUMS={
  dashboard:{name:'Início',era:'debut',font:'album-script',sub:'O começo de tudo',bg:'linear-gradient(110deg,#163e43,#75d7df)',ink:'#102c32'},
  vendas:{name:'1989',era:'1989',font:'album-marker',sub:'Vendas e novos começos',bg:'linear-gradient(110deg,#ffe2a6,#f8c9a4)',ink:'#26354d'},
+ orcamentos:{name:'Orçamentos',era:'lover',font:'album-script',sub:'Orçamentos lindos para fechar a festa',bg:'linear-gradient(110deg,#ffb4d0,#f7d5e7)',ink:'#a21d55'},
  encomendas:{name:'Lovers',era:'lover',font:'album-script',sub:'Feito com carinho',bg:'linear-gradient(110deg,#ffb4d0,#f7d5e7)',ink:'#a21d55'},
  clientes:{name:'Clientes',era:'fearless',font:'album-serif',sub:'Cada cliente faz parte da história',bg:'linear-gradient(110deg,#8b632f,#d8b878)',ink:'#fff7df'},
  estoque:{name:'Estoque',era:'reputation',font:'album-gothic',sub:'Controle total, sem perder o ritmo',bg:'linear-gradient(110deg,#080808,#282828)',ink:'#f7f7f7'},
@@ -1184,6 +1185,176 @@ header.top .mb{color:#7b2d3b;background:#ffffffb3;box-shadow:inset 0 0 0 1px #f2
 .sg-c img{display:block;width:100%;height:112px;object-fit:cover;background:#ffe9f0}
 .sg-c b{display:block;padding:9px 11px 2px;font:600 13.5px/1.25 Inter,sans-serif}
 .sg-c span{display:block;padding:0 11px 11px;font:600 12px Inter,sans-serif;color:var(--p)}
+`;document.head.append(st)}
+
+/* ===== Orçamentos: monta, gera PDF para o cliente e, ao aprovar, grava a data da festa nas Encomendas ===== */
+const OQ_ST=['Rascunho','Enviado','Aprovado','Recusado'],OQ_SEC=['Encomenda','Embalagem e entrega'];
+let OQ={list:[],f:'Todos',names:[]};
+const oqN=o=>String(o.numero||0).padStart(4,'0');
+const oqSub=(o,s)=>(o.itens||[]).filter(i=>i.sec===s).reduce((a,i)=>a+num(i.qtd)*num(i.preco),0);
+const oqTot=o=>Math.max(0,oqSub(o,OQ_SEC[0])+oqSub(o,OQ_SEC[1])-num(o.desconto));
+const oqDet=i=>i.det||`${fmtN(i.qtd)} × ${brl(i.preco)}`;
+const oqD=(d,full)=>{if(!d)return '—';const x=new Date(d+'T12:00:00');return full?x.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).replace(/^./,c=>c.toUpperCase()):x.toLocaleDateString('pt-BR')};
+const oqHora=h=>h?(h.slice(0,2)+'h'+(h.slice(3,5)&&h.slice(3,5)!=='00'?h.slice(3,5):'')):'';
+const oqVal=o=>{const d=new Date((o.criado_em||new Date().toISOString()).slice(0,10)+'T12:00:00');d.setDate(d.getDate()+(num(o.validade_dias)||7));return d.toLocaleDateString('pt-BR')};
+const oqErr=e=>e&&e.code==='42P01'?(toast('Falta rodar o orcamentos.sql no Supabase.','bad'),false):fail(e);
+const oqTel=t=>{const d=String(t||'').replace(/\D/g,'');return d?(d.length<=11?'55'+d:d):''};
+
+/* ---------- o PDF que vai para o cliente ---------- */
+function oqDoc(o){
+ const tot=oqTot(o),pct=num(o.sinal_pct),sin=tot*pct/100,nome=CFG.nome_doceria||'Doces da Analu';
+ const sec=(s,c)=>{const L=(o.itens||[]).filter(i=>i.sec===s&&i.nome);return L.length?`<div class="band ${c}"><span>${s.toUpperCase()}</span><span>${brl(oqSub(o,s))}</span></div>`+L.map(i=>`<div class=row><div><b>${esc(i.nome)}</b><small>${esc(oqDet(i))}</small></div><strong>${brl(num(i.qtd)*num(i.preco))}</strong></div>`).join(''):''};
+ const quando=[oqD(o.data_festa,true),oqHora(o.hora_festa)].filter(Boolean).join(' · ');
+ return `<div class=oqp><style>
+.oqp{width:794px;background:#fff;color:#2a1d1d;font:14px/1.45 Inter,Arial,sans-serif;padding:44px 48px 34px;box-sizing:border-box}
+.oqp *{box-sizing:border-box;margin:0}
+.oqp .hd{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:3px solid #d72c62}
+.oqp .br{font:400 42px/1 'Great Vibes',cursive;color:#7b2d3b}.oqp .br+small{display:block;margin-top:8px;color:#8a7a76;font-size:12px}
+.oqp .nm{text-align:right}.oqp .nm small{display:block;font:700 11px Inter,Arial,sans-serif;letter-spacing:.22em;color:#d72c62}
+.oqp .nm b{display:block;font:800 26px/1.15 Inter,Arial,sans-serif;margin:2px 0 4px}.oqp .nm span{display:block;color:#8a7a76;font-size:12px}
+.oqp .cols{display:flex;gap:28px;margin:22px 0 14px}.oqp .cols>div{flex:1}
+.oqp .lb{font:700 10.5px Inter,Arial,sans-serif;letter-spacing:.2em;color:#d72c62;margin-bottom:6px}
+.oqp .cols b{display:block;font-size:15px}.oqp .cols p{color:#6b5a56;font-size:12.5px;line-height:1.55}
+.oqp .tags{display:flex;gap:10px;margin:0 0 16px}.oqp .tags div{flex:1;background:#fff1f5;border:1px solid #f7cddb;border-radius:12px;padding:10px 14px;font-size:12.5px;color:#6b5a56}.oqp .tags b{color:#7b2d3b}
+.oqp .band{display:flex;justify-content:space-between;padding:8px 14px;border-radius:8px;font:800 11px Inter,Arial,sans-serif;letter-spacing:.14em;margin-top:10px}
+.oqp .b1{background:#f8e7e0;color:#7b4a3a}.oqp .b2{background:#dff3ef;color:#1b7f72}
+.oqp .row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #f0e6e2}
+.oqp .row b{display:block;font-size:14px}.oqp .row small{color:#9a8a86;font-size:12px}.oqp .row strong{font-size:14px;white-space:nowrap;padding-left:12px}
+.oqp .tt{display:flex;justify-content:space-between;align-items:center;background:#6b3a2a;color:#fff;border-radius:14px;padding:16px 22px;margin:20px 0 14px}
+.oqp .tt span{font:800 12px Inter,Arial,sans-serif;letter-spacing:.2em}.oqp .tt b{font:800 28px Inter,Arial,sans-serif}
+.oqp .cd{display:grid;grid-template-columns:1fr 1fr;gap:6px 22px;color:#4d3d39;font-size:13px}.oqp .cd div:before{content:'✓ ';color:#1f9d6b;font-weight:800}
+.oqp .ob{margin-top:12px;font-size:12.5px;color:#6b5a56;background:#faf6f4;border-radius:10px;padding:10px 14px;white-space:pre-wrap}
+.oqp .fc{margin-top:18px;background:#e6f6ee;color:#14744d;text-align:center;border-radius:12px;padding:13px;font-weight:600}
+.oqp .ft{margin-top:12px;text-align:center;color:#b3a09b;font-size:11px}
+</style>
+<div class=hd><div><div class=br>${esc(nome)}</div><small>${esc([CFG.telefone,CFG.endereco].filter(Boolean).join(' · '))}</small></div>
+<div class=nm><small>ORÇAMENTO</small><b>Nº ${oqN(o)}</b><span>Emitido em ${oqD((o.criado_em||new Date().toISOString()).slice(0,10))}</span><span>Válido até ${oqVal(o)}</span></div></div>
+<div class=cols><div><div class=lb>CLIENTE</div><b>${esc(o.cliente_nome||'')}</b><p>${esc(o.cliente_tel||'')}</p></div>
+<div><div class=lb>FESTA</div><b>${esc(o.ocasiao||'Festa')}</b><p>${esc(quando)}${o.convidados?`<br>${fmtN(o.convidados)} convidados`:''}${o.local_entrega?`<br>${esc(o.local_entrega)}`:''}</p></div></div>
+${o.tema||o.sabores?`<div class=tags>${o.tema?`<div><b>Tema:</b> ${esc(o.tema)}</div>`:''}${o.sabores?`<div><b>Sabores:</b> ${esc(o.sabores)}</div>`:''}</div>`:''}
+${sec(OQ_SEC[0],'b1')}${sec(OQ_SEC[1],'b2')}
+${num(o.desconto)>0?`<div class=row><div><b>Desconto</b></div><strong style="color:#1f9d6b">− ${brl(o.desconto)}</strong></div>`:''}
+<div class=tt><span>TOTAL</span><b>${brl(tot)}</b></div>
+<div class=cd>${pct>0?`<div>Sinal de ${fmtN(pct)}% no Pix reserva a data (${brl(sin)})</div>`:''}<div>Válido por ${num(o.validade_dias)||7} dias</div><div>Pagamento: ${esc(o.pagamento||'Pix ou cartão')}</div>${CFG.chave_pix?`<div>Chave Pix: ${esc(CFG.chave_pix)}</div>`:''}</div>
+${o.observacoes?`<div class=ob>${esc(o.observacoes)}</div>`:''}
+<div class=fc>Pra fechar, é só responder FECHADO no WhatsApp${CFG.telefone?' · '+esc(CFG.telefone):''}.</div>
+<div class=ft>${esc(nome)} · feito com muito carinho</div></div>`}
+
+const oqLoad=u=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=()=>no(new Error('Não consegui carregar o gerador de PDF — confira a internet.'));document.head.append(s)});
+const oqLib=async()=>{if(!window.html2canvas)await oqLoad('https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js');if(!window.jspdf)await oqLoad('https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js')};
+const oqFile=o=>`Orcamento-${oqN(o)}-${nm(o.cliente_nome).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cliente'}.pdf`;
+async function oqBlob(o){await oqLib();try{await document.fonts?.ready}catch(e){}
+ const w=document.createElement('div');w.className='oqp-host';w.style.cssText='position:fixed;left:-10000px;top:0;width:794px;pointer-events:none';w.innerHTML=oqDoc(o);document.body.append(w);
+ try{
+  const el=w.firstElementChild,W=794,K=2,top=el.getBoundingClientRect().top,
+   cuts=[...el.querySelectorAll('.hd,.cols,.tags,.band,.row,.tt,.cd,.ob,.fc')].map(x=>x.getBoundingClientRect().bottom-top).sort((a,b)=>a-b);
+  const cv=await html2canvas(el,{scale:K,useCORS:true,backgroundColor:'#ffffff',windowWidth:1280,onclone:d=>{const h=d.querySelector('.oqp-host');if(h)h.style.cssText='position:absolute;left:0;top:0;width:794px'}});
+  const H=cv.height/K,pageH=Math.round(W*297/210),pages=[];let st=0;
+  while(st<H-1){let en=Math.min(st+pageH,H);if(H-st<=pageH*1.06)en=H;else if(en<H){const c=cuts.filter(x=>x<=en&&x>st+pageH*.5);if(c.length)en=c[c.length-1]}pages.push([st,en]);st=en}
+  const pdf=new window.jspdf.jsPDF({unit:'mm',format:'a4',orientation:'portrait'});
+  pages.forEach(([a,b],i)=>{const sl=document.createElement('canvas');sl.width=cv.width;sl.height=Math.max(1,Math.round((b-a)*K));const g=sl.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,sl.width,sl.height);g.drawImage(cv,0,Math.round(a*K),cv.width,sl.height,0,0,cv.width,sl.height);if(i)pdf.addPage();{const dh=(b-a)*210/W,f=dh>297?297/dh:1;pdf.addImage(sl.toDataURL('image/jpeg',.95),'JPEG',(210-210*f)/2,0,210*f,dh*f)}});
+  return pdf.output('blob')
+ }finally{w.remove()}}
+const oqMsg=o=>`Oi, ${String(o.cliente_nome||'').split(' ')[0]}! Segue o orçamento Nº ${oqN(o)} da festa de ${oqD(o.data_festa,true)}. Total: ${brl(oqTot(o))}${num(o.sinal_pct)>0?` (sinal de ${fmtN(o.sinal_pct)}% para reservar a data)`:''}. É só responder FECHADO que eu já reservo a sua data 💗`;
+async function oqMark(o){if(o.id&&o.status==='Rascunho'){await sb.from('orcamentos').update({status:'Enviado'}).eq('id',o.id);orcView()}}
+async function oqDown(o){try{toast('Gerando o PDF…');dl(await oqBlob(o),oqFile(o))}catch(e){toast(e.message||'Não consegui gerar o PDF','bad')}}
+async function oqShare(o){
+ try{toast('Gerando o PDF…');const blob=await oqBlob(o),fn=oqFile(o),file=new File([blob],fn,{type:'application/pdf'}),txt=oqMsg(o);
+  if(navigator.canShare?.({files:[file]})){try{await navigator.share({files:[file],text:txt,title:'Orçamento Nº '+oqN(o)});return oqMark(o)}catch(e){if(e.name==='AbortError')return}}
+  dl(blob,fn);window.open('https://wa.me/'+oqTel(o.cliente_tel)+'?text='+encodeURIComponent(txt),'_blank');toast('PDF baixado — anexe ele na conversa do WhatsApp que abriu');oqMark(o)
+ }catch(e){toast(e.message||'Não consegui gerar o PDF','bad')}}
+
+/* ---------- aprovar: a data da festa vai para as Encomendas ---------- */
+async function oqAprovar(o){
+ if(!confirm(`Aprovar o orçamento Nº ${oqN(o)}?\n\nA festa de ${oqD(o.data_festa)} será gravada nas Encomendas.`))return;
+ const L=(o.itens||[]).map(i=>`• ${i.nome} — ${i.det||fmtN(i.qtd)+' un'}`).join('\n');
+ const desc=`Orçamento Nº ${oqN(o)} · ${o.ocasiao||'Festa'}${o.tema?' · Tema: '+o.tema:''}${o.sabores?'\nSabores: '+o.sabores:''}${o.convidados?'\n'+o.convidados+' convidados':''}${o.hora_festa?'\nHorário: '+oqHora(o.hora_festa):''}\n${L}`;
+ const r=await sb.from('encomendas').insert({cliente_id:o.cliente_id,descricao:desc,data_entrega:o.data_festa,valor:oqTot(o),sinal:0,status:'Novo'}).select().single();
+ if(r.error)return fail(r.error);
+ const u=await sb.from('orcamentos').update({status:'Aprovado',encomenda_id:String(r.data.id)}).eq('id',o.id);if(u.error)return fail(u.error);
+ toast('Aprovado! A data da festa já está nas Encomendas');orcView()}
+
+/* ---------- formulário (gaveta lateral) ---------- */
+const oqLn=(s,i={})=>`<div class=oq-ln><input name=nome list=dl_oqi placeholder="Item (ex.: Docinhos)" autocomplete=off value="${esc(i.nome||'')}"><input name=det placeholder="Detalhe (ex.: 100 un · 1 cento)" value="${esc(i.det||'')}"><div class=oq-q><input name=qtd type=number min=0 step=any inputmode=decimal placeholder=Qtd value="${i.qtd??''}"><input name=preco type=number min=0 step=any inputmode=decimal placeholder="Valor un. (R$)" value="${i.preco??''}"><output>${brl(num(i.qtd)*num(i.preco))}</output><button type=button class=ib data-rm title=Remover>${ic('x',14)}</button></div></div>`;
+const oqRead=fm=>{const g=n=>fm.querySelector(`[name="${n}"]`)?.value.trim()??'';const o={};
+ ['cliente_nome','cliente_tel','ocasiao','tema','sabores','data_festa','hora_festa','local_entrega','pagamento','observacoes'].forEach(k=>o[k]=g(k)||null);
+ ['convidados','desconto','sinal_pct','validade_dias'].forEach(k=>o[k]=num(g(k)));o.status=g('status')||'Rascunho';
+ o.itens=[...fm.querySelectorAll('.oq-ln')].map(r=>({sec:r.closest('.oq-lines').dataset.s,nome:r.querySelector('[name=nome]').value.trim(),det:r.querySelector('[name=det]').value.trim(),qtd:num(r.querySelector('[name=qtd]').value),preco:num(r.querySelector('[name=preco]').value)})).filter(i=>i.nome);return o};
+async function oqSave(v,o){
+ if(!v.cliente_nome)return toast('Informe o nome do cliente','bad'),null;
+ if(!v.data_festa)return toast('Informe a data da festa','bad'),null;
+ if(!v.itens.length)return toast('Adicione pelo menos um item','bad'),null;
+ const c=fnd('clientes',v.cliente_nome);let cid=c?.id;
+ if(!c){const r=await sb.from('clientes').insert({nome:v.cliente_nome,telefone:v.cliente_tel}).select().single();if(r.error)return fail(r.error),null;cid=r.data.id;cache.clientes=[...(cache.clientes||[]),r.data]}
+ else if(v.cliente_tel&&!c.telefone)await sb.from('clientes').update({telefone:v.cliente_tel}).eq('id',c.id);
+ const row={...v,cliente_id:cid==null?null:String(cid),total:oqTot(v)};
+ const r=o?.id?await sb.from('orcamentos').update(row).eq('id',o.id).select().single():await sb.from('orcamentos').insert(row).select().single();
+ if(r.error)return oqErr(r.error),null;return r.data}
+function orcForm(o0){
+ const o={sinal_pct:50,validade_dias:7,pagamento:'Pix ou cartão',...(o0||{})},it=(o.itens||[]).map(i=>({...i,sec:OQ_SEC.includes(i.sec)?i.sec:OQ_SEC[0]}));
+ const nomes=[...new Set([...(cache.produtos||[]).filter(p=>p.ativo!==false).map(p=>p.nome),...OQ.names])];
+ const I=(k,l,t='text',x='')=>`<div class=fl><label>${l}</label><input name="${k}" type="${t}" ${x} value="${esc(o[k]??'')}"></div>`;
+ const sts=o.status==='Aprovado'?['Aprovado']:['Rascunho','Enviado','Recusado'];
+ const close=open_(o.id?`Orçamento Nº ${oqN(o)}`:'Novo orçamento',`<form id=oq>${dls()}<datalist id=dl_oqi>${nomes.map(n=>`<option value="${esc(n)}">`).join('')}</datalist><div class=db>
+ <div class=oq-h>Cliente</div>${I('cliente_nome','Nome do cliente *','text','list=dl_clientes autocomplete=off')}${I('cliente_tel','WhatsApp do cliente','tel','inputmode=tel placeholder="(83) 99999-9999"')}
+ <div class=oq-h>A festa</div>${I('ocasiao','Ocasião','text','placeholder="Ex.: Aniversário de 1 ano"')}
+ <div class=oq-g2>${I('tema','Tema','text','placeholder="Ex.: Ursinho"')}${I('convidados','Convidados','number','min=0 inputmode=numeric')}</div>
+ ${I('sabores','Sabores','text','placeholder="Ex.: brigadeiro e ninho com morango"')}
+ <div class=oq-g2>${I('data_festa','Data da festa *','date')}${I('hora_festa','Horário','time')}</div>${I('local_entrega','Local / entrega','text','placeholder="Endereço ou retirada"')}
+ <div class=oq-h>Itens do orçamento</div>
+ ${OQ_SEC.map((s,k)=>`<div class=oq-sec><h4>${s}</h4><div class=oq-lines data-s="${s}">${it.filter(i=>i.sec===s).map(i=>oqLn(s,i)).join('')||(k===0?oqLn(s):'')}</div><button type=button class=btn-o data-addl="${s}">${ic('plus',16)} Adicionar item</button></div>`).join('')}
+ <div class=oq-h>Condições</div>
+ <div class=oq-g3>${I('desconto','Desconto (R$)','number','min=0 step=any inputmode=decimal')}${I('sinal_pct','Sinal (%)','number','min=0 max=100 step=any inputmode=decimal')}${I('validade_dias','Validade (dias)','number','min=1 inputmode=numeric')}</div>
+ ${I('pagamento','Formas de pagamento')}<div class=fl><label>Observações para o cliente</label><textarea name=observacoes rows=3>${esc(o.observacoes||'')}</textarea></div>
+ <div class=fl><label>Situação</label><select name=status ${o.status==='Aprovado'?'disabled':''}>${sts.map(s=>`<option ${s===(o.status||'Rascunho')?'selected':''}>${s}</option>`).join('')}</select></div></div>
+ <div class=df><div class=tot id=oqT></div><button type=button class=btn-o id=oqs>Salvar</button><button type=button class=btn id=oqp>Salvar e gerar PDF</button></div></form>`);
+ const fm=$('#oq'),upd=()=>{fm.querySelectorAll('.oq-ln').forEach(r=>{r.querySelector('output').textContent=brl(num(r.querySelector('[name=qtd]').value)*num(r.querySelector('[name=preco]').value))});const v=oqRead(fm),t=oqTot(v);$('#oqT').innerHTML=`Total <b>${brl(t)}</b>${v.sinal_pct?`<small>Sinal ${brl(t*v.sinal_pct/100)}</small>`:''}`};
+ fm.oninput=upd;upd();
+ fm.addEventListener('change',e=>{if(e.target.name!=='nome')return;const p=(cache.produtos||[]).find(x=>nm(x.nome)===nm(e.target.value)),r=e.target.closest('.oq-ln');
+  if(p&&r){const pr=r.querySelector('[name=preco]'),q=r.querySelector('[name=qtd]');if(!num(pr.value)&&num(p.preco))pr.value=p.preco;if(!num(q.value))q.value=1;upd()}});
+ fm.addEventListener('click',e=>{const a=e.target.closest('[data-addl]');if(a){fm.querySelector(`.oq-lines[data-s="${a.dataset.addl}"]`).insertAdjacentHTML('beforeend',oqLn(a.dataset.addl));return}
+  const r=e.target.closest('[data-rm]');if(r){r.closest('.oq-ln').remove();upd()}});
+ $('#oqs').onclick=async()=>{const s=await oqSave(oqRead(fm),o);if(s){close();toast('Orçamento salvo');orcView()}};
+ $('#oqp').onclick=async()=>{const s=await oqSave(oqRead(fm),o);if(s){close();orcView();oqDown(s)}}}
+
+/* ---------- lista ---------- */
+function orcDraw(){
+ const L=OQ.list,f=OQ.f,V=f==='Todos'?L:L.filter(o=>o.status===f),w=canW('orcamentos'),cls={Rascunho:'',Enviado:'info',Aprovado:'ok',Recusado:'bad'};
+ $('#main').innerHTML=`${eraBanner({t:'Orçamentos',s:'Monte o orçamento, mande em PDF para o cliente e, quando fechar, a data da festa vai direto para as Encomendas'})}<div class="ph ph-v"><div></div><div class=tools>${w?`<button class=btn id=on>${ic('plus',16)} Novo orçamento</button>`:''}</div></div>
+ <div class=oq-chips>${['Todos',...OQ_ST].map(s=>`<button class="oq-chip${f===s?' on':''}" data-f="${s}">${s}<em>${s==='Todos'?L.length:L.filter(o=>o.status===s).length}</em></button>`).join('')}</div>
+ ${V.length?`<div class=oq-list>${V.map(o=>{const i=L.indexOf(o),dia=o.data_festa?new Date(o.data_festa+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short'}):'';
+  return `<article class=oq-c><div class=oq-top><span class=oq-n>Nº ${oqN(o)}</span><span class="bd ${cls[o.status]||''}">${o.status}</span></div><h3>${esc(o.cliente_nome)}</h3>
+  <p class=mute>${esc([o.ocasiao,o.convidados?o.convidados+' convidados':'',o.tema?'Tema: '+o.tema:''].filter(Boolean).join(' · '))||'&nbsp;'}</p>
+  <div class=oq-meta><div><small>Data da festa</small><b>${oqD(o.data_festa)} <span class=mute>${dia}</span></b></div><div><small>Total</small><b>${brl(oqTot(o))}</b></div></div>
+  <div class=oq-a><button class=btn-o data-a=pdf data-i=${i}>${ic('download',15)} PDF</button><button class=btn data-a=send data-i=${i}>Enviar</button>${w&&o.status!=='Aprovado'?`<button class=btn-o data-a=ok data-i=${i}>${ic('check',15)} Aprovar</button>`:''}${w?`<button class=ib title=Editar data-a=edit data-i=${i}>${ic('edit')}</button><button class=ib title=Duplicar data-a=dup data-i=${i}>${ic('copy')}</button><button class=ib title=Excluir data-a=del data-i=${i}>${ic('trash')}</button>`:''}</div></article>`}).join('')}</div>`
+  :`<div class="card empty">${ic('receipt',40)}<p>${L.length?'Nenhum orçamento nessa situação.':'Nenhum orçamento ainda. Toque em “Novo orçamento” para montar o primeiro.'}</p></div>`}`;
+ $('#on')?.addEventListener('click',()=>orcForm());
+ $('#main').onclick=async e=>{const c=e.target.closest('[data-f]');if(c){OQ.f=c.dataset.f;return orcDraw()}
+  const b=e.target.closest('[data-a]');if(!b)return;const o=OQ.list[+b.dataset.i],a=b.dataset.a;
+  if(a==='pdf')return oqDown(o);if(a==='send')return oqShare(o);if(a==='ok')return oqAprovar(o);if(a==='edit')return orcForm(o);
+  if(a==='dup')return orcForm({...o,id:null,numero:null,criado_em:null,status:'Rascunho',encomenda_id:null});
+  if(a==='del'&&confirm(`Excluir o orçamento Nº ${oqN(o)} de ${o.cliente_nome}?`)){const r=await sb.from('orcamentos').delete().eq('id',o.id);if(r.error)return fail(r.error);toast('Orçamento excluído');orcView()}}}
+async function orcView(){
+ const [O,C,P]=await Promise.all([sb.from('orcamentos').select('*').order('numero',{ascending:false}),all('clientes'),all('produtos')]);
+ cache.clientes=C;cache.produtos=P;
+ if(O.error){$('#main').innerHTML=`<div class=ph><div><h2>Orçamentos</h2></div></div><div class="card empty">${ic('receipt',40)}<p>${O.error.code==='42P01'?'Falta criar a tabela de orçamentos: rode o arquivo orcamentos.sql no SQL Editor do Supabase.':esc(friendly(O.error))}</p></div>`;return}
+ OQ.list=O.data||[];OQ.names=[...new Set(OQ.list.flatMap(o=>(o.itens||[]).map(i=>i.nome)).filter(Boolean))];orcDraw()}
+
+{const st=document.createElement('style');st.textContent=`
+#oq{display:flex;flex-direction:column;flex:1;min-height:0}
+.oq-h{font:700 11px Inter,sans-serif;letter-spacing:.16em;text-transform:uppercase;color:var(--p);margin:18px 0 8px}.oq-h:first-child{margin-top:0}
+.oq-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.oq-g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.oq-sec{margin-bottom:12px;padding:12px;border:1px solid var(--bd);border-radius:16px;background:var(--ps)}.oq-sec h4{font:600 13px Inter,sans-serif;margin-bottom:6px}
+.oq-ln{display:grid;gap:6px;padding:8px 0;border-bottom:1px dashed var(--bd)}
+.oq-q{display:grid;grid-template-columns:1fr 1.3fr auto auto;gap:6px;align-items:center}.oq-q output{font-weight:600;font-size:13px;min-width:78px;text-align:right}
+.df .tot small{display:block;font-size:11.5px;color:var(--mu)}
+.oq-chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.oq-chip{border:1px solid var(--bd);background:#fff;border-radius:99px;padding:6px 14px;font:500 13px Inter,sans-serif;cursor:pointer;color:var(--ink)}
+.oq-chip.on{background:var(--p);border-color:var(--p);color:#fff}.oq-chip em{font-style:normal;opacity:.7;margin-left:6px}
+.oq-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+.oq-c{display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--bd);border-radius:20px;padding:16px 18px;box-shadow:0 8px 22px -16px #d72c6277}
+.oq-top{display:flex;justify-content:space-between;align-items:center}.oq-n{font:700 12px Inter,sans-serif;letter-spacing:.12em;color:var(--p)}.oq-c h3{font-size:18px}
+.oq-meta{display:flex;gap:22px;margin:8px 0}.oq-meta small{display:block;color:var(--mu);font-size:11.5px}.oq-meta b{font-size:15px}
+.oq-a{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:auto;padding-top:12px;border-top:1px solid var(--bd)}
 `;document.head.append(st)}
 
 boot()
