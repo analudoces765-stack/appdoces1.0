@@ -1368,6 +1368,7 @@ boot()
 /* ---------- o PDF que vai para o cliente ---------- */
 function oqDoc(o){
  const tot=oqTot(o),sub=oqSub(o,OQ_SEC[0])+oqSub(o,OQ_SEC[1]),nome='Doces da Analu',hora=oqHora(o.hora_festa);
+ const fot=(o.itens||[]).filter(i=>i.sec==='__foto'&&i.foto).map(i=>i.foto);
  const sab=(()=>{const t=String(o.sabores||'').trim();if(!t)return[];let L=t.split(/\r?\n|;/);if(L.length<2)L=t.split(',');return L.map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(.+?)\s*(?::|\s[—–-]\s)\s*(.+)$/);return m?[m[1],m[2]]:[x,'']})})();
  const chk='<svg viewBox="0 0 24 24" width="18" height="18" style="flex:none"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#c4305f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const sec=s=>{const L=(o.itens||[]).filter(i=>i.sec===s&&i.nome);if(!L.length)return '';
@@ -1385,12 +1386,17 @@ function oqDoc(o){
 .oqp .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:0 40px}
 .oqp .info{margin-top:32px}.oqp .info b{display:block;margin-top:10px;font:700 21px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
 .oqp .info p{margin-top:4px;font-size:16px;color:#3a1c2a;line-height:1.45}
-.oqp .band{margin:26px 40px 0;background:#fbe2e8;padding:14px 18px 15px}.oqp .band .g2{padding:0}
-.oqp .band .lb{font-size:12px}.oqp .band p{margin-top:6px;font-size:17px}
+.oqp .band{margin:26px 40px 0;background:#fbe2e8;padding:20px 26px 22px}
+.oqp .band p{margin-top:6px;font:600 20px/1.3 Inter,Arial,sans-serif;color:#3a1c2a}
+.oqp .band .sb{margin-top:0}.oqp .band .tm+.sb{margin-top:18px;padding-top:16px;border-top:1px solid #e9a9bb}
+.oqp .sb ul{list-style:none;padding:0;margin:12px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px 28px}
+.oqp .sb li{display:flex;gap:11px;align-items:flex-start}
+.oqp .sb li i{flex:none;width:9px;height:9px;margin-top:9px;border-radius:50%;background:#c4305f}
+.oqp .sb li b{display:block;font:700 20px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
+.oqp .sb li span{display:block;margin-top:2px;font-size:15px;line-height:1.35;color:#6b4553}
 .oqp .sc1{padding:0 40px;margin-top:34px}
-.oqp .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 40px;margin-top:12px}
-.oqp .sbc{background:#fbe2e8;border-left:5px solid #c4305f;padding:12px 16px}
-.oqp .sbc b{display:block;font:700 21px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}.oqp .sbc span{display:block;margin-top:3px;font-size:15.5px;color:#6b4553;line-height:1.35}
+.oqp .fts{display:grid;gap:12px;padding:0 40px;margin-top:12px}.oqp .fts.n1{grid-template-columns:1fr}.oqp .fts.n2{grid-template-columns:1fr 1fr}
+.oqp .ft1{background:#fbe2e8;display:flex;align-items:center;justify-content:center}.oqp .ft1 img{display:block;max-width:100%;width:auto;height:auto;object-fit:contain}.oqp .n1 .ft1 img{max-height:420px}.oqp .n2 .ft1 img{max-height:300px}
 .oqp .it{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:0 40px;margin-top:12px}
 .oqp .it b{display:block;font:700 22px/1.25 Inter,Arial,sans-serif}.oqp .it span{display:block;margin-top:3px;font-size:17px}.oqp .it em{display:block;font-style:normal;font-size:13.5px;color:#7d6070;margin-top:2px}
 .oqp .it strong{font:700 20px/1.3 Inter,Arial,sans-serif;white-space:nowrap;padding-top:3px}
@@ -1409,9 +1415,9 @@ function oqDoc(o){
 <div class=hr data-c></div>
 <div class="g2 info" data-c><div><div class=lb>Cliente</div><b>${esc(o.cliente_nome||'')}</b></div>
 <div><div class=lb>Festa</div><b>${esc(o.ocasiao||'Festa')}</b>${festa.map(x=>`<p>${esc(x)}</p>`).join('')}</div></div>
-${o.tema?`<div class=band data-c><div class=lb>Tema</div><p>${esc(o.tema)}</p></div>`:''}
-${sab.length?`<div class=sc1 data-c><div class=lb>Sabores</div></div><div class=sbg>${sab.map(([n,d])=>`<div class=sbc data-c><b>${esc(n)}</b>${d?`<span>${esc(d)}</span>`:''}</div>`).join('')}</div>`:''}
+${o.tema||sab.length?`<div class=band data-c>${o.tema?`<div class=tm><div class=lb>Tema</div><p>${esc(o.tema)}</p></div>`:''}${sab.length?`<div class=sb><div class=lb>Sabores</div><ul>${sab.map(([n,d])=>`<li><i></i><div><b>${esc(n)}</b>${d?`<span>${esc(d)}</span>`:''}</div></li>`).join('')}</ul></div>`:''}</div>`:''}
 ${sec(OQ_SEC[0])}${sec(OQ_SEC[1])}
+${fot.length?`<div class=sc1 data-c><div class=lb>Referência</div></div><div class="fts n${Math.min(fot.length,2)}" data-c>${fot.map(f=>`<div class=ft1><img src="${f}" alt=""></div>`).join('')}</div>`:''}
 ${num(o.desconto)>0?`<div class=dsc data-c><span>Subtotal <b>${brl(sub)}</b></span><span>Desconto <b>− ${brl(o.desconto)}</b></span></div>`:''}
 <div class=tot data-c><div class=tbar><span>TOTAL</span><b>${brl(tot)}</b></div></div>
 ${o.pagamento?`<div class=pay data-c>${chk}<span>Pagamento: ${esc(o.pagamento)}</span></div>`:''}
@@ -1444,7 +1450,7 @@ async function oqShare(o){
 /* ---------- aprovar: a data da festa vai para as Encomendas ---------- */
 async function oqAprovar(o){
  if(!confirm(`Aprovar o orçamento de ${o.cliente_nome}?\n\nA festa de ${oqD(o.data_festa)} será gravada nas Encomendas.`))return;
- const L=(o.itens||[]).map(i=>`• ${i.nome}${i.det?' — '+i.det:''}`).join('\n');
+ const L=(o.itens||[]).filter(i=>i.sec!=='__foto').map(i=>`• ${i.nome}${i.det?' — '+i.det:''}`).join('\n');
  const desc=`Orçamento Nº ${oqN(o)} · ${o.ocasiao||'Festa'}${o.tema?' · Tema: '+o.tema:''}${o.sabores?'\nSabores: '+o.sabores:''}${o.convidados?'\n'+o.convidados+' convidados':''}${o.hora_festa?'\nHorário: '+oqHora(o.hora_festa):''}\n${L}`;
  const r=await sb.from('encomendas').insert({cliente_id:o.cliente_id,descricao:desc,data_entrega:o.data_festa,valor:oqTot(o),sinal:0,status:'Novo'}).select().single();
  if(r.error)return fail(r.error);
@@ -1457,19 +1463,20 @@ const oqLn2=(s,i={})=>`<div class=oq-ln><input name=nome placeholder="Item" auto
 const oqRead2=fm=>{const g=n=>fm.querySelector(`[name="${n}"]`)?.value.trim()??'';const o={};
  ['cliente_nome','cliente_tel','ocasiao','tema','sabores','data_festa','hora_festa','local_entrega','pagamento','observacoes'].forEach(k=>o[k]=g(k)||null);
  ['convidados','desconto','sinal_pct','validade_dias'].forEach(k=>o[k]=num(g(k)));o.status=g('status')||'Rascunho';
- o.itens=[...fm.querySelectorAll('.oq-ln')].map(r=>({sec:r.closest('.oq-lines').dataset.s,nome:r.querySelector('[name=nome]').value.trim(),det:r.querySelector('[name=det]').value.trim(),valor:num(r.querySelector('[name=valor]').value)})).filter(i=>i.nome);return o};
+ o.itens=[...fm.querySelectorAll('.oq-ln')].map(r=>({sec:r.closest('.oq-lines').dataset.s,nome:r.querySelector('[name=nome]').value.trim(),det:r.querySelector('[name=det]').value.trim(),valor:num(r.querySelector('[name=valor]').value)})).filter(i=>i.nome);(fm._fotos||[]).forEach(f=>o.itens.push({sec:'__foto',foto:f}));return o};
 async function oqSave(v,o){
  if(!v.cliente_nome)return toast('Informe o nome do cliente','bad'),null;
  if(!v.data_festa)return toast('Informe a data da festa','bad'),null;
- if(!v.itens.length)return toast('Adicione pelo menos um item','bad'),null;
+ if(!v.itens.filter(i=>i.sec!=='__foto').length)return toast('Adicione pelo menos um item','bad'),null;
  const c=fnd('clientes',v.cliente_nome);let cid=c?.id;
  if(!c){const r=await sb.from('clientes').insert({nome:v.cliente_nome,telefone:v.cliente_tel}).select().single();if(r.error)return fail(r.error),null;cid=r.data.id;cache.clientes=[...(cache.clientes||[]),r.data]}
  else if(v.cliente_tel&&!c.telefone)await sb.from('clientes').update({telefone:v.cliente_tel}).eq('id',c.id);
  const row={...v,cliente_id:cid==null?null:String(cid),total:oqTot(v)};
  const r=o?.id?await sb.from('orcamentos').update(row).eq('id',o.id).select().single():await sb.from('orcamentos').insert(row).select().single();
  if(r.error)return oqErr(r.error),null;return r.data}
+const oqImg=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();im.onload=()=>{const k=Math.min(1,1000/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);g.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.82))};im.onerror=no;im.src=u});
 function orcForm(o0){
- const o={sinal_pct:50,validade_dias:7,pagamento:'Pix ou cartão',...(o0||{})},it=(o.itens||[]).map(i=>({...i,sec:OQ_SEC.includes(i.sec)?i.sec:OQ_SEC[0]}));
+ const o={sinal_pct:50,validade_dias:7,pagamento:'Pix ou cartão',...(o0||{})},it=(o.itens||[]).filter(i=>i.sec!=='__foto').map(i=>({...i,sec:OQ_SEC.includes(i.sec)?i.sec:OQ_SEC[0]}));
  const I=(k,l,t='text',x='')=>`<div class=fl><label>${l}</label><input name="${k}" type="${t}" ${x} value="${esc(o[k]??'')}"></div>`;
  const sts=o.status==='Aprovado'?['Aprovado']:['Rascunho','Enviado','Recusado'];
  const close=open_(o.id?`Orçamento Nº ${oqN(o)}`:'Novo orçamento',`<form id=oq>${dls()}<div class=db>
@@ -1480,14 +1487,18 @@ function orcForm(o0){
  <div class=oq-g2>${I('data_festa','Data da festa *','date')}${I('hora_festa','Horário','time')}</div>${I('local_entrega','Local / entrega','text','')}
  <div class=oq-h>Itens do orçamento</div>
  ${OQ_SEC.map((s,k)=>`<div class=oq-sec><h4>${s}</h4><div class=oq-lines data-s="${s}">${it.filter(i=>i.sec===s).map(i=>oqLn2(s,i)).join('')||(k===0?oqLn2(s):'')}</div><button type=button class=btn-o data-addl="${s}">${ic('plus',16)} Adicionar item</button></div>`).join('')}
+ <div class=oq-h>Fotos de referência (vão no PDF)</div><div class=fl><div id=oqF class=oq-phs></div><label class="btn-o" style="cursor:pointer">${ic('plus',16)} Adicionar foto<input type=file accept="image/*" multiple hidden id=oqFi></label><p class=hint>Até 4 fotos. Ex.: modelo do bolo ou da decoração.</p></div>
  <div class=oq-h>Condições</div>
  <div class=oq-g3>${I('desconto','Desconto (R$)','number','min=0 step=any inputmode=decimal')}${I('sinal_pct','Sinal (%)','number','min=0 max=100 step=any inputmode=decimal')}${I('validade_dias','Validade (dias)','number','min=1 inputmode=numeric')}</div>
  ${I('pagamento','Formas de pagamento')}<div class=fl><label>Observações para o cliente</label><textarea name=observacoes rows=3>${esc(o.observacoes||'')}</textarea></div>
  <div class=fl><label>Situação</label><select name=status ${o.status==='Aprovado'?'disabled':''}>${sts.map(s=>`<option ${s===(o.status||'Rascunho')?'selected':''}>${s}</option>`).join('')}</select></div></div>
  <div class=df><div class=tot id=oqT></div><button type=button class=btn-o id=oqs>Salvar</button><button type=button class=btn id=oqp>Salvar e gerar PDF</button></div></form>`);
  const fm=$('#oq'),upd=()=>{const v=oqRead2(fm),t=oqTot(v);$('#oqT').innerHTML=`Total <b>${brl(t)}</b>${v.sinal_pct?`<small>Sinal ${brl(t*v.sinal_pct/100)}</small>`:''}`};
- fm.oninput=upd;upd();
- fm.addEventListener('click',e=>{const a=e.target.closest('[data-addl]');if(a){fm.querySelector(`.oq-lines[data-s="${a.dataset.addl}"]`).insertAdjacentHTML('beforeend',oqLn2(a.dataset.addl));return}
+ fm._fotos=(o.itens||[]).filter(i=>i.sec==='__foto'&&i.foto).map(i=>i.foto);
+ const drawF=()=>{$('#oqF').innerHTML=fm._fotos.map((f,k)=>`<div class=oq-ph><img src="${f}" alt=""><button type=button class=ib data-rf="${k}" title=Remover>${ic('x',14)}</button></div>`).join('')};
+ $('#oqFi').onchange=async e=>{const fs=[...e.target.files];e.target.value='';for(const f of fs){if(fm._fotos.length>=4){toast('Máximo de 4 fotos','bad');break}try{fm._fotos.push(await oqImg(f))}catch(x){toast('Não consegui ler esta foto','bad')}}drawF();upd()};
+ fm.oninput=upd;drawF();upd();
+ fm.addEventListener('click',e=>{const rf=e.target.closest('[data-rf]');if(rf){fm._fotos.splice(+rf.dataset.rf,1);drawF();upd();return}const a=e.target.closest('[data-addl]');if(a){fm.querySelector(`.oq-lines[data-s="${a.dataset.addl}"]`).insertAdjacentHTML('beforeend',oqLn2(a.dataset.addl));return}
   const r=e.target.closest('[data-rm]');if(r){r.closest('.oq-ln').remove();upd()}});
  $('#oqs').onclick=async()=>{const s=await oqSave(oqRead2(fm),o);if(s){close();toast('Orçamento salvo');orcView()}};
  $('#oqp').onclick=async()=>{const s=await oqSave(oqRead2(fm),o);if(s){close();orcView();oqDown(s)}}}
@@ -1523,6 +1534,7 @@ async function orcView(){
 .oq-ln{display:grid;gap:6px;padding:8px 0;border-bottom:1px dashed var(--bd)}
 .oq-q{display:grid;grid-template-columns:1fr 110px auto;gap:6px;align-items:center}
 .df .tot small{display:block;font-size:11.5px;color:var(--mu)}
+.oq-phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:8px}.oq-phs:empty{display:none}.oq-ph{position:relative}.oq-ph img{display:block;width:100%;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}.oq-ph .ib{position:absolute;top:4px;right:4px;background:#fffd;border-radius:50%;color:var(--ba)}
 .oq-chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.oq-chip{border:1px solid var(--bd);background:#fff;border-radius:99px;padding:6px 14px;font:500 13px Inter,sans-serif;cursor:pointer;color:var(--ink)}
 .oq-chip.on{background:var(--p);border-color:var(--p);color:#fff}.oq-chip em{font-style:normal;opacity:.7;margin-left:6px}
 .oq-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
