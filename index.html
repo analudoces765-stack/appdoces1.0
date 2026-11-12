@@ -1367,7 +1367,8 @@ boot()
 
 /* ---------- o PDF que vai para o cliente ---------- */
 function oqDoc(o){
- const tot=oqTot(o),sub=oqSub(o,OQ_SEC[0])+oqSub(o,OQ_SEC[1]),nome=CFG.nome_doceria||'Doces da Analu',hora=oqHora(o.hora_festa);
+ const tot=oqTot(o),sub=oqSub(o,OQ_SEC[0])+oqSub(o,OQ_SEC[1]),nome='Doces da Analu',hora=oqHora(o.hora_festa);
+ const sab=(()=>{const t=String(o.sabores||'').trim();if(!t)return[];let L=t.split(/\r?\n|;/);if(L.length<2)L=t.split(',');return L.map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(.+?)\s*(?::|\s[—–-]\s)\s*(.+)$/);return m?[m[1],m[2]]:[x,'']})})();
  const chk='<svg viewBox="0 0 24 24" width="18" height="18" style="flex:none"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#c4305f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   const sec=s=>{const L=(o.itens||[]).filter(i=>i.sec===s&&i.nome);if(!L.length)return '';
   return `<div class=sc1 data-c><div class=lb>${s}</div></div>`+L.map(i=>`<div class=it data-c><div><b>${esc(i.nome)}</b>${i.det?`<span>${esc(i.det)}</span>`:''}</div><strong>${brl(oqVl(i))}</strong></div>`).join('')};
@@ -1387,6 +1388,9 @@ function oqDoc(o){
 .oqp .band{margin:26px 40px 0;background:#fbe2e8;padding:14px 18px 15px}.oqp .band .g2{padding:0}
 .oqp .band .lb{font-size:12px}.oqp .band p{margin-top:6px;font-size:17px}
 .oqp .sc1{padding:0 40px;margin-top:34px}
+.oqp .sbg{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 40px;margin-top:12px}
+.oqp .sbc{background:#fbe2e8;border-left:5px solid #c4305f;padding:12px 16px}
+.oqp .sbc b{display:block;font:700 21px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}.oqp .sbc span{display:block;margin-top:3px;font-size:15.5px;color:#6b4553;line-height:1.35}
 .oqp .it{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:0 40px;margin-top:12px}
 .oqp .it b{display:block;font:700 22px/1.25 Inter,Arial,sans-serif}.oqp .it span{display:block;margin-top:3px;font-size:17px}.oqp .it em{display:block;font-style:normal;font-size:13.5px;color:#7d6070;margin-top:2px}
 .oqp .it strong{font:700 20px/1.3 Inter,Arial,sans-serif;white-space:nowrap;padding-top:3px}
@@ -1405,7 +1409,8 @@ function oqDoc(o){
 <div class=hr data-c></div>
 <div class="g2 info" data-c><div><div class=lb>Cliente</div><b>${esc(o.cliente_nome||'')}</b></div>
 <div><div class=lb>Festa</div><b>${esc(o.ocasiao||'Festa')}</b>${festa.map(x=>`<p>${esc(x)}</p>`).join('')}</div></div>
-${o.tema||o.sabores?`<div class=band data-c><div class=g2><div>${o.tema?`<div class=lb>Tema</div><p>${esc(o.tema)}</p>`:''}</div><div>${o.sabores?`<div class=lb>Sabores</div><p>${esc(o.sabores)}</p>`:''}</div></div></div>`:''}
+${o.tema?`<div class=band data-c><div class=lb>Tema</div><p>${esc(o.tema)}</p></div>`:''}
+${sab.length?`<div class=sc1 data-c><div class=lb>Sabores</div></div><div class=sbg>${sab.map(([n,d])=>`<div class=sbc data-c><b>${esc(n)}</b>${d?`<span>${esc(d)}</span>`:''}</div>`).join('')}</div>`:''}
 ${sec(OQ_SEC[0])}${sec(OQ_SEC[1])}
 ${num(o.desconto)>0?`<div class=dsc data-c><span>Subtotal <b>${brl(sub)}</b></span><span>Desconto <b>− ${brl(o.desconto)}</b></span></div>`:''}
 <div class=tot data-c><div class=tbar><span>TOTAL</span><b>${brl(tot)}</b></div></div>
@@ -1471,7 +1476,7 @@ function orcForm(o0){
  <div class=oq-h>Cliente</div>${I('cliente_nome','Nome do cliente *','text','list=dl_clientes autocomplete=off')}${I('cliente_tel','WhatsApp do cliente','tel','inputmode=tel')}
  <div class=oq-h>A festa</div>${I('ocasiao','Ocasião','text','')}
  <div class=oq-g2>${I('tema','Tema','text','')}${I('convidados','Convidados','number','min=0 inputmode=numeric')}</div>
- ${I('sabores','Sabores','text','')}
+ <div class=fl><label>Sabores (um por linha; use “sabor: detalhe” se quiser)</label><textarea name=sabores rows=5 placeholder="Ninho com morango: 50 un&#10;Brigadeiro meio amargo: 50 un">${esc(o.sabores||'')}</textarea></div>
  <div class=oq-g2>${I('data_festa','Data da festa *','date')}${I('hora_festa','Horário','time')}</div>${I('local_entrega','Local / entrega','text','')}
  <div class=oq-h>Itens do orçamento</div>
  ${OQ_SEC.map((s,k)=>`<div class=oq-sec><h4>${s}</h4><div class=oq-lines data-s="${s}">${it.filter(i=>i.sec===s).map(i=>oqLn2(s,i)).join('')||(k===0?oqLn2(s):'')}</div><button type=button class=btn-o data-addl="${s}">${ic('plus',16)} Adicionar item</button></div>`).join('')}
