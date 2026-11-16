@@ -1371,43 +1371,52 @@ function oqDoc(o){
  const fot=(o.itens||[]).filter(i=>i.sec==='__foto'&&i.foto).map(i=>i.foto);
  const sab=(()=>{const t=String(o.sabores||'').trim();if(!t)return[];let L=t.split(/\r?\n|;/);if(L.length<2)L=t.split(',');return L.map(x=>x.trim()).filter(Boolean).map(x=>{const m=x.match(/^(.+?)\s*(?::|\s[—–-]\s)\s*(.+)$/);return m?[m[1],m[2]]:[x,'']})})();
  const chk='<svg viewBox="0 0 24 24" width="18" height="18" style="flex:none"><path d="M5 12.5l4.5 4.5L19 7" fill="none" stroke="#c4305f" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-  const sec=s=>{const L=(o.itens||[]).filter(i=>i.sec===s&&i.nome);if(!L.length)return '';
-  return `<div class=sc1 data-c><div class=lb>${s}</div></div>`+L.map(i=>`<div class=it data-c><div><b>${esc(i.nome)}</b>${i.det?`<span>${esc(i.det)}</span>`:''}</div><strong>${brl(oqVl(i))}</strong></div>`).join('')};
- const festa=[[oqD(o.data_festa,true),hora].filter(x=>x&&x!=='—').join(' · '),o.convidados?fmtN(o.convidados)+' convidados':'',o.local_entrega||''].filter(Boolean);
+ const sec=s=>{const L=(o.itens||[]).filter(i=>i.sec===s&&i.nome);if(!L.length)return '';
+  return `<div class=sc1 data-c><div class=lb>${s}</div></div>`+L.map(i=>`<div class=it data-c><div class=l><b>${esc(i.nome)}</b><i></i><strong>${brl(oqVl(i))}</strong></div>${i.det?`<span>${esc(i.det)}</span>`:''}</div>`).join('')};
+ const festa=[[oqD(o.data_festa,true),hora?'às '+hora:''].filter(x=>x&&x!=='—').join(' · '),o.convidados?fmtN(o.convidados)+' convidados':'',o.local_entrega||''].filter(Boolean);
+ const rows=[];for(let i=0;i<fot.length;i+=2)rows.push(fot.slice(i,i+2));
+ const fotos=fot.length?`<div class="sc1 ph1" data-c><div class=lb>Referências</div></div>`+rows.map(r=>`<div class="fr n${r.length}" data-c>${r.map(f=>`<div class=ft1><img src="${f}" alt=""></div>`).join('')}</div>`).join(''):'';
  return `<div class=oqp><style>
 .oqp{width:794px;min-height:1123px;display:flex;flex-direction:column;background:#fdf8f8;color:#3a1c2a;font:15px/1.4 Inter,Arial,sans-serif;box-sizing:border-box}
 .oqp *{box-sizing:border-box;margin:0}
-.oqp .hd{display:flex;align-items:center;padding:62px 40px 0}
+.oqp .hd{display:flex;align-items:center;padding:56px 40px 0}
 .oqp .hd img{width:290px;height:auto;display:block}
-.oqp .hd .vl{width:1px;height:160px;background:#c4305f;margin:0 0 0 38px;opacity:.8}
+.oqp .hd .vl{width:1px;height:150px;background:#c4305f;margin:0 0 0 38px;opacity:.8}
 .oqp .hd h1{flex:1;text-align:right;font:600 22px/1 Inter,Arial,sans-serif;letter-spacing:.34em;color:#4a1a2c;margin-right:-.34em}
-.oqp .hr{height:0;border-top:1px solid #c4305f;margin:34px 40px 0;opacity:.85}
+.oqp .hr{height:0;border-top:1px solid #c4305f;margin:30px 40px 0;opacity:.85}
 .oqp .lb{font:700 13px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.3em;text-transform:uppercase;color:#c4305f}
 .oqp .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 24px;padding:0 40px}
-.oqp .info{margin-top:32px}.oqp .info b{display:block;margin-top:10px;font:700 21px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
-.oqp .info p{margin-top:4px;font-size:16px;color:#3a1c2a;line-height:1.45}
-.oqp .band{margin:26px 40px 0;background:#fbe2e8;padding:20px 26px 22px}
+.oqp .info{margin-top:28px}.oqp .info b{display:block;margin-top:10px;font:700 22px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
+.oqp .info p{margin-top:5px;font-size:16px;color:#3a1c2a;line-height:1.4}.oqp .info p:first-of-type{font-weight:600;color:#8f2345}
+.oqp .band{margin:24px 40px 0;background:#fbe2e8;padding:18px 26px 20px}
 .oqp .band p{margin-top:6px;font:600 20px/1.3 Inter,Arial,sans-serif;color:#3a1c2a}
-.oqp .band .sb{margin-top:0}.oqp .band .tm+.sb{margin-top:18px;padding-top:16px;border-top:1px solid #e9a9bb}
-.oqp .sb ul{list-style:none;padding:0;margin:12px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:12px 28px}
+.oqp .band .tm+.sb{margin-top:16px;padding-top:14px;border-top:1px solid #e9a9bb}
+.oqp .sb ul{list-style:none;padding:0;margin:11px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:10px 28px}
 .oqp .sb li{display:flex;gap:11px;align-items:flex-start}
 .oqp .sb li i{flex:none;width:9px;height:9px;margin-top:9px;border-radius:50%;background:#c4305f}
-.oqp .sb li b{display:block;font:700 20px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
+.oqp .sb li b{display:block;font:700 19px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
 .oqp .sb li span{display:block;margin-top:2px;font-size:15px;line-height:1.35;color:#6b4553}
-.oqp .sc1{padding:0 40px;margin-top:34px}
-.oqp .fts{display:grid;gap:12px;padding:0 40px;margin-top:12px}.oqp .fts.n1{grid-template-columns:1fr}.oqp .fts.n2{grid-template-columns:1fr 1fr}
-.oqp .ft1{background:#fbe2e8;display:flex;align-items:center;justify-content:center}.oqp .ft1 img{display:block;max-width:100%;width:auto;height:auto;object-fit:contain}.oqp .n1 .ft1 img{max-height:420px}.oqp .n2 .ft1 img{max-height:300px}
-.oqp .it{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding:0 40px;margin-top:12px}
-.oqp .it b{display:block;font:700 22px/1.25 Inter,Arial,sans-serif}.oqp .it span{display:block;margin-top:3px;font-size:17px}.oqp .it em{display:block;font-style:normal;font-size:13.5px;color:#7d6070;margin-top:2px}
-.oqp .it strong{font:700 20px/1.3 Inter,Arial,sans-serif;white-space:nowrap;padding-top:3px}
-.oqp .dsc{display:flex;justify-content:flex-end;gap:26px;padding:0 40px;margin-top:10px;font-size:15px;color:#7d6070}.oqp .dsc b{color:#3a1c2a}
-.oqp .tot{margin:22px 40px 0;border-top:1px solid #c4305f;padding-top:18px}
+.oqp .sc1{padding:0 40px;margin-top:30px}
+.oqp .it{padding:0 40px;margin-top:13px}
+.oqp .it .l{display:flex;align-items:baseline;gap:10px}
+.oqp .it b{font:700 21px/1.25 Inter,Arial,sans-serif;color:#3a1c2a}
+.oqp .it .l i{flex:1;min-width:20px;border-bottom:2px dotted #e2a3b6;transform:translateY(-5px)}
+.oqp .it strong{font:700 20px/1.3 Inter,Arial,sans-serif;white-space:nowrap;color:#3a1c2a}
+.oqp .it span{display:block;margin-top:3px;font-size:16px;line-height:1.4;color:#6b4553;max-width:78%}
+.oqp .dsc{display:flex;justify-content:flex-end;gap:26px;padding:0 40px;margin-top:14px;font-size:15px;color:#7d6070}.oqp .dsc b{color:#3a1c2a}
+.oqp .tot{margin:24px 40px 0;border-top:1px solid #c4305f;padding-top:18px}
 .oqp .tbar{display:flex;justify-content:space-between;align-items:center;background:#8f2345;color:#fff;padding:15px 30px}
 .oqp .tbar span{font:600 21px/1 'Cormorant Garamond',Georgia,serif;letter-spacing:.34em;padding-left:10px}.oqp .tbar b{font:700 34px/1 Inter,Arial,sans-serif}
-.oqp .pay{display:flex;align-items:center;gap:9px;padding:0 54px;margin-top:20px;font-size:16px}
-.oqp .ob{margin:18px 40px 0;font-size:13.5px;color:#6b4553;background:#fbe2e8;padding:11px 16px;white-space:pre-wrap}
-.oqp .fz{margin-top:auto;padding-top:40px}
-.oqp .nm{display:flex;align-items:center;gap:22px;padding:0 6px 34px}.oqp .nm i{flex:1;border-top:1px solid #c4305f;opacity:.85}
+.oqp .pay{display:flex;align-items:center;gap:9px;padding:0 54px;margin-top:18px;font-size:16px}
+.oqp .ob{margin:18px 40px 0;font-size:14px;line-height:1.5;color:#6b4553;background:#fbe2e8;padding:12px 18px;white-space:pre-wrap}
+.oqp .ph1{margin-top:38px}
+.oqp .fr{display:grid;gap:14px;padding:0 40px;margin-top:14px}
+.oqp .fr.n2{grid-template-columns:1fr 1fr}.oqp .fr.n1{grid-template-columns:minmax(0,62%);justify-content:center}
+.oqp .ft1{background:#fff;border:1px solid #f0c6d3;border-radius:4px;padding:8px;box-shadow:0 8px 18px -12px #c4305f88;display:flex;align-items:center;justify-content:center}
+.oqp .ft1 img{display:block;width:100%;object-fit:contain;border-radius:2px}
+.oqp .n2 .ft1 img{height:300px}.oqp .n1 .ft1 img{height:340px}
+.oqp .fz{margin-top:auto;padding-top:38px}
+.oqp .nm{display:flex;align-items:center;gap:22px;padding:0 6px 32px}.oqp .nm i{flex:1;border-top:1px solid #c4305f;opacity:.85}
 .oqp .nm b{font:400 46px/1 'Great Vibes','Satisfy',cursive;color:#c4305f;white-space:nowrap}
 .oqp .bar{height:54px;background:#cb4a73}
 </style>
@@ -1417,11 +1426,11 @@ function oqDoc(o){
 <div><div class=lb>Festa</div><b>${esc(o.ocasiao||'Festa')}</b>${festa.map(x=>`<p>${esc(x)}</p>`).join('')}</div></div>
 ${o.tema||sab.length?`<div class=band data-c>${o.tema?`<div class=tm><div class=lb>Tema</div><p>${esc(o.tema)}</p></div>`:''}${sab.length?`<div class=sb><div class=lb>Sabores</div><ul>${sab.map(([n,d])=>`<li><i></i><div><b>${esc(n)}</b>${d?`<span>${esc(d)}</span>`:''}</div></li>`).join('')}</ul></div>`:''}</div>`:''}
 ${sec(OQ_SEC[0])}${sec(OQ_SEC[1])}
-${fot.length?`<div class=sc1 data-c><div class=lb>Referência</div></div><div class="fts n${Math.min(fot.length,2)}" data-c>${fot.map(f=>`<div class=ft1><img src="${f}" alt=""></div>`).join('')}</div>`:''}
 ${num(o.desconto)>0?`<div class=dsc data-c><span>Subtotal <b>${brl(sub)}</b></span><span>Desconto <b>− ${brl(o.desconto)}</b></span></div>`:''}
 <div class=tot data-c><div class=tbar><span>TOTAL</span><b>${brl(tot)}</b></div></div>
 ${o.pagamento?`<div class=pay data-c>${chk}<span>Pagamento: ${esc(o.pagamento)}</span></div>`:''}
 ${o.observacoes?`<div class=ob data-c>${esc(o.observacoes)}</div>`:''}
+${fotos}
 <div class=fz data-c><div class=nm><i></i><b>${esc(nome)}</b><i></i></div><div class=bar></div></div></div>`}
 
 const oqFile2=o=>`Orcamento-${nm(o.cliente_nome).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'cliente'}.pdf`;
@@ -1483,11 +1492,11 @@ function orcForm(o0){
  <div class=oq-h>Cliente</div>${I('cliente_nome','Nome do cliente *','text','list=dl_clientes autocomplete=off')}${I('cliente_tel','WhatsApp do cliente','tel','inputmode=tel')}
  <div class=oq-h>A festa</div>${I('ocasiao','Ocasião','text','')}
  <div class=oq-g2>${I('tema','Tema','text','')}${I('convidados','Convidados','number','min=0 inputmode=numeric')}</div>
- <div class=fl><label>Sabores (um por linha; use “sabor: detalhe” se quiser)</label><textarea name=sabores rows=5 placeholder="Ninho com morango: 50 un&#10;Brigadeiro meio amargo: 50 un">${esc(o.sabores||'')}</textarea></div>
+ <div class=fl><label>Sabores (um por linha; pode usar “sabor: detalhe”)</label><textarea name=sabores rows=5>${esc(o.sabores||'')}</textarea></div>
  <div class=oq-g2>${I('data_festa','Data da festa *','date')}${I('hora_festa','Horário','time')}</div>${I('local_entrega','Local / entrega','text','')}
  <div class=oq-h>Itens do orçamento</div>
  ${OQ_SEC.map((s,k)=>`<div class=oq-sec><h4>${s}</h4><div class=oq-lines data-s="${s}">${it.filter(i=>i.sec===s).map(i=>oqLn2(s,i)).join('')||(k===0?oqLn2(s):'')}</div><button type=button class=btn-o data-addl="${s}">${ic('plus',16)} Adicionar item</button></div>`).join('')}
- <div class=oq-h>Fotos de referência (vão no PDF)</div><div class=fl><div id=oqF class=oq-phs></div><label class="btn-o" style="cursor:pointer">${ic('plus',16)} Adicionar foto<input type=file accept="image/*" multiple hidden id=oqFi></label><p class=hint>Até 4 fotos. Ex.: modelo do bolo ou da decoração.</p></div>
+ <div class=oq-h>Fotos de referência (vão no PDF)</div><div class=fl><div id=oqF class=oq-phs></div><label class=btn-o style="cursor:pointer">${ic('plus',16)} Adicionar foto<input type=file accept="image/*" multiple hidden id=oqFi></label></div>
  <div class=oq-h>Condições</div>
  <div class=oq-g3>${I('desconto','Desconto (R$)','number','min=0 step=any inputmode=decimal')}${I('sinal_pct','Sinal (%)','number','min=0 max=100 step=any inputmode=decimal')}${I('validade_dias','Validade (dias)','number','min=1 inputmode=numeric')}</div>
  ${I('pagamento','Formas de pagamento')}<div class=fl><label>Observações para o cliente</label><textarea name=observacoes rows=3>${esc(o.observacoes||'')}</textarea></div>
@@ -1533,8 +1542,8 @@ async function orcView(){
 .oq-sec{margin-bottom:12px;padding:12px;border:1px solid var(--bd);border-radius:16px;background:var(--ps)}.oq-sec h4{font:600 13px Inter,sans-serif;margin-bottom:6px}
 .oq-ln{display:grid;gap:6px;padding:8px 0;border-bottom:1px dashed var(--bd)}
 .oq-q{display:grid;grid-template-columns:1fr 110px auto;gap:6px;align-items:center}
-.df .tot small{display:block;font-size:11.5px;color:var(--mu)}
 .oq-phs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px;margin-bottom:8px}.oq-phs:empty{display:none}.oq-ph{position:relative}.oq-ph img{display:block;width:100%;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--bd)}.oq-ph .ib{position:absolute;top:4px;right:4px;background:#fffd;border-radius:50%;color:var(--ba)}
+.df .tot small{display:block;font-size:11.5px;color:var(--mu)}
 .oq-chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}.oq-chip{border:1px solid var(--bd);background:#fff;border-radius:99px;padding:6px 14px;font:500 13px Inter,sans-serif;cursor:pointer;color:var(--ink)}
 .oq-chip.on{background:var(--p);border-color:var(--p);color:#fff}.oq-chip em{font-style:normal;opacity:.7;margin-left:6px}
 .oq-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
